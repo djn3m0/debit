@@ -1,0 +1,20 @@
+Source: debit
+Section: unstable
+Priority: optional
+Maintainer: Jean-Baptiste Note <jean-baptiste.note@m4x.org>
+Build-Depends: debhelper (>= 5), autotools-dev
+Standards-Version: 3.7.2
+
+Package: debit
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Reverse-engeneering tools for xilinx bitstreams
+ This tool allows takes as input virtex-2 bitstreams and can output
+ pseudo-xdl. For now this is proof-of-concept code, you can contact me
+ if you want more detailed reverse-engeneering or other services.
+
+Package: debit-data
+Architecture: all
+Description: Data files for debit
+ The data files for debitting. These are architecture-independent. How
+ to generate them is kept secret for now.

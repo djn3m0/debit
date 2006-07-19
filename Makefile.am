@@ -2,7 +2,10 @@ AM_CPPFLAGS	= -Wall -Werror -Wunused -O3 -g
 
 bin_PROGRAMS	= debit
 debit_SOURCES	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
-		  localpips.c bitstream.c wiring.c debit.c
+		localpips.c bitstream.c wiring.c debit.c \
+		bitarray.h bitstream.h config.h design.h localpips.h \
+		virtex2_config.h bitheader.h bitstream_parser.h \
+		debitlog.h filedump.h sites.h wiring.h
 debit_CFLAGS	= @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDFLAGS	= @GLIB_LIBS@
 
@@ -13,7 +16,7 @@ DATDATA=$(addsuffix _control.db,$(DATAPREFIX))
 WIRES_DB=wires.db
 ALLDATA=$(DATACONTROL) $(DATDATA) $(WIRES_DB)
 
-dist_data_DATA= $(addprefix data/,$(ALLDATA))
+dist_pkgdata_DATA= $(addprefix data/,$(ALLDATA))
 
 #Specific testing and profiling targets. To be reorganized
 
@@ -31,7 +34,7 @@ checkpoint: $(DEBIT)
 	$$OLDPWD/$< --input $$OLDPWD/$(BITFILE_REF) $(DEBIT_ARGS) && \
 	popd
 
-check: $(DEBIT)
+checkcheckpoint: $(DEBIT)
 	mkdir -p $(TEST_DIR) && pushd $(TEST_DIR) && \
 	$$OLDPWD/$< --input $$OLDPWD/$(BITFILE_REF) $(DEBIT_ARGS) && \
 	popd && \
@@ -68,4 +71,7 @@ DOXYDIR=doc
 doc: $(DOCSOURCES) $(DOXYCONFIG)
 	doxygen $(DOXYCONFIG) #&& make -C $(DOXYDIR)/latex/
 
-# DO NOT DELETE
+debian:
+	dpkg-buildpackage -rfakeroot -i'(trash|.git)'
+
+.PHONY: debian

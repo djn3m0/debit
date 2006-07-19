@@ -1,0 +1,6 @@
+debit (0.1-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Jean-Baptiste Note <jean-baptiste.note@m4x.org>  Wed, 19 Jul 2006 15:36:28 +0200
+
