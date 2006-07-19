@@ -24,6 +24,7 @@
 #include <glib.h>
 
 #include "bitstream_parser.h"
+#include "debitlog.h"
 #include "filedump.h"
 #include "localpips.h"
 
@@ -33,6 +34,10 @@ static gboolean pipdump = FALSE;
 static gchar *ifile = NULL;
 static gchar *odir = NULL;
 static gchar *datadir = NULL;
+
+#if DEBIT_DEBUG > 0
+unsigned int debit_debug = 0;
+#endif
 
 static int
 debit_file(gchar *input_file, gchar *output_dir) {
@@ -66,8 +71,11 @@ debit_file(gchar *input_file, gchar *output_dir) {
 static GOptionEntry entries[] =
 {
   {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Read bitstream <ifile>", "<ifile>"},
+#if DEBIT_DEBUG > 0
+  {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
+#endif
   {"outdir", 'o', 0, G_OPTION_ARG_FILENAME, &odir, "Write data files in directory <odir>", "<odir>"},
-  {"datadir", 'o', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
+  {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
   {"framedump", 'f', 0, G_OPTION_ARG_NONE, &framedump, "Dump raw data frames", NULL},
   {"pipdump", 'p', 0, G_OPTION_ARG_NONE, &pipdump, "Dump pips in the bitstream", NULL},
   { NULL }

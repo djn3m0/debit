@@ -11,6 +11,7 @@
 #include "design.h"
 #include "bitheader.h"
 #include "bitstream_parser.h"
+#include "debitlog.h"
 
 typedef struct _chip_descr {
   guint32 idcode;
@@ -186,7 +187,7 @@ update_crc(bitstream_parser_t *parser,
 
   /* write the CRC to the CRC register */
   crcreg->value = bcc;
-  //  g_warning("CRC now %04x", bcc);
+  //  debit_log(L_BITSTREAM,"CRC now %04x", bcc);
 }
 
 /***
@@ -195,7 +196,7 @@ update_crc(bitstream_parser_t *parser,
 
 static inline void
 print_far(sw_far_t *far) {
-  g_warning("FAR is [ba %i, mja %i, mna %i, bn %i]",
+  debit_log(L_BITSTREAM, "FAR is [ba %i, mja %i, mna %i, bn %i]",
 	    far->ba, far->mja, far->mna, far->bn);
 }
 
@@ -234,7 +235,7 @@ _type_of_far(const bitstream_parser_t *bitstream,
   case BA_TYPE_BRAM_INT:
     return V2C_BRAM_INT;
   default:
-    g_warning("Unrecognized ba type %i",ba);
+    debit_log(L_BITSTREAM,"Unrecognized ba type %i",ba);
     return -1;
   }
 }
@@ -275,6 +276,7 @@ _col_of_far(const bitstream_parser_t *bitstream,
 
   default:
     g_assert_not_reached();
+    return -1;
   }
 }
 
@@ -348,12 +350,12 @@ default_register_write(bitstream_parser_t *parser,
   xil_register_t *regp = &parser->registers[reg];
   unsigned i;
 
-  g_warning("Writing %i words to register %i", length, reg);
+  debit_log(L_BITSTREAM,"Writing %i words to register %i", length, reg);
 
   for (i = 0; i < length; i++) {
     guint32 val = bytearray_get_uint32(ba);
     regp->value = val;
-    update_crc(parser, reg, val);
+    /* update_crc(parser, reg, val); */
   }
   parser->active_length -= length;
 
@@ -374,7 +376,7 @@ void record_frame(bitstream_parsed_t *parsed,
   index = _col_of_far(bitstream, &far);
   frame = far.mna;
 
-  g_warning("flushing frame [type:%i,index:%02i,frame:%2X]",
+  debit_log(L_BITSTREAM,"flushing frame [type:%i,index:%02i,frame:%2X]",
 	    type, index, frame);
   *get_frame_loc(parsed, type, index, frame) = bitstream->last_frame;
 }
@@ -448,7 +450,7 @@ handle_fdri_write(bitstream_parsed_t *parsed,
   offset = frame_len;
 
   if (length < frame_len) {
-    g_warning("%i bytes remaining in FDRI write, "
+    debit_log(L_BITSTREAM,"%i bytes remaining in FDRI write, "
 	      "which is inconsistent with the FLR value %i",
 	      length, frame_len);
     return -1;
@@ -474,14 +476,14 @@ handle_fdri_write(bitstream_parsed_t *parsed,
 
 int synchronize_bitstream(bitstream_parser_t *parser) {
   bytearray_t *ba = &parser->ba;
+  guint32 synch;
 
   /* XXX guint32 data access must be aligned -- make sure it is */
   /* advance the bitstream until the sync word is found */
-  while (bytearray_peek_uint32(ba) != SYNCHRO) {
-    (void) bytearray_get_uint32(ba);
-  }
+  do {
+    synch = bytearray_get_uint32(ba);
+  } while (synch != SYNCHRO);
 
-  g_assert(bytearray_get_uint32(ba) == SYNCHRO);
   parser->state = STATE_WAITING_CTRL;
   return 0;
 }
@@ -502,7 +504,7 @@ _parse_bitstream_data(bitstream_parsed_t *dest,
 
   err = synchronize_bitstream(parser);
   if (err) {
-    g_warning("Could not synchronize bitstream");
+    debit_log(L_BITSTREAM,"Could not synchronize bitstream");
     return err;
   }
 
@@ -512,7 +514,7 @@ _parse_bitstream_data(bitstream_parsed_t *dest,
   } while(advance > 0);
 
   if (advance < 0)
-    g_warning("Error parsing bitstream: %i", advance);
+    debit_log(L_BITSTREAM,"Error parsing bitstream: %i", advance);
 
   return advance;
 }
@@ -530,7 +532,7 @@ _parse_bitfile(bitstream_parsed_t *dest,
   offset = parse_header(buf_in, len);
 
   if (offset < 0) {
-    g_warning("header parsing error");
+    debit_log(L_BITSTREAM,"header parsing error");
     return -1;
   }
 
@@ -548,14 +550,14 @@ print_parser_state(const bitstream_parser_t *parser) {
   gint state = parser->state;
   switch(state) {
   case STATE_WAITING_CTRL:
-    g_warning("Waiting CTRL");
+    debit_log(L_BITSTREAM,"Waiting CTRL");
     break;
   case STATE_WAITING_DATA:
-    g_warning("Waiting DATA, %i words remaining for register %i",
+    debit_log(L_BITSTREAM,"Waiting DATA, %i words remaining for register %i",
 	      parser->active_length, parser->active_register);
     break;
   default:
-    g_warning("Unknown parser state %i",state);
+    debit_log(L_BITSTREAM,"Unknown parser state %i",state);
   }
 }
 
@@ -581,7 +583,7 @@ read_next_token(bitstream_parsed_t *parsed,
 
       /* For now we don't error out in this state */
       if (avail == 0) {
-	g_warning("End-of-bitstream reached");
+	debit_log(L_BITSTREAM,"End-of-bitstream reached");
 	return 0;
       }
 
@@ -589,21 +591,21 @@ read_next_token(bitstream_parsed_t *parsed,
 
       /* catch a noop */
       if (pkt == NOOP) {
-	g_warning("Got NOOP packet");
+	debit_log(L_BITSTREAM,"Got NOOP packet");
 	return offset;
       }
 
       /* v1 or v2 packet */
       switch (type_of_pkt1(pkt)) {
       case V1: {
-	g_warning("Got V1 packet");
+	debit_log(L_BITSTREAM,"Got V1 packet");
 	parser->active_register = rega_of_pkt1(pkt);
 	parser->active_length = wordc_of_pkt1(pkt);
 	parser->write__read = wr_of_pkt1(pkt);
 	break;
       }
       case V2: {
-	g_warning("Got V2 packet");
+	debit_log(L_BITSTREAM,"Got V2 packet");
 	parser->active_length = wordc_of_v2pkt(pkt);
 	break;
       }
@@ -611,7 +613,7 @@ read_next_token(bitstream_parsed_t *parsed,
 	break;
 
       default:
-	g_warning("Unrecognized packet %08x while in state %i", pkt, state);
+	debit_log(L_BITSTREAM,"Unrecognized packet %08x while in state %i", pkt, state);
 	return -1;
       }
 
@@ -628,7 +630,7 @@ read_next_token(bitstream_parsed_t *parsed,
 	length = parser->active_length;
 
       if (offset > avail) {
-	g_warning("Register length of %i words while only %i words remain",
+	debit_log(L_BITSTREAM,"Register length of %i words while only %i words remain",
 		  offset, avail);
 	return -1;
       }
@@ -637,14 +639,14 @@ read_next_token(bitstream_parsed_t *parsed,
 
       switch(reg) {
       case FDRI:
-	g_warning("FDRI setting");
+	debit_log(L_BITSTREAM,"FDRI setting");
 	offset = handle_fdri_write(parsed, parser, length);
 	break;
       case FAR:
-	g_warning("FAR setting");
+	debit_log(L_BITSTREAM,"FAR setting");
 	break;
       case FLR:
-	g_warning("FLR setting");
+	debit_log(L_BITSTREAM,"FLR setting");
 	break;
       default:
 	break;
@@ -657,7 +659,7 @@ read_next_token(bitstream_parsed_t *parsed,
       if (parser->active_length == 0)
 	parser->state = STATE_WAITING_CTRL;
       if (parser->active_length < 0) {
-	g_warning("AutoCRC is %04x", parser->registers[FDRI].value);
+	debit_log(L_BITSTREAM,"AutoCRC is %04x", parser->registers[FDRI].value);
 	parser->state = STATE_WAITING_CTRL;
       }
 
@@ -682,7 +684,7 @@ parse_bitstream(const gchar*filename) {
   file = g_mapped_file_new (filename, FALSE, &error);
 
   if (error != NULL) {
-    g_warning("could not map file %s: %s",filename,error->message);
+    debit_log(L_BITSTREAM,"could not map file %s: %s",filename,error->message);
     g_error_free (error);
     goto out_free_dest;
   }

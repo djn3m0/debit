@@ -3,7 +3,7 @@ AM_CPPFLAGS	= -Wall -Werror -Wunused -O3 -g
 bin_PROGRAMS	= debit
 debit_SOURCES	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
 		  localpips.c bitstream.c wiring.c debit.c
-debit_CFLAGS	= @GLIB_CFLAGS@
+debit_CFLAGS	= @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDFLAGS	= @GLIB_LIBS@
 
 DATAPREFIX=clb tterm bterm rterm lterm lioi rioi tioi bioi \
