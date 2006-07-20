@@ -44,7 +44,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir "/"
 %dir "/usr/"
 %dir "/usr/bin/"
-"/usr/bin/debit"
+/usr/bin/*
 
 %changelog
 * Thu Jul 20 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
