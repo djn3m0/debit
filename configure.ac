@@ -40,5 +40,5 @@ AC_FUNC_MMAP
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([memset munmap regcomp strdup strerror strtoul])
 
-AC_CONFIG_FILES([Makefile data/Makefile])
+AC_CONFIG_FILES([Makefile data/Makefile debian/Makefile rpm/Makefile])
 AC_OUTPUT

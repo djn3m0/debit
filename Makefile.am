@@ -1,4 +1,4 @@
-SUBDIRS = data
+SUBDIRS = data debian rpm
 
 AM_CPPFLAGS	= -Wall -Werror -Wunused -O3 -g -DDATADIR=\"$(pkgdatadir)\"
 
@@ -66,7 +66,8 @@ doc: $(DOCSOURCES) $(DOXYCONFIG)
 
 deb: dist
 #could also be $(DIST_ARCHIVES)
-	mv $(PACKAGE)-$(VERSION).tar.gz ../$(PACKAGE)_$(VERSION).orig.tar.gz && dpkg-buildpackage -rfakeroot -i'(trash|.git)' -Itrash -I.git
+	mv $(PACKAGE)-$(VERSION).tar.gz ../$(PACKAGE)_$(VERSION).orig.tar.gz && \
+	dpkg-buildpackage -rfakeroot -i'(trash|.git)' -Itrash -I.git
 
 rpm: dist
 	mkdir -p rpm/SOURCES rpm/BUILD && mv $(PACKAGE)-$(VERSION).tar.gz rpm/SOURCES && cd rpm && \

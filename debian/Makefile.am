@@ -1,0 +1,1 @@
+dist_noinst_DATA=changelog control compat copyright rules
