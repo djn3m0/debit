@@ -3,7 +3,7 @@ Name: debit
 Version: 0.1
 Release: 1
 Vendor: Jean-Baptiste Note <jean-baptiste.note@m4x.org>
-Copyright: GPL
+License: GPL
 Group: Applications/Engineering
 #BuildRequires:glib-devel
 Source: ../%{name}-%{version}.tar.gz

@@ -350,7 +350,7 @@ default_register_write(bitstream_parser_t *parser,
   xil_register_t *regp = &parser->registers[reg];
   unsigned i;
 
-  debit_log(L_BITSTREAM,"Writing %i words to register %i", length, reg);
+  debit_log(L_BITSTREAM,"Writing %zd words to register %i", length, reg);
 
   for (i = 0; i < length; i++) {
     guint32 val = bytearray_get_uint32(ba);
@@ -630,7 +630,7 @@ read_next_token(bitstream_parsed_t *parsed,
 	length = parser->active_length;
 
       if (offset > avail) {
-	debit_log(L_BITSTREAM,"Register length of %i words while only %i words remain",
+	debit_log(L_BITSTREAM,"Register length of %i words while only %zd words remain",
 		  offset, avail);
 	return -1;
       }
