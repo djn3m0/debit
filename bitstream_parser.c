@@ -682,6 +682,7 @@ parse_bitstream(const gchar*filename) {
   dest = g_new0(bitstream_parsed_t, 1);
 
   file = g_mapped_file_new (filename, FALSE, &error);
+  dest->file = file;
 
   if (error != NULL) {
     debit_log(L_BITSTREAM,"could not map file %s: %s",filename,error->message);
@@ -709,6 +710,7 @@ parse_bitstream(const gchar*filename) {
 void
 free_bitstream(bitstream_parsed_t *bitstream) {
   free_indexer(bitstream);
+  g_mapped_file_free(bitstream->file);
   g_free(bitstream);
   return;
 }

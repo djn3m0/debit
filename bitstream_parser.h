@@ -23,6 +23,9 @@ typedef struct _bitstream_parsed {
   /* frames */
   gint frame_len;
   const gchar ***frames;
+
+  /* mmapped file information */
+  GMappedFile *file;
 } bitstream_parsed_t;
 
 bitstream_parsed_t *parse_bitstream(const gchar*filename);

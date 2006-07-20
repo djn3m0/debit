@@ -174,6 +174,7 @@ void free_wiredb(wire_db_t *wires) {
   GStringChunk *wirenames = wires->wirenames;
   if (wirenames)
     g_string_chunk_free(wirenames);
+  g_free(wires->details);
   g_free(wires->names);
   g_free(wires->wires);
   g_free(wires);
