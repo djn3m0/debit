@@ -68,4 +68,9 @@ deb: dist
 #could also be $(DIST_ARCHIVES)
 	mv $(PACKAGE)-$(VERSION).tar.gz ../$(PACKAGE)_$(VERSION).orig.tar.gz && dpkg-buildpackage -rfakeroot -i'(trash|.git)' -Itrash -I.git
 
+rpm: dist
+	mkdir -p rpm/SOURCES rpm/BUILD && mv $(PACKAGE)-$(VERSION).tar.gz rpm/SOURCES && cd rpm && \
+	rpmbuild --sign -bb --target noarch debit-data-0.1-1.spec && \
+	rpmbuild --sign -bb debit-0.1-1.spec
+
 .PHONY: debian
