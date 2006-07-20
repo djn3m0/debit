@@ -161,8 +161,7 @@ typedef struct _bitstream_parser {
   /* detailed view of some registers */
   id_t type;
 
-  /* Specific quirks */
-  guint32 last_far;
+  /* Specific FDRI quirks */
   const void *last_frame;
 
   /* Bitstream proper */
@@ -213,6 +212,14 @@ shift_one_crc_bit(guint bit, guint16 bcc) {
 
   return bcc & 0xffff;
 }
+
+/*
+ * problems for CRC:
+ * 1/ implement reset CRC. Should the reset happen before or after the
+ * write to CMD for the reset ?
+ * 2/ is the autocrc word a write to FDRI or to CRC register ?
+ * 3/ how many bits for the register address for the v2 device ?
+ */
 
 static inline void
 update_crc(bitstream_parser_t *parser,
@@ -409,14 +416,13 @@ default_register_write(bitstream_parser_t *parser,
 
 static inline
 void record_frame(bitstream_parsed_t *parsed,
-		  bitstream_parser_t *bitstream) {
+		  bitstream_parser_t *bitstream,
+		  const guint32 myfar) {
   sw_far_t far;
   guint type, index, frame;
+  const char *dataframe = bitstream->last_frame;
 
-  if (!bitstream->last_frame)
-    return;
-
-  fill_swfar(&far, bitstream->last_far);
+  fill_swfar(&far, myfar);
 
   type = _type_of_far(bitstream, &far);
   index = _col_of_far(bitstream, &far);
@@ -424,7 +430,7 @@ void record_frame(bitstream_parsed_t *parsed,
 
   debit_log(L_BITSTREAM,"flushing frame [type:%i,index:%02i,frame:%2X]",
 	    type, index, frame);
-  *get_frame_loc(parsed, type, index, frame) = bitstream->last_frame;
+  *get_frame_loc(parsed, type, index, frame) = dataframe;
 }
 
 static void
@@ -487,37 +493,70 @@ iterate_over_frames(const bitstream_parsed_t *parsed,
 static gint
 handle_fdri_write(bitstream_parsed_t *parsed,
 		  bitstream_parser_t *parser,
-		  unsigned length) {
+		  const unsigned length) {
   bytearray_t *ba = &parser->ba;
+  const gchar *frame = bytearray_get_ptr(ba);
   const guint frame_len = frame_length(parser);
-  gint offset;
+  guint i, nrframes;
+  guint32 last_far = 0;
 
-  /* NB: loop here */
-  offset = frame_len;
-
-  if (length < frame_len) {
-    debit_log(L_BITSTREAM,"%i bytes remaining in FDRI write, "
+  /* Frame length writes must be a multiple of the flr length */
+  if (length % frame_len) {
+    debit_log(L_BITSTREAM,"%i bytes in FDRI write, "
 	      "which is inconsistent with the FLR value %i",
 	      length, frame_len);
     return -1;
   }
 
-  /* flush the previous frame into the frame array with the previous FAR
-     address */
-  record_frame(parsed, parser);
+  nrframes = length / frame_len;
 
-  parser->last_far = register_read(parser, FAR);
-  parser->last_frame = bytearray_get_ptr(ba);
+  /* We handle here a complete series of writes, so that we have
+     the ability to see the start and end frames */
 
-  far_increment_mna(parser);
+  for (i = 0; i < nrframes; i++) {
 
-  /* AutoCRC and flushing frame at the end of a FDRI write */
-  if (length == frame_len) {
-    parser->last_frame = NULL;
-    offset += 1;
+    /* The first write of a FDRI write in WCFG mode does not flush the
+       previous writes. As I don't know what other modes may be on, be
+       conservative wrt to mode setting */
+    if (i != 0)
+      /* flush the previous frame into the frame array with the previous FAR
+	 address */
+      record_frame(parsed, parser, last_far);
+
+    last_far = register_read(parser, FAR);
+    parser->last_frame = frame;
+
+    /* evolution of the state machine */
+    far_increment_mna(parser);
+    frame += frame_len * sizeof(guint32);
   }
 
-  return offset;
+  debit_log(L_BITSTREAM,"%i frames written to fdri", i);
+
+  /* Tell the others that we need an autoCRC word */
+  return length+1;
+}
+
+static gint
+handle_cmd_write(bitstream_parsed_t *parsed,
+		 bitstream_parser_t *parser) {
+  cmd_code_t cmd = register_read(parser, CMD);
+
+  switch(cmd) {
+  case C_MFWR:
+    debit_log(L_BITSTREAM,"Executing multi-frame write");
+    record_frame(parsed, parser, register_read(parser, FAR));
+    break;
+  case RCRC:
+    debit_log(L_BITSTREAM,"Resetting CRC");
+    register_write(parser, CRC, 0);
+    break;
+  default:
+    break;
+  }
+
+  return 0;
+
 }
 
 int synchronize_bitstream(bitstream_parser_t *parser) {
@@ -599,8 +638,8 @@ print_parser_state(const bitstream_parser_t *parser) {
     debit_log(L_BITSTREAM,"Waiting CTRL");
     break;
   case STATE_WAITING_DATA:
-    debit_log(L_BITSTREAM,"Waiting DATA, %i words remaining for register %i",
-	      parser->active_length, parser->active_register);
+    debit_log(L_BITSTREAM,"Waiting DATA, %i words remaining for register %s",
+	      parser->active_length, reg_names[parser->active_register]);
     break;
   default:
     debit_log(L_BITSTREAM,"Unknown parser state %i",state);
@@ -675,41 +714,44 @@ read_next_token(bitstream_parsed_t *parsed,
       gsize avail = bytearray_available(ba),
 	length = parser->active_length;
 
+      offset = length;
+
+      /* pre-processing */
+      if (reg == FDRI)
+	offset = handle_fdri_write(parsed, parser, length);
+
       if (offset > avail) {
 	debit_log(L_BITSTREAM,"Register length of %i words while only %zd words remain",
-		  offset, avail);
+		  length, avail);
 	return -1;
       }
 
-      offset = length;
+      default_register_write(parser, reg, length);
+
+      /* post-processing */
 
       switch(reg) {
       case FDRI:
 	debit_log(L_BITSTREAM,"FDRI write with CMD register %s",
 		  cmd_names[register_read(parser,CMD)]);
-	offset = handle_fdri_write(parsed, parser, length);
+	debit_log(L_BITSTREAM,"FDRI handling autoCRC");
+	debit_log(L_BITSTREAM,"pre-autoCRC CRC register is %04x", register_read(parser,CRC));
+	default_register_write(parser, CRC, 1);
+	debit_log(L_BITSTREAM,"post-autoCRC CRC register is %04x", register_read(parser,CRC));
 	break;
       case FAR:
-	debit_log(L_BITSTREAM,"FAR reexecuting CMD register %s",
-		  cmd_names[register_read(parser,CMD)]);
-	break;
+	debit_log(L_BITSTREAM,"FAR write reexecuting CMD register");
+	/* Fall-through to CMD register action */
       case CMD:
-	debit_log(L_BITSTREAM,"CMD set to %s",
-		  cmd_names[bytearray_peek_uint32(ba)]);
+	handle_cmd_write(parsed, parser);
+	break;
       default:
 	break;
       }
 
-      default_register_write(parser, reg, offset);
-
-      /* < 0 happens with autocrc on FDRI writes. We must then check
-	 that the CRC is alright */
-      if (parser->active_length == 0)
+      /* < 0 happens with autocrc on FDRI writes */
+      if (parser->active_length <= 0)
 	parser->state = STATE_WAITING_CTRL;
-      if (parser->active_length < 0) {
-	debit_log(L_BITSTREAM,"AutoCRC is %04x", parser->registers[FDRI].value);
-	parser->state = STATE_WAITING_CTRL;
-      }
 
     }
   }
