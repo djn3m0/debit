@@ -240,7 +240,11 @@ update_crc(bitstream_parser_t *parser,
 
   /* write the CRC to the CRC register */
   crcreg->value = bcc;
-  //  debit_log(L_BITSTREAM,"CRC now %04x", bcc);
+
+  /* writes to the CRC should yield a zero value.
+     In case of strict checks, this should abort the parsing. */
+  if (reg == CRC)
+    debit_log(L_BITSTREAM,"write to CRC register yielded %04x", bcc);
 }
 
 /***
@@ -407,8 +411,9 @@ default_register_write(bitstream_parser_t *parser,
 
   for (i = 0; i < length; i++) {
     guint32 val = bytearray_get_uint32(ba);
+    update_crc(parser, reg, val);
+    /* XXX writes to the CRC registers may only be crc updates */
     regp->value = val;
-    /* update_crc(parser, reg, val); */
   }
   parser->active_length -= length;
 
@@ -735,9 +740,7 @@ read_next_token(bitstream_parsed_t *parsed,
 	debit_log(L_BITSTREAM,"FDRI write with CMD register %s",
 		  cmd_names[register_read(parser,CMD)]);
 	debit_log(L_BITSTREAM,"FDRI handling autoCRC");
-	debit_log(L_BITSTREAM,"pre-autoCRC CRC register is %04x", register_read(parser,CRC));
-	default_register_write(parser, CRC, 1);
-	debit_log(L_BITSTREAM,"post-autoCRC CRC register is %04x", register_read(parser,CRC));
+	update_crc(parser, CRC, bytearray_get_uint32(ba));
 	break;
       case FAR:
 	debit_log(L_BITSTREAM,"FAR write reexecuting CMD register");
