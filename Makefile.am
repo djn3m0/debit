@@ -1,22 +1,15 @@
-AM_CPPFLAGS	= -Wall -Werror -Wunused -O3 -g
+SUBDIRS = data
+
+AM_CPPFLAGS	= -Wall -Werror -Wunused -O3 -g -DDATADIR=\"$(pkgdatadir)\"
 
 bin_PROGRAMS	= debit
 debit_SOURCES	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
 		localpips.c bitstream.c wiring.c debit.c \
 		bitarray.h bitstream.h config.h design.h localpips.h \
 		virtex2_config.h bitheader.h bitstream_parser.h \
-		debitlog.h filedump.h sites.h wiring.h
+		debitlog.h filedump.h sites.h wiring.h debit.h
 debit_CFLAGS	= @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDFLAGS	= @GLIB_LIBS@
-
-DATAPREFIX=clb tterm bterm rterm lterm lioi rioi tioi bioi \
-	   bram ttermbram btermbram bioibram tioibram
-DATCONTROL=$(addsuffix _data.db,$(DATAPREFIX))
-DATDATA=$(addsuffix _control.db,$(DATAPREFIX))
-WIRES_DB=wires.db
-ALLDATA=$(DATACONTROL) $(DATDATA) $(WIRES_DB)
-
-dist_pkgdata_DATA= $(addprefix data/,$(ALLDATA))
 
 #Specific testing and profiling targets. To be reorganized
 
@@ -71,7 +64,8 @@ DOXYDIR=doc
 doc: $(DOCSOURCES) $(DOXYCONFIG)
 	doxygen $(DOXYCONFIG) #&& make -C $(DOXYDIR)/latex/
 
-debian:
-	dpkg-buildpackage -rfakeroot -i'(trash|.git)'
+deb: dist
+#could also be $(DIST_ARCHIVES)
+	mv $(PACKAGE)-$(VERSION).tar.gz ../$(PACKAGE)_$(VERSION).orig.tar.gz && dpkg-buildpackage -rfakeroot -i'(trash|.git)' -Itrash -I.git
 
 .PHONY: debian

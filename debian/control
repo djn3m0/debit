@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: debit
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, debit-data
 Description: Reverse-engeneering tools for xilinx bitstreams
  This tool allows takes as input virtex-2 bitstreams and can output
  pseudo-xdl. For now this is proof-of-concept code, you can contact me

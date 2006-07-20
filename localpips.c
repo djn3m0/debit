@@ -97,26 +97,27 @@ static const gchar *basedbnames[SITE_TYPE_NEUTRAL] = {
  */
 
 static int
-read_db_from_file(pip_db_t *pipdb) {
+read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
   int err = 0;
-  guint i;
+  gchar *filename = NULL;
   GKeyFile *control = NULL, *data = NULL;
+  guint i;
 
   for (i = 0; i < SITE_TYPE_NEUTRAL; i++) {
-#define FILENAME_SIZE 40
-    gchar filename[FILENAME_SIZE];
     const gchar *base = basedbnames[i];
 
     if (!base)
       continue;
 
-    snprintf(filename,FILENAME_SIZE,"data/%s_control.db",base);
+    filename = g_build_filename(datadir,base,"control.db",NULL);
     err = read_keyfile(&control,filename);
+    g_free(filename);
     if (err)
       goto out_err_free;
 
-    snprintf(filename,FILENAME_SIZE,"data/%s_data.db",base);
+    filename = g_build_filename(datadir,base,"data.db",NULL);
     err = read_keyfile(&data,filename);
+    g_free(filename);
     if (err)
       goto out_err_free;
 
@@ -149,19 +150,19 @@ read_db_from_file(pip_db_t *pipdb) {
  * Load a new database into memory
  */
 pip_db_t *
-get_pipdb(void) {
+get_pipdb(const gchar *datadir) {
   pip_db_t *ret;
 
   ret = g_new0(pip_db_t, 1);
 
   /* XXX This to be passed as argument in final version of API */
-  ret->wiredb = get_wiredb();
+  ret->wiredb = get_wiredb(datadir);
   if (!ret->wiredb) {
     g_free(ret);
     return NULL;
   }
 
-  if (read_db_from_file(ret))
+  if (read_db_from_file(ret,datadir))
     return NULL;
 
   return ret;

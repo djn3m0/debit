@@ -112,7 +112,7 @@ typedef struct _pip {
 
 gint parse_wire_simple(const wire_db_t *, wire_atom_t*, const gchar *);
 
-wire_db_t *get_wiredb(void);
+wire_db_t *get_wiredb(const gchar *datadir);
 void free_wiredb(wire_db_t *wires);
 
 #endif /* _HAS_WIRING_SIMPLE_H */

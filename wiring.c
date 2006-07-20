@@ -66,29 +66,18 @@ load_wire_atom(const wire_db_t *db, GKeyFile *keyfile,
   /* Insert the wirename */
   db->names[id] = g_string_chunk_insert_const(db->wirenames, wirename);
 
-  wire->dx = g_key_file_get_integer(keyfile, wirename, "DX", &err);
-  if (err)
-    goto out_err;
+#define GET_STRUCT_MEMBER(structname, structmem, strname) \
+do { structname->structmem = g_key_file_get_integer(keyfile, wirename, #strname, &err);\
+  if (err)\
+    goto out_err;\
+} while (0)
 
-  wire->dy = g_key_file_get_integer(keyfile, wirename, "DY", &err);
-  if (err)
-    goto out_err;
-
-  wire->ep = g_key_file_get_integer(keyfile, wirename, "EP", &err);
-  if (err)
-    goto out_err;
-
-  detail->type = g_key_file_get_integer(keyfile, wirename, "TYPE", &err);
-  if (err)
-    goto out_err;
-
-  detail->direction = g_key_file_get_integer(keyfile, wirename, "DIR", &err);
-  if (err)
-    goto out_err;
-
-  detail->situation = g_key_file_get_integer(keyfile, wirename, "SIT", &err);
-  if (err)
-    goto out_err;
+  GET_STRUCT_MEMBER(wire, dx, DX);
+  GET_STRUCT_MEMBER(wire, dy, DY);
+  GET_STRUCT_MEMBER(wire, ep, EP);
+  GET_STRUCT_MEMBER(detail, type, TYPE);
+  GET_STRUCT_MEMBER(detail, direction, DIR);
+  GET_STRUCT_MEMBER(detail, situation, SIT);
 
   return 0;
 
@@ -148,13 +137,16 @@ load_db_from_file(GKeyFile* db, wire_db_t *wires) {
 /*
  * High-level function
  */
-wire_db_t *get_wiredb(void) {
-  const gchar *dbname = "data/wires.db";
+wire_db_t *get_wiredb(const gchar *datadir) {
   wire_db_t *wiredb = g_new0(wire_db_t, 1);
   GKeyFile *db = NULL;
+  gchar *dbname;
   gint err;
 
+  dbname = g_build_filename(datadir,"wires.db",NULL);
+
   err = read_wiredb(&db, dbname);
+  g_free(dbname);
   if (err)
     goto out_err;
 

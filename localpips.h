@@ -30,7 +30,7 @@ typedef struct pip_db {
   wire_db_t *wiredb;
 } pip_db_t;
 
-pip_db_t *get_pipdb(void);
+pip_db_t *get_pipdb(const gchar *datadir);
 void free_pipdb(pip_db_t *pipdb);
 
 

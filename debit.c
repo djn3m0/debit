@@ -33,7 +33,7 @@ static gboolean pipdump = FALSE;
 
 static gchar *ifile = NULL;
 static gchar *odir = NULL;
-static gchar *datadir = NULL;
+static gchar *datadir = DATADIR;
 
 #if DEBIT_DEBUG > 0
 unsigned int debit_debug = 0;
@@ -56,7 +56,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
     design_write_frames(bit,NULL);
 
   if (pipdump) {
-    pip_db_t *pipdb = get_pipdb();
+    pip_db_t *pipdb = get_pipdb(datadir);
     if (pipdb != NULL) {
       dump_all_pips(pipdb, bit);
       free_pipdb(pipdb);
