@@ -87,6 +87,52 @@ typedef enum _registers_index {
   __NUM_REGISTERS,
 } register_index_t;
 
+static const
+char *reg_names[__NUM_REGISTERS] = {
+  [CRC] = "CRC",
+  [FAR] = "FAR",
+  [FDRI] = "FDRI",
+  [FDRO] = "FDRO",
+  [CMD] = "CMD",
+  [CTL] = "CTL",
+  [MASK] = "MASK",
+  [STAT] = "STAT",
+  [LOUT] = "LOUT",
+  [COR] = "COR",
+  [MFWR] = "MFWR",
+  [FLR] = "FLR",
+  [KEY] = "KEY",
+  [CBC] = "CBC",
+  [IDCODE] = "IDCODE",
+};
+
+typedef enum _cmd_code {
+  WCFG = 1,
+  C_MFWR,
+  LFRM, RCFG, START, RCAP, RCRC,
+  AGHIGH, SWITCH, GRESTORE,
+  SHUTDOWN, GCAPTURE,
+  DESYNCH,
+  __NUM_CMD_CODE,
+} cmd_code_t;
+
+static const
+char *cmd_names[__NUM_CMD_CODE] = {
+  [WCFG] = "WCFG",
+  [C_MFWR] = "MFWR",
+  [LFRM] = "LFRM",
+  [RCFG] = "RCFG",
+  [START] = "START",
+  [RCAP] = "RCAP",
+  [RCRC] = "RCRC",
+  [AGHIGH] = "AGHIGH",
+  [SWITCH] = "SWITCH",
+  [GRESTORE] = "GRESTORE",
+  [SHUTDOWN] = "SHUTDOWN",
+  [GCAPTURE] = "GCAPTURE",
+  [DESYNCH] = "DESYNCH",
+};
+
 typedef enum _cmd_pkt_ver {
   V1 = 1, V2 =2,
 } cmd_pkt_ver_t;
@@ -350,7 +396,7 @@ default_register_write(bitstream_parser_t *parser,
   xil_register_t *regp = &parser->registers[reg];
   unsigned i;
 
-  debit_log(L_BITSTREAM,"Writing %zd words to register %i", length, reg);
+  debit_log(L_BITSTREAM,"Writing %zd words to register %s", length, reg_names[reg]);
 
   for (i = 0; i < length; i++) {
     guint32 val = bytearray_get_uint32(ba);
@@ -639,15 +685,17 @@ read_next_token(bitstream_parsed_t *parsed,
 
       switch(reg) {
       case FDRI:
-	debit_log(L_BITSTREAM,"FDRI setting");
+	debit_log(L_BITSTREAM,"FDRI write with CMD register %s",
+		  cmd_names[register_read(parser,CMD)]);
 	offset = handle_fdri_write(parsed, parser, length);
 	break;
       case FAR:
-	debit_log(L_BITSTREAM,"FAR setting");
+	debit_log(L_BITSTREAM,"FAR reexecuting CMD register %s",
+		  cmd_names[register_read(parser,CMD)]);
 	break;
-      case FLR:
-	debit_log(L_BITSTREAM,"FLR setting");
-	break;
+      case CMD:
+	debit_log(L_BITSTREAM,"CMD set to %s",
+		  cmd_names[bytearray_peek_uint32(ba)]);
       default:
 	break;
       }
