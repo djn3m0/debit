@@ -7,9 +7,18 @@ debit_SOURCES	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
 		localpips.c bitstream.c wiring.c debit.c \
 		bitarray.h bitstream.h config.h design.h localpips.h \
 		virtex2_config.h bitheader.h bitstream_parser.h \
-		debitlog.h filedump.h sites.h wiring.h debit.h
+		debitlog.h filedump.h sites.h wiring.h
 debit_CFLAGS	= @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDFLAGS	= @GLIB_LIBS@
+
+#Distribution hook so that the tarballs are tagged with the git tree
+#SHA1 hash
+GIT_DIR		= $(srcdir)/.git
+GIT_COMMIT_REF	= $(shell cat $(GIT_DIR)/refs/heads/master)
+GIT_TREE_REF	= $(shell git cat-file commit $(GIT_COMMIT_REF) | head -n1 | awk '{print $$2}')
+
+dist-hook:
+	echo "$(GIT_COMMIT_REF)" > $(distdir)/git-ref
 
 #Specific testing and profiling targets. To be reorganized
 

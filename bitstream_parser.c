@@ -213,14 +213,6 @@ shift_one_crc_bit(guint bit, guint16 bcc) {
   return bcc & 0xffff;
 }
 
-/*
- * problems for CRC:
- * 1/ implement reset CRC. Should the reset happen before or after the
- * write to CMD for the reset ?
- * 2/ is the autocrc word a write to FDRI or to CRC register ?
- * 3/ how many bits for the register address for the v2 device ?
- */
-
 static inline void
 update_crc(bitstream_parser_t *parser,
 	   const register_index_t reg,
