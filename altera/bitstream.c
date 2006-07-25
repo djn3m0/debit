@@ -4,6 +4,7 @@
 
 #include <glib.h>
 
+#include "bitstream_header.h"
 #include "bitstream.h"
 #include "bitarray.h"
 
@@ -127,8 +128,8 @@ offset_array(const geo_stride_t *strides) {
   return array;
 }
 
-/* the absolute coordinate of (0,0,0) -- well, a rought guess actually */
-#define BASE_BITS
+/* the absolute coordinate of (1,1,30) -- well, a rought guess actually */
+#define BASE_BITS 6583639
 
 typedef struct _coord_descr_t {
   unsigned max;
@@ -155,7 +156,11 @@ get_bit_offset(const altera_bitstream_t *bitstream,
   unsigned x_offset = bitstream->xoffsets[x];
   unsigned slice_offset = coords[SLICE].offset * x;
 
-  return BASE_BITS - y_offset - x_offset - slice_offset;
+  unsigned ret = BASE_BITS - y_offset - x_offset - slice_offset;
+
+  g_print("offset is %i\n", ret);
+
+  return ret;
 }
 
 static inline unsigned
@@ -208,6 +213,9 @@ guint16 get_truth_table(const altera_bitstream_t *bitstream,
   guint16 res = 0;
   unsigned i;
 
+  g_print("getting truth table for (%i, %i, %i)\n",
+	  x, y , N);
+
   /* the table is divided into four things of four bits */
   /* there may be a xor mask to apply ! */
   for (i = 0; i < 4; i++) {
@@ -246,6 +254,22 @@ dump_lut_tables(const altera_bitstream_t *bitstream) {
     }
 }
 
+int
+dump_raw_bit(const altera_bitstream_t *bitstream, const gchar *filename) {
+  GError *error = NULL;
+  gboolean ret;
+
+  ret = g_file_set_contents(filename, bitstream->bitdata,
+			    bitstream->bitlength, &error);
+
+  if (ret)
+    return 0;
+
+  g_print("could not dump file %s: %s",filename,error->message);
+  g_error_free (error);
+  return -1;
+}
+
 altera_bitstream_t *
 parse_bitstream(const gchar *filename) {
   /* get the bitstream into a bitarray */
@@ -264,12 +288,16 @@ parse_bitstream(const gchar *filename) {
     goto out_free_dest;
   }
 
-  /* load the file into the bitarray */
-  bit->bitarray = bitarray_create_data(g_mapped_file_get_contents (file),
-				       8 * g_mapped_file_get_length (file));
+  /* grossly parse the structure */
+  parse_bitstream_structure(bit, g_mapped_file_get_contents (file),
+			    g_mapped_file_get_length (file));
+
+  /* load the actual bitstream data into the bitarray */
+  bit->bitarray = bitarray_create_data((char *)bit->bitdata, 8 * bit->bitlength);
 
   /* then do mighty things with it ! */
   bit->xoffsets = offset_array(x_offsets_descr);
+
   return bit;
 
  out_free_dest:

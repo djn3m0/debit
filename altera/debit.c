@@ -33,8 +33,10 @@
 
 static gboolean framedump = FALSE;
 static gboolean pipdump = FALSE;
+static gboolean lutdump = FALSE;
 
 static gchar *ifile = NULL;
+static gchar *bitdump = NULL;
 static gchar *odir = NULL;
 static gchar *datadir = DATADIR;
 
@@ -44,8 +46,18 @@ debit_file(gchar *input_file, gchar *output_dir) {
   gint err = 0;
 
   altera = parse_bitstream(input_file);
-  free_bitstream(altera);
 
+  if (lutdump)
+    dump_lut_tables(altera);
+
+  if (bitdump) {
+    err = dump_raw_bit(altera, bitdump);
+    if (err)
+      goto out_err;
+  }
+
+ out_err:
+  free_bitstream(altera);
   return err;
 }
 
@@ -55,6 +67,8 @@ static GOptionEntry entries[] =
 #if DEBIT_DEBUG > 0
   {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
 #endif
+  {"bitdump", 'b', 0, G_OPTION_ARG_FILENAME, &bitdump, "dump the raw bitstream data to <ofile>", "<ofile>"},
+  {"lutdump", 'l', 0, G_OPTION_ARG_NONE, &lutdump, "dump lut tables", NULL},
   {"outdir", 'o', 0, G_OPTION_ARG_FILENAME, &odir, "Write data files in directory <odir>", "<odir>"},
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
   {"framedump", 'f', 0, G_OPTION_ARG_NONE, &framedump, "Dump raw data frames", NULL},
