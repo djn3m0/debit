@@ -1,9 +1,8 @@
 #ifndef __BITARRAY_H__
 #define __BITARRAY_H__ 1
 /*
-   elmo - ELectronic Mail Operator
-
    Copyright (C) 2003 rzyjontko
+   Copyright (C) 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,6 +20,13 @@
 
 */
 
+/*
+ * This will evolve. We'll need more subtle stack structure for Altera's
+ * unaligned shit.
+ */
+
+#include <glib.h>
+
 typedef struct bitarray {
   unsigned *array;
   int       size;
@@ -31,6 +37,7 @@ extern bitarray_t *bitarray_create (int bits);
 extern bitarray_t *bitarray_create_data (char *data, int bits);
 extern bitarray_t *bitarray_reverse (bitarray_t *b);
 extern void        bitarray_destroy (bitarray_t *a);
+extern unsigned *  bitarray_free (bitarray_t *a, gboolean keep_data);
 extern void        bitarray_remove (bitarray_t *a, int index);
 extern void        bitarray_zeros (bitarray_t *a);
 extern void        bitarray_ones (bitarray_t *a);
@@ -51,15 +58,4 @@ extern int         bitarray_true_for_all (bitarray_t *a, int (*fun)(int));
 extern int         bitarray_first_set (bitarray_t *a);
 extern int         bitarray_none_is_set (bitarray_t *a);
 
-/****************************************************************************
- *    INTERFACE OBJECT CLASS DEFINITIONS
- ****************************************************************************/
-/****************************************************************************
- *    INTERFACE TRAILING HEADERS
- ****************************************************************************/
-/****************************************************************************
- *
- *    END HEADER bitarray.h
- *
- ****************************************************************************/
 #endif

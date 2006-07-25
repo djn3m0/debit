@@ -9,6 +9,9 @@ typedef struct _altera_bitstream_t {
   GMappedFile *file;
 } altera_bitstream_t;
 
+void
+dump_lut_tables(const altera_bitstream_t *);
+
 altera_bitstream_t *
 parse_bitstream(const gchar *file);
 

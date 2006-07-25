@@ -1,7 +1,6 @@
 /*
-   elmo - ELectronic Mail Operator
-
    Copyright (C) 2003 rzyjontko
+   Copyright (C) 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,23 +22,15 @@
    efficient representation of sets.
 
 */
-/****************************************************************************
- *    IMPLEMENTATION HEADERS
- ****************************************************************************/
 
-#include <stdio.h>
 #include <glib.h>
 #include "bitarray.h"
 
 static void
 print_int (int a)
 {
-  printf (" %d", a);
+  g_print (" %d", a);
 }
-
-/****************************************************************************
- *    INTERFACE FUNCTIONS
- ****************************************************************************/
 
 bitarray_t *
 bitarray_create_data (char *data, int bits) {
@@ -103,7 +94,19 @@ bitarray_destroy (bitarray_t *a)
     g_free (a);
 }
 
+unsigned *
+bitarray_free (bitarray_t *a, gboolean keep_data) {
+  unsigned *data = a->array;
+  g_assert(a);
 
+  g_free(a);
+
+  if (keep_data)
+    return data;
+
+  g_free(data);
+  return NULL;
+}
 
 void
 bitarray_zeros (bitarray_t *a)
@@ -276,7 +279,7 @@ void
 bitarray_print (bitarray_t *a)
 {
   bitarray_for_ones (a, print_int);
-  printf ("\n");
+  g_print ("\n");
 }
 
 

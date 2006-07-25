@@ -51,7 +51,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
 
 static GOptionEntry entries[] =
 {
-  {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Read bitstream <ifile>", "<ifile>"},
+  {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Read bitstream (sof file) <ifile>", "<ifile>"},
 #if DEBIT_DEBUG > 0
   {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
 #endif
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
   GError *error = NULL;
   GOptionContext *context = NULL;
 
-  context = g_option_context_new ("- dump xilinx bitstream data");
+  context = g_option_context_new ("- dump altera bitstream data");
   g_option_context_add_main_entries (context, entries, NULL);
   g_option_context_parse (context, &argc, &argv, &error);
   if (error != NULL) {

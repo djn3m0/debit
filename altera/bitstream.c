@@ -15,7 +15,12 @@
    First dimention is X, then slicing, then Y
 */
 
+/* 0 - 65 */
 #define EP35_X_SITES 66
+/* 0 - 36, but we restrict here to 1-35
+   The border causes problems and we don't want it */
+#define EP35_Y_SITES 35
+#define EP35_LAB_SITES 32
 
 typedef struct _geo_stride {
   unsigned offset;
@@ -28,7 +33,7 @@ static const geo_stride_t x_offsets_descr[] = {
     .length = 1 },
   { .offset = 35,
     .length = 12 },
-  /* don't know what this is */
+  /* don't know what this is, X = 13 */
   { .offset = 166,
     .length = 1 },
   { .offset = 35,
@@ -36,11 +41,16 @@ static const geo_stride_t x_offsets_descr[] = {
   /* small thing: interconnect site ? */
   { .offset = 4,
     .length = 1 },
-  /* standard things */
+  /* standard thing */
   { .offset = 35,
     .length = 10 },
-  /* again big in the middle */
+  /* another @X = 26 */
   { .offset = 166,
+    .length = 1 },
+  { .offset = 35,
+    .length = 12 },
+  /* again strange, @X = 39 */
+  { .offset = 27,
     .length = 1 },
   /* event 49->50 */
   { .offset = 35,
@@ -49,6 +59,7 @@ static const geo_stride_t x_offsets_descr[] = {
     .length = 1, },
   { .offset = 35,
     .length = 1, },
+  /* last strange @X = 52 */
   { .offset = 166,
     .length = 1 },
   { .offset = 35,
@@ -92,7 +103,8 @@ offset_total(const geo_stride_t *strides) {
 static unsigned *
 offset_array(const geo_stride_t *strides) {
   unsigned total = width_total(strides);
-  unsigned *array = g_new0(unsigned, total);
+  unsigned *array = g_new(unsigned, total);
+  unsigned *posarray = array;
   unsigned offset = 0;
   unsigned steps, stepping;
 
@@ -103,11 +115,12 @@ offset_array(const geo_stride_t *strides) {
     stepping = strides->offset;
 
     for (i = 0; i < steps; i++) {
-      array[i] = offset;
+      posarray[i] = offset;
       offset += stepping;
     }
 
-    array += steps;
+    posarray += steps;
+    strides++;
 
   } while (steps != 0);
 
@@ -192,7 +205,7 @@ static const char xor_mask[4] = {
 static inline
 guint16 get_truth_table(const altera_bitstream_t *bitstream,
 			unsigned x, unsigned y, unsigned N) {
-  guint32 res = 0;
+  guint16 res = 0;
   unsigned i;
 
   /* the table is divided into four things of four bits */
@@ -214,6 +227,24 @@ get_lab_data() {
 }
 
 /* high-level interface */
+void
+dump_lut_tables(const altera_bitstream_t *bitstream) {
+  unsigned x;
+  /* iterate over all lut tables. This is a bit tricky, as some sites
+     are not lut-enabled */
+  for ( x = 1; x < EP35_X_SITES-1; x++)
+    /* if we're of the right type. This is a rought filter */
+    if (get_chunk_len(bitstream,x) == 35) {
+      unsigned y;
+      for ( y = 1; y <= EP35_Y_SITES; y++) {
+	unsigned n;
+	for ( n = 0; n < EP35_LAB_SITES; n+=2) {
+	  guint16 table = get_truth_table(bitstream,x,y,n);
+	  g_print("(%i,%i,%i) is %04x\n",x,y,n,table);
+	}
+      }
+    }
+}
 
 altera_bitstream_t *
 parse_bitstream(const gchar *filename) {
@@ -239,6 +270,7 @@ parse_bitstream(const gchar *filename) {
 
   /* then do mighty things with it ! */
   bit->xoffsets = offset_array(x_offsets_descr);
+  return bit;
 
  out_free_dest:
   g_free (bit);
@@ -246,6 +278,8 @@ parse_bitstream(const gchar *filename) {
 }
 
 void free_bitstream(altera_bitstream_t *bitstream) {
+  g_free(bitstream->xoffsets);
+  (void) bitarray_free(bitstream->bitarray, TRUE);
   g_mapped_file_free(bitstream->file);
   g_free(bitstream);
 }
