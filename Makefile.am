@@ -1,4 +1,4 @@
-SUBDIRS = data debian rpm
+SUBDIRS = data debian rpm utils
 
 AM_CPPFLAGS	= -Wall -Werror -Wunused -O3 -g -DDATADIR=\"$(pkgdatadir)\"
 
