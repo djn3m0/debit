@@ -40,7 +40,7 @@ static const geo_stride_t x_offsets_descr[] = {
   { .offset = 35,
     .length = 1 },
   /* small thing: interconnect site ? */
-  { .offset = 4,
+  { .offset = 4 + 35,
     .length = 1 },
   /* standard thing */
   { .offset = 35,
@@ -56,7 +56,7 @@ static const geo_stride_t x_offsets_descr[] = {
   /* event 49->50 */
   { .offset = 35,
     .length = 10, },
-  { .offset = 4,
+  { .offset = 4 + 35,
     .length = 1, },
   { .offset = 35,
     .length = 1, },
@@ -99,6 +99,14 @@ offset_total(const geo_stride_t *strides) {
   return offset_tot;
 }
 
+static inline void
+check_consistency(const altera_bitstream_t *bit) {
+  unsigned offset = offset_total(x_offsets_descr);
+/*   unsigned nx = width_total(x_offsets_descr); */
+/*   g_print("offset total is %i for %i sites\n", offset, nx); */
+  g_assert( offset == 2701 );
+}
+
 /* accumulate the x_offsets_descr and build corresponding
    offset array */
 static unsigned *
@@ -128,8 +136,8 @@ offset_array(const geo_stride_t *strides) {
   return array;
 }
 
-/* the absolute coordinate of (1,1,30) -- well, a rought guess actually */
-#define BASE_BITS 6583639
+/* the absolute coordinate of (1,1,30) -- adjusted for various offsets */
+#define BASE_BITS (6479737+34-1*2701)
 
 typedef struct _coord_descr_t {
   unsigned max;
@@ -148,25 +156,37 @@ static const coord_descr_t coords[COORD_NUM] = {
   [X] = { .max = 65, .offset = 0 /* computed normally from above */},
 };
 
+/*
+  NB: slices seem ordered in a bizarre fashion. Reordering them would
+  take the following permutation (which is expressed in pure code
+  instead of data in get_truth_table)
+  there would be something like this
+  1 extremity
+  32 (4*8) standard, containing luts
+  4 central
+  32 (4*8) standard, containing luts
+  1 extremity
+ */
+
 static inline unsigned
 get_bit_offset(const altera_bitstream_t *bitstream,
 	       unsigned y, unsigned slice, unsigned x) {
   /* start from beginning */
-  unsigned y_offset = coords[Y].offset * y;
+  unsigned y_offset = coords[Y].offset * (y-1);
   unsigned x_offset = bitstream->xoffsets[x];
-  unsigned slice_offset = coords[SLICE].offset * x;
+  unsigned slice_offset = coords[SLICE].offset * slice;
 
-  unsigned ret = BASE_BITS - y_offset - x_offset - slice_offset;
+  /* yes. Don't ask. Another intern. */
+  unsigned ret = BASE_BITS - y_offset - x_offset + slice_offset;
 
-  g_print("offset is %i\n", ret);
-
+/*   g_print("offset is %i, y %i, x %i, slice %i\n", */
+/* 	  ret, y_offset, x_offset, slice_offset); */
   return ret;
 }
 
 static inline unsigned
 get_chunk_len(const altera_bitstream_t *bitstream, unsigned x) {
-  (void) bitstream;
-  return x_offsets_descr[x].offset;
+  return (bitstream->xoffsets[x+1] - bitstream->xoffsets[x]);
 }
 
 static inline gboolean
@@ -189,41 +209,43 @@ static inline
 guint32 get_chunk(const altera_bitstream_t *bitstream,
 		  unsigned x, unsigned y, unsigned slice,
 		  unsigned start, unsigned end) {
+  bitarray_t *bitarray = bitstream->bitarray;
+  unsigned basebit = get_bit_offset(bitstream,y,slice,x) + start;
   guint32 res = 0;
-  unsigned len = end - start;
   unsigned i;
 
-  for (i = 0; i < len; i++)
-    if (get_bit(bitstream,x,y,slice,start+i))
+  for (i = start; i < end; i++)
+    if (bitarray_is_set(bitarray,basebit++))
       res |= 1 << i;
 
   return res;
 }
 
-/* the truth table really is nasty */
-
-static const char xor_mask[4] = {
-  [0] = 0, [1] = 0, [2] = 0, [3] = 0
-};
-
-/* XXX needs reordering */
 static inline
 guint16 get_truth_table(const altera_bitstream_t *bitstream,
 			unsigned x, unsigned y, unsigned N) {
   guint16 res = 0;
-  unsigned i;
+  unsigned slice, i;
 
-  g_print("getting truth table for (%i, %i, %i)\n",
-	  x, y , N);
+  g_assert(N % 2 == 0);
+/*   g_print("getting truth table for (%i, %i, %i)\n", */
+/* 	  x, y , N); */
 
+  /* lut ordering is a bit weird (see above for slice details) */
+  if (N < 16) {
+    /* or test 16 bit */
+    slice = 1 + 2*N;
+  } else {
+    slice = 69 + 2 - 4 - (N-16)*2;
+  }
   /* the table is divided into four things of four bits */
   /* there may be a xor mask to apply ! */
   for (i = 0; i < 4; i++) {
-    guint32 table = get_chunk(bitstream, x, y, (N/2) * 4 + 3, 0, 4);
-    res |= (table ^ xor_mask[i]) << (4*i);
+    guint32 table = get_chunk(bitstream, x, y, slice + i, 0, 4);
+    res |= table << (4*i);
   }
 
-  return res;
+  return ~res;
 }
 
 static inline bitarray_t *
@@ -248,9 +270,12 @@ dump_lut_tables(const altera_bitstream_t *bitstream) {
 	unsigned n;
 	for ( n = 0; n < EP35_LAB_SITES; n+=2) {
 	  guint16 table = get_truth_table(bitstream,x,y,n);
-	  g_print("(%i,%i,%i) is %04x\n",x,y,n,table);
+	  if (table != 0 && table != 0xffff)
+	    g_print("(%i,%i,%i) is %04x\n",x,y,n,table);
 	}
       }
+    } else {
+      g_print("not considering x value %i\n",x);
     }
 }
 
@@ -283,7 +308,7 @@ parse_bitstream(const gchar *filename) {
   bit->file = file;
 
   if (error != NULL) {
-    //debit_log(L_BITSTREAM,"could not map file %s: %s",filename,error->message);
+    g_warning("could not map file %s: %s",filename,error->message);
     g_error_free (error);
     goto out_free_dest;
   }
@@ -297,6 +322,9 @@ parse_bitstream(const gchar *filename) {
 
   /* then do mighty things with it ! */
   bit->xoffsets = offset_array(x_offsets_descr);
+
+  /* do some basic checks */
+  check_consistency(bit);
 
   return bit;
 

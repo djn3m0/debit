@@ -46,6 +46,11 @@ debit_file(gchar *input_file, gchar *output_dir) {
   gint err = 0;
 
   altera = parse_bitstream(input_file);
+  if (!altera) {
+    g_warning("Bitstream parsing failed");
+    err = -1;
+    goto out_err_nofree;
+  }
 
   if (lutdump)
     dump_lut_tables(altera);
@@ -58,6 +63,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
 
  out_err:
   free_bitstream(altera);
+ out_err_nofree:
   return err;
 }
 
