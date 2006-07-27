@@ -179,8 +179,8 @@ get_bit_offset(const altera_bitstream_t *bitstream,
   /* yes. Don't ask. Another intern. */
   unsigned ret = BASE_BITS - y_offset - x_offset + slice_offset;
 
-  g_print("offset is %i, y %i, x %i, slice %i\n",
-	  ret, y_offset, x_offset, slice_offset);
+/*   g_print("offset is %i, y %i, x %i, slice %i\n", */
+/* 	  ret, y_offset, x_offset, slice_offset); */
   return ret;
 }
 
@@ -248,33 +248,73 @@ guint16 get_truth_table(const altera_bitstream_t *bitstream,
   return ~res;
 }
 
+static inline void
+bitarray_write_bit(bitarray_t *dest, unsigned offset,
+		   gboolean value) {
+  if (value)
+    bitarray_set(dest, offset);
+  else
+    bitarray_unset(dest, offset);
+}
+
+static inline void
+bitcopy_to_bitarray(bitarray_t *dest, unsigned offset,
+		    const guint32 data, unsigned length) {
+  unsigned i;
+  for ( i = 0; i < length; i++) {
+    gboolean isset = (data & (1 << i)) ? TRUE : FALSE;
+    bitarray_write_bit(dest, offset+i, isset);
+  }
+}
+
 /* This is the function that begs optimization -- TODO after a while for
    performance reasons */
-/* static inline void */
-/* bitcopy_to_bitarray(bitarray_t *dest, unsigned offset, */
-/* 		    const atlera_bitstream_t *bistream, */
-/* 		    unsigned x, unsigned y, unsigned site, */
-/* 		    unsigned length) { */
-/* } */
+static inline void
+bitstream_to_bitarray(bitarray_t *dest, unsigned offset,
+		      const altera_bitstream_t *bitstream,
+		      unsigned x, unsigned y, unsigned site,
+		      unsigned length) {
+  unsigned read = 0;
+  /* For now divise in chunks of 32 bits */
+  do {
+    unsigned readlen = length > 32 ? 32 : length;
+    guint32 table = get_chunk(bitstream, x, y, site, read, readlen);
+    bitcopy_to_bitarray(dest, offset + read, table, readlen);
 
-/* static inline unsigned * */
-/* get_lab_data(const altera_bitstream_t *bitstream, */
-/* 	     unsigned x, unsigned y) { */
-/*   unsigned width = get_chunk_size(bitstream, x); */
-/*   /\* lab size, anyone ? *\/ */
-/*   unsigned size = width * 70; */
-/*   bitarray_t *bitarray = new_bitarray(size); */
-/*   unsigned data_index; */
-/*   unsigned i; */
+    read += readlen;
+    length -= readlen;
+  } while (length > 0);
+}
 
-/*   for (i = 0; i < EP35_LAB_SITES; i++) { */
-/*     /\* iterate over all slices in the lab, and get all data *\/ */
-/*     data_index++; */
-/*   } */
+/* Maybe have a version with allocation outside so that it can be
+   reused.. */
 
-/*   /\* this is more difficult, it requires guint64 *\/ */
-/*   return NULL; */
-/* } */
+static inline bitarray_t *
+get_lab_data(const altera_bitstream_t *bitstream,
+	     unsigned x, unsigned y) {
+  unsigned width = get_chunk_len(bitstream, x);
+  /* lab size, anyone ? */
+  unsigned size = width * 70;
+  bitarray_t *bitarray = bitarray_create(size);
+  unsigned i, bitindex = 0;
+
+  for (i = 0; i < EP35_LAB_SITES; i++) {
+    bitstream_to_bitarray(bitarray, bitindex,
+			  bitstream, x, y, i,
+			  width);
+    bitindex += width;
+  }
+
+  return bitarray;
+}
+
+static inline gchar *make_lab_string(unsigned x, unsigned y) {
+  GString *string = g_string_sized_new (64);
+  g_string_printf(string, "lab_%u_%u.bin", x, y);
+  return g_string_free(string, FALSE);
+}
+
+static inline int bitarray_dump(bitarray_t *data, const gchar *filename);
 
 void
 dump_lab_data(const altera_bitstream_t *bitstream) {
@@ -285,7 +325,15 @@ dump_lab_data(const altera_bitstream_t *bitstream) {
     if (get_chunk_len(bitstream,x) == 35) {
       unsigned y;
       for ( y = 1; y <= EP35_Y_SITES; y++) {
-	/* for now only dump lab */
+	bitarray_t *bitarray;
+	gchar *name;
+
+	bitarray = get_lab_data(bitstream, x, y);
+	name = make_lab_string(x,y);
+	bitarray_dump(bitarray, name);
+
+	g_free(name);
+	(void) bitarray_free(bitarray, FALSE);
       }
     } else {
       g_print("not considering x value %i\n",x);
@@ -313,6 +361,24 @@ dump_lut_tables(const altera_bitstream_t *bitstream) {
     } else {
       g_print("not considering x value %i\n",x);
     }
+}
+
+/* share ! */
+
+static inline int bitarray_dump(bitarray_t *data,
+				 const gchar *filename) {
+  GError *error = NULL;
+  gboolean ret;
+
+  ret = g_file_set_contents(filename, (gchar *)data->array,
+			    data->size * sizeof(unsigned), &error);
+
+  if (ret)
+    return 0;
+
+  g_print("could not dump file %s: %s",filename,error->message);
+  g_error_free (error);
+  return -1;
 }
 
 int

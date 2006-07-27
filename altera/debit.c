@@ -31,7 +31,7 @@
 #include "bitarray.h"
 #include "bitstream.h"
 
-static gboolean framedump = FALSE;
+static gboolean labdump = FALSE;
 static gboolean pipdump = FALSE;
 static gboolean lutdump = FALSE;
 
@@ -55,6 +55,9 @@ debit_file(gchar *input_file, gchar *output_dir) {
   if (lutdump)
     dump_lut_tables(altera);
 
+  if (labdump)
+    dump_lab_data(altera);
+
   if (bitdump) {
     err = dump_raw_bit(altera, bitdump);
     if (err)
@@ -77,7 +80,7 @@ static GOptionEntry entries[] =
   {"lutdump", 'l', 0, G_OPTION_ARG_NONE, &lutdump, "dump lut tables", NULL},
   {"outdir", 'o', 0, G_OPTION_ARG_FILENAME, &odir, "Write data files in directory <odir>", "<odir>"},
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
-  {"framedump", 'f', 0, G_OPTION_ARG_NONE, &framedump, "Dump raw data frames", NULL},
+  {"labdump", 'a', 0, G_OPTION_ARG_NONE, &labdump, "Dump raw lab data", NULL},
   {"pipdump", 'p', 0, G_OPTION_ARG_NONE, &pipdump, "Dump pips in the bitstream", NULL},
   { NULL }
 };
