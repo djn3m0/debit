@@ -221,33 +221,6 @@ guint32 get_chunk(const altera_bitstream_t *bitstream,
   return res;
 }
 
-static inline
-guint16 get_truth_table(const altera_bitstream_t *bitstream,
-			unsigned x, unsigned y, unsigned N) {
-  guint16 res = 0;
-  unsigned slice, i;
-
-  g_assert(N % 2 == 0);
-/*   g_print("getting truth table for (%i, %i, %i)\n", */
-/* 	  x, y , N); */
-
-  /* lut ordering is a bit weird (see above for slice details) */
-  if (N < 16) {
-    /* or test 16 bit */
-    slice = 1 + 2*N;
-  } else {
-    slice = 69 + 2 - 4 - (N-16)*2;
-  }
-  /* the table is divided into four things of four bits */
-  /* there may be a xor mask to apply ! */
-  for (i = 0; i < 4; i++) {
-    guint32 table = get_chunk(bitstream, x, y, slice + i, 0, 4);
-    res |= table << (4*i);
-  }
-
-  return ~res;
-}
-
 static inline void
 bitarray_write_bit(bitarray_t *dest, unsigned offset,
 		   gboolean value) {
@@ -255,6 +228,59 @@ bitarray_write_bit(bitarray_t *dest, unsigned offset,
     bitarray_set(dest, offset);
   else
     bitarray_unset(dest, offset);
+}
+
+static inline
+void set_chunk(const altera_bitstream_t *bitstream,
+	       unsigned x, unsigned y, unsigned slice,
+	       unsigned start, unsigned end,
+	       guint32 data) {
+  bitarray_t *bitarray = bitstream->bitarray;
+  unsigned basebit = get_bit_offset(bitstream,y,slice,x) + start;
+  unsigned i;
+
+  for (i = start; i < end; i++) {
+    gboolean set = (data & (1 << i)) ? TRUE : FALSE;
+    bitarray_write_bit(bitarray, basebit++, set);
+  }
+}
+
+static inline
+unsigned slice_from_index(unsigned N) {
+  g_assert(N % 2 == 0);
+
+  if (N < 16)
+    return 1 + 2*N;
+  else
+    return 69 + 2 - 4 - (N-16)*2;
+}
+
+static inline
+void zero_truth_table(const altera_bitstream_t *bitstream,
+		     unsigned x, unsigned y, unsigned N) {
+  unsigned slice, i;
+
+  slice = slice_from_index(N);
+
+  for (i = 0; i < 4; i++)
+    set_chunk(bitstream, x, y, slice + i, 0, 4, 0);
+}
+
+static inline
+guint16 get_truth_table(const altera_bitstream_t *bitstream,
+			unsigned x, unsigned y, unsigned N) {
+  guint16 res = 0;
+  unsigned slice, i;
+
+  slice = slice_from_index(N);
+
+  /* todo: bit reordering */
+  for (i = 0; i < 4; i++) {
+    guint32 table = get_chunk(bitstream, x, y, slice + i, 0, 4);
+    res |= table << (4*i);
+  }
+
+  return ~res;
 }
 
 static inline void
@@ -316,51 +342,78 @@ static inline gchar *make_lab_string(unsigned x, unsigned y) {
 
 static inline int bitarray_dump(bitarray_t *data, const gchar *filename);
 
+typedef void (*lab_iterator_t)(const altera_bitstream_t *bitstream,
+			       unsigned x, unsigned y, void *data);
+
 void
-dump_lab_data(const altera_bitstream_t *bitstream) {
+iterate_over_labs(const altera_bitstream_t *bitstream,
+		  lab_iterator_t iter, void *data) {
   unsigned x;
-  /* loop through the sites, and dump their data */
+
   for ( x = 1; x < EP35_X_SITES-1; x++)
     /* if we're of the right type. This is a rought filter */
     if (get_chunk_len(bitstream,x) == 35) {
       unsigned y;
-      for ( y = 1; y <= EP35_Y_SITES; y++) {
-	bitarray_t *bitarray;
-	gchar *name;
-
-	bitarray = get_lab_data(bitstream, x, y);
-	name = make_lab_string(x,y);
-	bitarray_dump(bitarray, name);
-
-	g_free(name);
-	(void) bitarray_free(bitarray, FALSE);
-      }
+      for ( y = 1; y <= EP35_Y_SITES; y++)
+	iter(bitstream, x, y, data);
     } else {
       g_print("not considering x value %i\n",x);
     }
 }
 
-/* high-level interface */
+typedef void (*table_iterator_t)(const altera_bitstream_t *bitstream,
+				 unsigned x, unsigned y, unsigned n);
+
+static void
+iter_over_tables(const altera_bitstream_t *bitstream,
+		 unsigned x, unsigned y, void *data) {
+  table_iterator_t iter = data;
+  unsigned n;
+  for ( n = 0; n < EP35_LAB_SITES; n+=2)
+    iter(bitstream, x, y, n);
+}
+
+void
+iterate_over_tables(const altera_bitstream_t *bitstream,
+		    table_iterator_t iter) {
+  iterate_over_labs(bitstream, iter_over_tables, iter);
+}
+
+static void
+dump_lab(const altera_bitstream_t *bitstream,
+	 unsigned x, unsigned y, void *data) {
+  bitarray_t *bitarray;
+  gchar *name;
+
+  bitarray = get_lab_data(bitstream, x, y);
+  name = make_lab_string(x,y);
+  bitarray_dump(bitarray, name);
+
+  g_free(name);
+  (void) bitarray_free(bitarray, FALSE);
+}
+
+void
+dump_lab_data(const altera_bitstream_t *bitstream) {
+  iterate_over_labs(bitstream, dump_lab, NULL);
+}
+
+static void
+table_display(const altera_bitstream_t *bitstream,
+	      unsigned x, unsigned y, unsigned n) {
+  guint16 table = get_truth_table(bitstream,x,y,n);
+  if (table != 0 && table != 0xffff)
+    g_print("(%i,%i,%i) is %04x\n",x,y,n,table);
+}
+
 void
 dump_lut_tables(const altera_bitstream_t *bitstream) {
-  unsigned x;
-  /* iterate over all lut tables. This is a bit tricky, as some sites
-     are not lut-enabled */
-  for ( x = 1; x < EP35_X_SITES-1; x++)
-    /* if we're of the right type. This is a rought filter */
-    if (get_chunk_len(bitstream,x) == 35) {
-      unsigned y;
-      for ( y = 1; y <= EP35_Y_SITES; y++) {
-	unsigned n;
-	for ( n = 0; n < EP35_LAB_SITES; n+=2) {
-	  guint16 table = get_truth_table(bitstream,x,y,n);
-	  if (table != 0 && table != 0xffff)
-	    g_print("(%i,%i,%i) is %04x\n",x,y,n,table);
-	}
-      }
-    } else {
-      g_print("not considering x value %i\n",x);
-    }
+  iterate_over_tables(bitstream, table_display);
+}
+
+void
+zero_lut_tables(const altera_bitstream_t *bitstream) {
+  iterate_over_tables(bitstream, zero_truth_table);
 }
 
 /* share ! */
@@ -407,7 +460,7 @@ parse_bitstream(const gchar *filename) {
 
   bit = g_new0(altera_bitstream_t, 1);
 
-  file = g_mapped_file_new (filename, FALSE, &error);
+  file = g_mapped_file_new (filename, TRUE, &error);
   bit->file = file;
 
   if (error != NULL) {
