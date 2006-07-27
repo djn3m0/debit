@@ -179,8 +179,8 @@ get_bit_offset(const altera_bitstream_t *bitstream,
   /* yes. Don't ask. Another intern. */
   unsigned ret = BASE_BITS - y_offset - x_offset + slice_offset;
 
-/*   g_print("offset is %i, y %i, x %i, slice %i\n", */
-/* 	  ret, y_offset, x_offset, slice_offset); */
+  g_print("offset is %i, y %i, x %i, slice %i\n",
+	  ret, y_offset, x_offset, slice_offset);
   return ret;
 }
 
@@ -248,12 +248,48 @@ guint16 get_truth_table(const altera_bitstream_t *bitstream,
   return ~res;
 }
 
-static inline bitarray_t *
-get_lab_data() {
-  /* iterate over all slices in the lab, and get all data */
+/* This is the function that begs optimization -- TODO after a while for
+   performance reasons */
+/* static inline void */
+/* bitcopy_to_bitarray(bitarray_t *dest, unsigned offset, */
+/* 		    const atlera_bitstream_t *bistream, */
+/* 		    unsigned x, unsigned y, unsigned site, */
+/* 		    unsigned length) { */
+/* } */
 
-  /* this is more difficult, it requires guint64 */
-  return NULL;
+/* static inline unsigned * */
+/* get_lab_data(const altera_bitstream_t *bitstream, */
+/* 	     unsigned x, unsigned y) { */
+/*   unsigned width = get_chunk_size(bitstream, x); */
+/*   /\* lab size, anyone ? *\/ */
+/*   unsigned size = width * 70; */
+/*   bitarray_t *bitarray = new_bitarray(size); */
+/*   unsigned data_index; */
+/*   unsigned i; */
+
+/*   for (i = 0; i < EP35_LAB_SITES; i++) { */
+/*     /\* iterate over all slices in the lab, and get all data *\/ */
+/*     data_index++; */
+/*   } */
+
+/*   /\* this is more difficult, it requires guint64 *\/ */
+/*   return NULL; */
+/* } */
+
+void
+dump_lab_data(const altera_bitstream_t *bitstream) {
+  unsigned x;
+  /* loop through the sites, and dump their data */
+  for ( x = 1; x < EP35_X_SITES-1; x++)
+    /* if we're of the right type. This is a rought filter */
+    if (get_chunk_len(bitstream,x) == 35) {
+      unsigned y;
+      for ( y = 1; y <= EP35_Y_SITES; y++) {
+	/* for now only dump lab */
+      }
+    } else {
+      g_print("not considering x value %i\n",x);
+    }
 }
 
 /* high-level interface */
@@ -301,6 +337,7 @@ parse_bitstream(const gchar *filename) {
   GError *error = NULL;
   GMappedFile *file = NULL;
   altera_bitstream_t *bit;
+  int err;
 
   bit = g_new0(altera_bitstream_t, 1);
 
@@ -314,8 +351,11 @@ parse_bitstream(const gchar *filename) {
   }
 
   /* grossly parse the structure */
-  parse_bitstream_structure(bit, g_mapped_file_get_contents (file),
-			    g_mapped_file_get_length (file));
+  err = parse_bitstream_structure(bit, g_mapped_file_get_contents (file),
+				  g_mapped_file_get_length (file));
+
+  if (err)
+    goto out_free_dest;
 
   /* load the actual bitstream data into the bitarray */
   bit->bitarray = bitarray_create_data((char *)bit->bitdata, 8 * bit->bitlength);

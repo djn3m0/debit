@@ -30,6 +30,11 @@ typedef struct _bitstream_option {
   char data[];
 } PACKED bitstream_option_t;
 
+static inline
+uint32_t get_32(const char *data) {
+  return *((uint32_t *)data);
+}
+
 static inline const bitstream_option_t *
 parse_option(altera_bitstream_t *altera,
 	     option_code_t *rcode,
@@ -57,13 +62,13 @@ parse_option(altera_bitstream_t *altera,
     break;
   case PACKAGE:
     {
-      guint32 id = GUINT32_FROM_LE(*((guint32 *)data));
+      guint32 id = GUINT32_FROM_LE(get_32(data));
       g_print("Something, maybe the package is %04x\n", id);
     }
     break;
   case CRC:
     {
-      guint32 crc = GUINT32_FROM_LE(*((guint32 *)data));
+      guint32 crc = GUINT32_FROM_LE(get_32(data));
       g_print("CRC for the bitstream is %08x\n", crc);
     }
     break;
@@ -75,20 +80,31 @@ parse_option(altera_bitstream_t *altera,
   return (const void *)&data[length];
 }
 
+#define SOF_MAGIC 0x534f4600
+
 int
 parse_bitstream_structure(altera_bitstream_t *bitstream,
 			  const gchar *buf, const size_t buf_len) {
   const bitstream_option_t *current;
+  const bitstream_option_t *last_option = (void *) (buf + buf_len);
   const gchar *read = buf;
   option_code_t code = NEUTRAL;
 
+  /* recognize SOF magic */
+  if (GUINT32_FROM_BE(get_32(read)) != SOF_MAGIC) {
+    g_warning("This does not look like a .sof file");
+    return -1;
+  }
+
   /* seek to the first option past SOF-- I need more bitstream examples to
      reverse-engeneer the very beginning of the file */
-  read += 12;
+
+  read += 3 * sizeof(uint32_t);
   current = (void *)read;
 
-  while (code != CRC)
+  while (current < last_option) {
     current = parse_option(bitstream, &code, current);
+  }
 
   /* yeah, there can be no error with such rock-solid code */
   return 0;
