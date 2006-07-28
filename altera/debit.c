@@ -37,7 +37,7 @@ static gboolean lutdump = FALSE;
 
 static gchar *ifile = NULL;
 static gchar *bitdump = NULL;
-static gchar *odir = NULL;
+static gchar *odir = ".";
 static gchar *datadir = DATADIR;
 
 static int
@@ -56,10 +56,10 @@ debit_file(gchar *input_file, gchar *output_dir) {
     dump_lut_tables(altera);
 
   if (labdump)
-    dump_lab_data(altera);
+    dump_lab_data(odir, altera);
 
   if (bitdump) {
-    err = dump_raw_bit(altera, bitdump);
+    err = dump_raw_bit(odir, bitdump, altera);
     if (err)
       goto out_err;
   }

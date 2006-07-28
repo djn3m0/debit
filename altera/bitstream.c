@@ -7,6 +7,7 @@
 #include "bitstream_header.h"
 #include "bitstream.h"
 #include "bitarray.h"
+#include "debit.h"
 
 
 /* the meat */
@@ -340,7 +341,8 @@ static inline gchar *make_lab_string(unsigned x, unsigned y) {
   return g_string_free(string, FALSE);
 }
 
-static inline int bitarray_dump(bitarray_t *data, const gchar *filename);
+static inline int bitarray_dump(const gchar *dir, const gchar *file,
+				const bitarray_t *data);
 
 typedef void (*lab_iterator_t)(const altera_bitstream_t *bitstream,
 			       unsigned x, unsigned y, void *data);
@@ -387,15 +389,16 @@ dump_lab(const altera_bitstream_t *bitstream,
 
   bitarray = get_lab_data(bitstream, x, y);
   name = make_lab_string(x,y);
-  bitarray_dump(bitarray, name);
+  bitarray_dump(data, name, bitarray);
 
   g_free(name);
   (void) bitarray_free(bitarray, FALSE);
 }
 
 void
-dump_lab_data(const altera_bitstream_t *bitstream) {
-  iterate_over_labs(bitstream, dump_lab, NULL);
+dump_lab_data(const gchar *odir,
+	      const altera_bitstream_t *bitstream) {
+  iterate_over_labs(bitstream, dump_lab, (void*)odir);
 }
 
 static void
@@ -416,15 +419,21 @@ zero_lut_tables(const altera_bitstream_t *bitstream) {
   iterate_over_tables(bitstream, zero_truth_table);
 }
 
-/* share ! */
-
-static inline int bitarray_dump(bitarray_t *data,
-				 const gchar *filename) {
+static inline int dump_data(const gchar *odir,
+			    const gchar *filename,
+			    const char *data,
+			    unsigned length) {
+  gchar *name;
   GError *error = NULL;
   gboolean ret;
 
-  ret = g_file_set_contents(filename, (gchar *)data->array,
-			    data->size * sizeof(unsigned), &error);
+  /* Assemble the filename */
+  name = g_build_filename(odir, filename, NULL);
+
+  /* Actually write the file */
+  ret = g_file_set_contents(name, data, length, &error);
+
+  g_free(name);
 
   if (ret)
     return 0;
@@ -434,20 +443,17 @@ static inline int bitarray_dump(bitarray_t *data,
   return -1;
 }
 
+static inline int bitarray_dump(const gchar *odir, const gchar *filename,
+				const bitarray_t *data) {
+  return dump_data(odir, filename, (gchar *)data->array,
+		   data->size * sizeof(unsigned));
+}
+
 int
-dump_raw_bit(const altera_bitstream_t *bitstream, const gchar *filename) {
-  GError *error = NULL;
-  gboolean ret;
-
-  ret = g_file_set_contents(filename, bitstream->bitdata,
-			    bitstream->bitlength, &error);
-
-  if (ret)
-    return 0;
-
-  g_print("could not dump file %s: %s",filename,error->message);
-  g_error_free (error);
-  return -1;
+dump_raw_bit(const gchar *odir, const gchar *filename,
+	     const altera_bitstream_t *bitstream) {
+  return dump_data(odir, filename,
+		   bitstream->bitdata, bitstream->bitlength);
 }
 
 altera_bitstream_t *
