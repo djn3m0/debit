@@ -10,9 +10,9 @@
 
 typedef struct state {
   /* Maybe we'd better represent this loosely */
-  unsigned char *known_data;
+  char *known_data;
   /* Full data representation */
-  unsigned char *unknown_data;
+  char *unknown_data;
 } state_t;
 
 /* state manipulation routines */
@@ -25,8 +25,8 @@ zero_lut(site_config_t *site) {
 
 static inline int
 alloc_state(state_t *to, size_t len, size_t ulen) {
-  to->known_data = g_new0(unsigned char,len);
-  to->unknown_data = g_new0(unsigned char,ulen);
+  to->known_data = g_new0(char,len);
+  to->unknown_data = g_new0(char,ulen);
   return 0;
 }
 

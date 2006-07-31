@@ -8,88 +8,44 @@
 #include "bitisolation_db.h"
 
 static int
-mmap_fd_data(unsigned char **dst, const char *fname) {
+get_file_data(gchar **data, unsigned *len, const gchar *file) {
+  GError *error;
+  if (g_file_get_contents (file, data, len, &error))
+    return 0;
+
+  g_warning("Could not load data from %s: %s", file,
+	    error->message);
+  g_error_free(error);
   return -1;
 }
 
-/* VIRTEX-SPECIFIC CODE */
-#define MAX_FNAME 64
-
-static int
-get_known_data(state_t *s, const unsigned row, const unsigned col) {
-  /* First, the binary data generation is done in perl */
-  char fname[MAX_FNAME];
-  snprintf(fname,MAX_FNAME,"R%iC%i_known.bin",row,col);
-  //fprintf(stderr, "mmapping %s @%p\n", fname, s);
-  return mmap_fd_data(&s->known_data,fname);
-}
-
-static int
-get_unknown_data(state_t *s, const unsigned row, const unsigned col) {
-  char fname[MAX_FNAME];
-  /* XXX factor this with other name-generating snipper in device.c */
-  snprintf(fname,MAX_FNAME,"R%iC%i.bin",row,col);
-  //fprintf(stderr, "mmapping %s @%p\n", fname, s);
-  return mmap_fd_data(&s->unknown_data,fname);
-}
-
-typedef struct db_ref {
-  unsigned row;
-  unsigned col;
-  /* bitfile */
-  unsigned bitfile;
-} db_ref_t;
-
-static db_ref_t *db_array;
-
-static void store_db(const unsigned idx,
-		     const unsigned col,
-		     const unsigned row) {
-  db_array[idx].row = row;
-  db_array[idx].col = col;
-}
-
-static void alloc_db(const unsigned nelems) {
-  db_array = g_new0(db_ref_t, nelems);
-}
-
-static void free_db() {
-  g_free(db_array);
-}
-
-
-void free_all_data() {
-  /* FIXME: loop and munmap */
-  free_db();
-}
-
 /* Iterate over all sites to get all data */
-unsigned
-fill_all_data(alldata_t *alldata) {
-  /* XXX dumb, should not depend on R/C */
-  int i,j;
+alldata_t *
+fill_all_data(const gchar **knw, const gchar **uknw) {
+  alldata_t *dat = g_new(alldata_t, 1);
   unsigned idx = 0;
-  alloc_db(MAXR * MAXC);
-  for(i = 0; i < MAXR; i++)
-    for(j = 0; j < MAXC; j++) {
-      state_t *s = &alldata->states[idx];
-      if (get_known_data(s,i,j)) {
-	//fprintf(stderr, "no known data for position (%03i,%03i)\n", i, j);
-	continue;
-      }
-      else if (get_unknown_data(s,i,j)) {
-	/* just warn */
-	fprintf(stderr, "no unknown data for position (%03i,%03i)\n", i, j);
-      } else {
-	store_db(idx,i,j);
-      }
-      idx++;
-    }
-  return idx;
+  GArray *data_array;
+
+  data_array = g_array_new(FALSE, FALSE, sizeof(state_t));
+
+  while (knw[idx] != NULL && uknw[idx] != NULL) {
+    const gchar *inp = knw[idx], *outp = uknw[idx];
+    state_t s;
+    /* XXX Check data length */
+    get_file_data(&s.known_data, &dat->known_data_len, inp);
+    get_file_data(&s.unknown_data, &dat->unknown_data_len, outp);
+    g_array_append_val(data_array, s);
+    idx++;
+  }
+
+  dat->nstates = data_array->len;
+  dat->states = (state_t *)g_array_free(data_array, FALSE);
+
+  return dat;
 }
 
-/* static void print_file(FILE *to, unsigned idx) { */
-/*   fprintf(to, "R%iC%i", */
-/* 	  db_array[idx].row, */
-/* 	  db_array[idx].col); */
-/* } */
+void
+free_all_data(alldata_t *dat) {
+  g_free(dat->states);
+  g_free(dat);
+}

@@ -20,23 +20,20 @@ typedef struct alldata {
   size_t known_data_len;
   size_t unknown_data_len;
   size_t nstates;
-  state_t states[];
+  state_t *states;
 } alldata_t;
 
 /*
  * Currently-used API
  */
 /* raw data database -- (xdl data, bitstream) site data pairs */
-unsigned fill_all_data(alldata_t *alldata);
-void free_all_data();
+alldata_t *fill_all_data(const gchar **in, const gchar **out);
+void free_all_data(alldata_t *);
 
 /* PIP database */
 typedef struct pip_ref {
   char *start;
   char *end;
-  /* zero: not isolated
-     !zero: isolated
-  */
   int isolated;
   /* The bitdata corresponding to the pip */
   state_t state;

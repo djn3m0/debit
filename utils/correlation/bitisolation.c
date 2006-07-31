@@ -29,7 +29,7 @@ dump_known(FILE *out, const int bit,
 
 static int
 _is_isolated(FILE *out, const int bit,
-	     const unsigned char *dat, const size_t len) {
+	     const char *dat, const size_t len) {
   unsigned i;
   int ok = 0;
   for (i=0; i < len; i++) {
@@ -45,10 +45,10 @@ _is_isolated(FILE *out, const int bit,
 
 static void
 dump_bin(FILE *out, const void *_data, const unsigned num) {
-  const unsigned char *const data = _data;
+  const char *const data = _data;
   unsigned i;
   for( i = 0; i < num; i++) {
-    unsigned char atom = data[i];
+    char atom = data[i];
     putc(atom, out);
   }
 }
@@ -66,7 +66,7 @@ static void
 print_state(FILE *out,
 	    const void *_data, const unsigned num) {
   unsigned i,j;
-  const unsigned char *data = _data;
+  const char *data = _data;
   for(i = 0; i < num; i++)
     for(j = 0; j < 8; j++)
       if (data[i] & (1 << j)) {
@@ -80,7 +80,7 @@ print_state(FILE *out,
 }
 
 static void
-dump_unknown(const unsigned bit, const unsigned char *dat, const size_t len) {
+dump_unknown(const unsigned bit, const char *dat, const size_t len) {
   char fn[64];
   snprintf(fn, 64, "isolated_%i.bin", bit);
   dump_bin_file(fn, dat, len);
@@ -143,28 +143,28 @@ cmpstringp(const void *p1, const void *p2)
 
 /* TODO: move to uint32_t -- speed x4 */
 static void
-and_data(unsigned char *to, unsigned char *and, size_t len) {
+and_data(char *to, char *and, size_t len) {
   size_t i;
   for(i = 0; i < len; i++)
     to[i] = to[i] & and[i];
 }
 
 static void
-or_data(unsigned char *to, unsigned char *or, size_t len) {
+or_data(char *to, char *or, size_t len) {
   size_t i;
   for(i = 0; i < len; i++)
     to[i] = to[i] | or[i];
 }
 
 static void
-and_neg_data(unsigned char *to, unsigned char *and, size_t len) {
+and_neg_data(char *to, char *and, size_t len) {
   size_t i;
   for(i = 0; i < len; i++)
     to[i] = to[i] & ~and[i];
 }
 
 static int
-data_nil(unsigned char *data, size_t len) {
+data_nil(char *data, size_t len) {
   size_t i;
   for(i = 0; i < len; i++)
     if (data[i] != 0)
@@ -175,8 +175,8 @@ data_nil(unsigned char *data, size_t len) {
 static void __attribute__((unused))
 dump_bytes(FILE *out, const void *_data, int num)
 {
-  const unsigned char *const data = _data;
-  const unsigned char *ptr = data;
+  const char *const data = _data;
+  const char *ptr = data;
 
   if (num <= 0) {
     fprintf(out, "\n");
@@ -394,11 +394,11 @@ do_filtered_pips(alldata_t *dat, unsigned npips,
    reclen */
 static unsigned
 count_bits(const void *dat, const size_t len) {
-  const unsigned char *data = dat;
+  const char *data = dat;
   unsigned count = 0;
   unsigned i,j;
   for (i = 0; i < len; i++) {
-    unsigned char atom = data[i];
+    char atom = data[i];
     if (!atom)
       continue;
     else {
@@ -454,7 +454,7 @@ static int
 _is_grouped(const alldata_t *dat, const unsigned pip) {
   size_t len = dat->known_data_len;
   const state_t *work_state;
-  unsigned char *kdata;
+  char *kdata;
   unsigned i;
 
   work_state = get_pip_state(pip);
@@ -481,7 +481,7 @@ mark_group(const alldata_t *dat, const unsigned pip) {
   size_t len = dat->known_data_len;
   unsigned marked = 0;
   const state_t *work_state;
-  unsigned char *kdata;
+  char *kdata;
   unsigned i;
 
   work_state = get_pip_state(pip);
@@ -528,7 +528,7 @@ do_grouped_pips(const alldata_t *dat, const unsigned npips) {
 
 static void
 remove_known_pips(const alldata_t *dat, const state_t *s, const unsigned kpip) {
-  unsigned char *remains = s->known_data;
+  char *remains = s->known_data;
   unsigned len = dat->known_data_len;
   unsigned ulen = dat->unknown_data_len;
   unsigned i;
@@ -629,21 +629,20 @@ do_thorough_passes(alldata_t *dat, unsigned npips) {
    interresting
 */
 
-static char *db_name = NULL;
 static char *start = NULL;
 static char *end = NULL;
-static gboolean allpips = 0;
-static gboolean unite = 0;
-static gboolean thorough = 0;
-static unsigned long pip = 0;
+static gboolean allpips = FALSE;
+static gboolean unite = FALSE;
+static gboolean thorough = FALSE;
+
+static const char **dat_output = NULL;
+static const char **dat_input = NULL;
+
 
 static GOptionEntry entries[] =
 {
-  {"db", 'd', 0, G_OPTION_ARG_FILENAME, &db_name, "Database name (whatever this is)", NULL},
-  {"pip", 'p', 0, G_OPTION_ARG_INT, &pip, "Number of pips", NULL},
-  {"start", 's', 0, G_OPTION_ARG_STRING, &start, "Start", NULL},
-  {"end", 'e', 0, G_OPTION_ARG_STRING, &end, "End", NULL},
-  {"allpips", 'a', 0, G_OPTION_ARG_NONE, &allpips, "Do all pips", NULL},
+  {"input", 'i', 0, G_OPTION_ARG_FILENAME_ARRAY, &dat_input, "Input values of the function we seek", NULL},
+  {"output", 'o', 0, G_OPTION_ARG_FILENAME_ARRAY, &dat_output, "Output values of the function we seek", NULL},
   {"thorough", 't', 0, G_OPTION_ARG_NONE, &thorough, "be thorough", NULL},
   {"union", 'u', 0, G_OPTION_ARG_NONE, &unite, "Unite !", NULL},
   { NULL }
@@ -651,27 +650,17 @@ static GOptionEntry entries[] =
 
 static int do_real_work(void) {
   alldata_t *dat;
-  unsigned db_size;
-  unsigned npips;
+  unsigned npips = 0;
 
-  /* open the pip name database */
-  npips = read_pips_db(db_name);
+  /* we fill the data and build the database along the way */
+  dat = fill_all_data(dat_input, dat_output);
 
-  /* open the data db */
-  /* XXX move allocation out of here */
-  dat = g_malloc(sizeof(alldata_t) + MAXR*MAXC*sizeof(*dat->states));
-  db_size = fill_all_data(dat);
-  dat->nstates = db_size;
-
-  fprintf(stderr, "db site size is %i, npips is %i\n", db_size, npips);
-  /* FIXME: flexibilize a bit this */
-  /* in bytes */
-  dat->known_data_len = 2989;
-  dat->unknown_data_len = 220;
-
+  /* what is this now ? */
   alloc_pips_state(npips,
 		   dat->known_data_len,
 		   dat->unknown_data_len);
+
+  /* */
 
   if (thorough) {
     do_thorough_passes(dat, npips);
@@ -686,15 +675,14 @@ static int do_real_work(void) {
   /* Not exactly clever, more though for CL argument */
   if (allpips)
     do_all_pips(dat, npips);
-  else {
-    /* XXX -- allow filtering on start / end */
-    isolate_bit(pip, dat);
-  }
+/*   else { */
+/*     /\* XXX -- allow filtering on start / end *\/ */
+/*     isolate_bit(pip, dat); */
+/*   } */
 
  exit:
   free_pips_state(npips);
-  free_pips_db(npips);
-  free_all_data();
+  free_all_data(dat);
 
   print_summary();
   return 0;
