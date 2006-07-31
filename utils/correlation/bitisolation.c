@@ -629,64 +629,30 @@ do_thorough_passes(alldata_t *dat, unsigned npips) {
    interresting
 */
 
-/* Final function does the job */
-int main(int argc, char *argv[], char *env[]) {
-  char *db_name = NULL;
-  char *start = NULL;
-  char *end = NULL;
-  static int allpips = 0;
-  static int unite = 0;
-  static int thorough = 0;
-  static unsigned long pip = 0;
+static char *db_name = NULL;
+static char *start = NULL;
+static char *end = NULL;
+static gboolean allpips = 0;
+static gboolean unite = 0;
+static gboolean thorough = 0;
+static unsigned long pip = 0;
 
+static GOptionEntry entries[] =
+{
+  {"db", 'd', 0, G_OPTION_ARG_FILENAME, &db_name, "Database name (whatever this is)", NULL},
+  {"pip", 'p', 0, G_OPTION_ARG_INT, &pip, "Number of pips", NULL},
+  {"start", 's', 0, G_OPTION_ARG_STRING, &start, "Start", NULL},
+  {"end", 'e', 0, G_OPTION_ARG_STRING, &end, "End", NULL},
+  {"allpips", 'a', 0, G_OPTION_ARG_NONE, &allpips, "Do all pips", NULL},
+  {"thorough", 't', 0, G_OPTION_ARG_NONE, &thorough, "be thorough", NULL},
+  {"union", 'u', 0, G_OPTION_ARG_NONE, &unite, "Unite !", NULL},
+  { NULL }
+};
+
+static int do_real_work(void) {
   alldata_t *dat;
   unsigned db_size;
   unsigned npips;
-
-  static struct option longopts[] = {
-    {"db", required_argument, 0, 'd'},
-    //    {"pipnum", required_argument, 0, 'n'},
-    {"pip", required_argument, 0, 'p'},
-    {"start", required_argument, 0, 's'},
-    {"end", required_argument, 0, 'e'},
-    {"allpips", no_argument, &allpips, 1},
-    {"thorough", no_argument, &thorough, 1},
-    {"union", no_argument, &unite, 1},
-    {0, 0, 0, 0},
-  };
-  static const char shortopts[] = "d:p:s:e:";
-
-  while (1) {
-    int c;
-    /* getopt_long stores the option index here. */
-    int option_index = 0;
-
-    c = getopt_long(argc, argv, shortopts, longopts, &option_index);
-
-    /* Detect the end of the options. */
-    if (c == -1)
-      break;
-
-    switch (c) {
-    case 0:
-      /* flags */
-      break;
-    case 'd':
-      db_name = optarg;
-      break;
-    case 's':
-      start = optarg;
-      break;
-    case 'e':
-      end = optarg;
-      break;
-    case 'p':
-      pip = strtoul(optarg, NULL, 10);
-      break;
-    default:
-      abort();
-    }
-  }
 
   /* open the pip name database */
   npips = read_pips_db(db_name);
@@ -731,6 +697,24 @@ int main(int argc, char *argv[], char *env[]) {
   free_all_data();
 
   print_summary();
-
   return 0;
+}
+
+/* Final function does the job */
+int main(int argc, char *argv[], char *env[]) {
+  GError *error = NULL;
+  GOptionContext *context = NULL;
+
+  context = g_option_context_new ("- find a set function given some input/output pairs");
+  g_option_context_add_main_entries (context, entries, NULL);
+  g_option_context_parse (context, &argc, &argv, &error);
+  if (error != NULL) {
+    g_warning("parse error: %s",error->message);
+    g_error_free (error);
+    return -1;
+  }
+
+  g_option_context_free(context);
+
+  return do_real_work();
 }
