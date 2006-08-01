@@ -319,7 +319,7 @@ bitstream_to_bitarray(bitarray_t *dest, unsigned offset,
 static inline bitarray_t *
 get_lab_data(const altera_bitstream_t *bitstream,
 	     unsigned x, unsigned y) {
-  unsigned width = get_chunk_len(bitstream, x);
+  unsigned width = 35;//get_chunk_len(bitstream, x);
   /* lab size, anyone ? */
   unsigned size = width * 70;
   bitarray_t *bitarray = bitarray_create(size);
@@ -352,15 +352,17 @@ iterate_over_labs(const altera_bitstream_t *bitstream,
 		  lab_iterator_t iter, void *data) {
   unsigned x;
 
-  for ( x = 1; x < EP35_X_SITES-1; x++)
+  for ( x = 1; x < EP35_X_SITES-1; x++) {
+    unsigned chunk_len = get_chunk_len(bitstream,x);
     /* if we're of the right type. This is a rought filter */
-    if (get_chunk_len(bitstream,x) == 35) {
+    if (chunk_len == 35 || chunk_len == 35 + 4) {
       unsigned y;
       for ( y = 1; y <= EP35_Y_SITES; y++)
 	iter(bitstream, x, y, data);
     } else {
       g_print("not considering x value %i\n",x);
     }
+  }
 }
 
 typedef void (*table_iterator_t)(const altera_bitstream_t *bitstream,
