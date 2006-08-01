@@ -145,7 +145,7 @@ bitarray_set (bitarray_t *a, int bit)
   if (bit > a->bits)
     return;
 
-  a->array[bit / 32] |= (1 << (bit % 32));
+  a->array[bit / 8 * sizeof(array_storage_t)] |= (1 << (bit % 8 * sizeof(array_storage_t)));
 }
 
 
@@ -159,7 +159,7 @@ bitarray_unset (bitarray_t *a, int bit)
   if (bit > a->bits)
     return;
 
-  a->array[bit / 32] &= ~ (1 << (bit % 32));
+  a->array[bit / 8 * sizeof(array_storage_t)] &= ~ (1 << (bit % 8 * sizeof(array_storage_t)));
 }
 
 
@@ -173,7 +173,7 @@ bitarray_change_bit (bitarray_t *a, int bit)
   if (bit > a->bits)
     return;
 
-  a->array[bit / 32] ^= (1 << (bit % 32));
+  a->array[bit / 8 * sizeof(array_storage_t)] ^= (1 << (bit % 8 * sizeof(array_storage_t)));
 }
 
 
@@ -190,7 +190,7 @@ bitarray_neg (bitarray_t *a)
 
 
 void
-bitarray_sum (bitarray_t *a, bitarray_t *b)
+bitarray_sum (bitarray_t *a, const bitarray_t *b)
 {
   int i;
 
@@ -201,7 +201,7 @@ bitarray_sum (bitarray_t *a, bitarray_t *b)
 
 
 void
-bitarray_intersect (bitarray_t *a, bitarray_t *b)
+bitarray_intersect (bitarray_t *a, const bitarray_t *b)
 {
   int i;
 
@@ -209,10 +209,8 @@ bitarray_intersect (bitarray_t *a, bitarray_t *b)
     a->array[i] &= b->array[i];
 }
 
-
-
 void
-bitarray_subtract (bitarray_t *a, bitarray_t *b)
+bitarray_subtract (bitarray_t *a, const bitarray_t *b)
 {
   int i;
 
@@ -220,9 +218,17 @@ bitarray_subtract (bitarray_t *a, bitarray_t *b)
     a->array[i] &= ~ b->array[i];
 }
 
+void
+bitarray_diffsym (bitarray_t *a, const bitarray_t *b)
+{
+  int i;
+
+  for (i = 0; i < a->size; i++)
+    a->array[i] ^= b->array[i];
+}
 
 int
-bitarray_equal (bitarray_t *a, bitarray_t *b)
+bitarray_equal (const bitarray_t *a, const bitarray_t *b)
 {
   int i;
 
@@ -235,7 +241,7 @@ bitarray_equal (bitarray_t *a, bitarray_t *b)
 
 
 void
-bitarray_copy (bitarray_t *to, bitarray_t *from)
+bitarray_copy (bitarray_t *to, const bitarray_t *from)
 {
   int i;
 
@@ -246,10 +252,10 @@ bitarray_copy (bitarray_t *to, bitarray_t *from)
 
 
 int
-bitarray_is_set (bitarray_t *a, int bit)
+bitarray_is_set (const bitarray_t *a, int bit)
 {
   if (a && a->array){
-    return a->array[bit / 32] & (1 << (bit % 32));
+    return a->array[bit / 8 * sizeof(array_storage_t)] & (1 << (bit % 8 * sizeof(array_storage_t)));
   }
   else
     return 0;
@@ -266,9 +272,9 @@ bitarray_for_ones (bitarray_t *a, void (*fun)(int))
     return;
 
   for (i = 0; i < a->size; i++){
-    for (j = 0; j < 32 && 32 * i + j < a->bits; j++){
+    for (j = 0; j < 8 * sizeof(array_storage_t) && 8 * sizeof(array_storage_t) * i + j < a->bits; j++){
       if ((a->array[i] & (1 << j)) != 0)
-        fun (32 * i + j);
+        fun (8 * sizeof(array_storage_t) * i + j);
     }
   }
 }
@@ -285,7 +291,7 @@ bitarray_print (bitarray_t *a)
 
 
 int
-bitarray_ones_count (bitarray_t *a)
+bitarray_ones_count (const bitarray_t *a)
 {
   unsigned char x;
   int      i;
@@ -310,9 +316,9 @@ bitarray_true_for_all (bitarray_t *a, int (*fun)(int))
   int j;
 
   for (i = 0; i < a->size; i++){
-    for (j = 0; j < 32 && 32 * i + j < a->bits; j++){
+    for (j = 0; j < 8 * sizeof(array_storage_t) && 8 * sizeof(array_storage_t) * i + j < a->bits; j++){
       if ((a->array[i] & (1 << j)) != 0)
-        if (! fun (32 * i + j))
+        if (! fun (8 * sizeof(array_storage_t) * i + j))
           return 0;
     }
   }
@@ -322,15 +328,15 @@ bitarray_true_for_all (bitarray_t *a, int (*fun)(int))
 
 
 int
-bitarray_first_set (bitarray_t *a)
+bitarray_first_set (const bitarray_t *a)
 {
   int i;
   int j;
 
   for (i = 0; i < a->size; i++){
-    for (j = 0; j < 32 && 32 * i + j < a->bits; j++){
+    for (j = 0; j < 8 * sizeof(array_storage_t) && 8 * sizeof(array_storage_t) * i + j < a->bits; j++){
       if ((a->array[i] & (1 << j)) != 0)
-        return 32 * i + j;
+        return 8 * sizeof(array_storage_t) * i + j;
     }
   }
   return -1;
@@ -339,7 +345,7 @@ bitarray_first_set (bitarray_t *a)
 
 
 int
-bitarray_none_is_set (bitarray_t *a)
+bitarray_none_is_set (const bitarray_t *a)
 {
   int i;
 

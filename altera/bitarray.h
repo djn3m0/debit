@@ -47,17 +47,18 @@ extern void        bitarray_set (bitarray_t *a, int bit);
 extern void        bitarray_unset (bitarray_t *a, int bit);
 extern void        bitarray_change_bit (bitarray_t *a, int bit);
 extern void        bitarray_neg (bitarray_t *a);
-extern void        bitarray_sum (bitarray_t *a, bitarray_t *b);
-extern void        bitarray_intersect (bitarray_t *a, bitarray_t *b);
-extern void        bitarray_subtract (bitarray_t *a, bitarray_t *b);
-extern int         bitarray_equal (bitarray_t *a, bitarray_t *b);
-extern void        bitarray_copy (bitarray_t *to, bitarray_t *from);
-extern int         bitarray_is_set (bitarray_t *a, int bit);
+extern void        bitarray_sum (bitarray_t *a, const bitarray_t *b);
+extern void        bitarray_intersect (bitarray_t *a, const bitarray_t *b);
+extern void        bitarray_subtract (bitarray_t *a, const bitarray_t *b);
+extern void        bitarray_diffsym (bitarray_t *a, const bitarray_t *b);
+extern int         bitarray_equal (const bitarray_t *a, const bitarray_t *b);
+extern void        bitarray_copy (bitarray_t *to, const bitarray_t *from);
+extern int         bitarray_is_set (const bitarray_t *a, int bit);
 extern void        bitarray_for_ones (bitarray_t *a, void (*fun)(int));
 extern void        bitarray_print (bitarray_t *a);
-extern int         bitarray_ones_count (bitarray_t *a);
+extern int         bitarray_ones_count (const bitarray_t *a);
 extern int         bitarray_true_for_all (bitarray_t *a, int (*fun)(int));
-extern int         bitarray_first_set (bitarray_t *a);
-extern int         bitarray_none_is_set (bitarray_t *a);
+extern int         bitarray_first_set (const bitarray_t *a);
+extern int         bitarray_none_is_set (const bitarray_t *a);
 
 #endif
