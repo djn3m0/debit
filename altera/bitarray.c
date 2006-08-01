@@ -52,7 +52,7 @@ bitarray_create (int bits)
     return NULL;
 
   result = bitarray_create_data(NULL, bits);
-  result->array = g_new (array_storage_t, result->size);
+  result->array = g_new0 (array_storage_t, result->size);
   return result;
 }
 

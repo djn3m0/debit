@@ -49,7 +49,7 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
 
   /* initial state. The printing should be specific and done outside of
      this pip-agnostic function */
-  g_print("doing pip #%08i, %s -> %s...",bit,
+  g_print("doing pip #%08i, %s -> %s... ",bit,
 	  get_pip_start(pipdb,bit),get_pip_end(pipdb,bit));
 
   alloc_state(&state, len, ulen);
@@ -59,7 +59,7 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   switch(status) {
   case STATUS_NOTALONE:
     unisolated++;
-    //fprintf(stdout, "not alone\n");
+    g_print("not alone\n");
     break;
   case STATUS_NIL:
     nil++;

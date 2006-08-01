@@ -13,12 +13,6 @@
 
 #include "bitisolation.h"
 
-/* Ugly and infamous constants */
-#define MAXR 100
-#define MAXC 100
-//#define n_pips 2827
-#define n_pips 2847
-
 #define BYTES_OF_BITS(x) ((x + 7) / 8)
 
 typedef struct alldata {
