@@ -38,8 +38,8 @@ bitarray_create_data (char *data, int bits) {
 
   result        = g_new0 (bitarray_t, 1);
   result->bits  = bits;
-  result->size  = (bits + sizeof(unsigned) * 8 - 1) / (sizeof(unsigned)*8);
-  result->array  = (unsigned *)data;
+  result->size  = (bits + sizeof(array_storage_t) * 8 - 1) / (sizeof(array_storage_t)*8);
+  result->array = (void*) data;
   return result;
 }
 
@@ -52,7 +52,7 @@ bitarray_create (int bits)
     return NULL;
 
   result = bitarray_create_data(NULL, bits);
-  result->array = g_new (unsigned, result->size);
+  result->array = g_new (array_storage_t, result->size);
   return result;
 }
 
@@ -94,9 +94,9 @@ bitarray_destroy (bitarray_t *a)
     g_free (a);
 }
 
-unsigned *
+array_storage_t *
 bitarray_free (bitarray_t *a, gboolean keep_data) {
-  unsigned *data = a->array;
+  array_storage_t *data = a->array;
   g_assert(a);
 
   g_free(a);
@@ -287,13 +287,13 @@ bitarray_print (bitarray_t *a)
 int
 bitarray_ones_count (bitarray_t *a)
 {
-  unsigned x;
+  unsigned char x;
   int      i;
   int      result = 0;
 
   for (i = 0; i < a->size; i++){
     x = a->array[i];
-    while (x){
+    while (x) {
       x &= x - 1;
       result++;
     }
@@ -350,11 +350,3 @@ bitarray_none_is_set (bitarray_t *a)
   return i == a->size;
 }
 
-/****************************************************************************
- *    INTERFACE CLASS BODIES
- ****************************************************************************/
-/****************************************************************************
- *
- *    END MODULE bitarray.c
- *
- ****************************************************************************/

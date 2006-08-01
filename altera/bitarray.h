@@ -27,8 +27,10 @@
 
 #include <glib.h>
 
+typedef unsigned char array_storage_t;
+
 typedef struct bitarray {
-  unsigned *array;
+  array_storage_t *array;
   int       size;
   int       bits;
 } bitarray_t;
@@ -37,7 +39,7 @@ extern bitarray_t *bitarray_create (int bits);
 extern bitarray_t *bitarray_create_data (char *data, int bits);
 extern bitarray_t *bitarray_reverse (bitarray_t *b);
 extern void        bitarray_destroy (bitarray_t *a);
-extern unsigned *  bitarray_free (bitarray_t *a, gboolean keep_data);
+extern unsigned char *bitarray_free (bitarray_t *a, gboolean keep_data);
 extern void        bitarray_remove (bitarray_t *a, int index);
 extern void        bitarray_zeros (bitarray_t *a);
 extern void        bitarray_ones (bitarray_t *a);
