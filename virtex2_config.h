@@ -8,6 +8,9 @@
  * now, and see what can be shared as we go along.
  */
 
+#ifndef _HAS_VIRTEX2_CONFIG_H
+#define _HAS_VIRTEX2_CONFIG_H
+
 #include <inttypes.h>
 
 typedef struct slice_descr {
@@ -42,3 +45,5 @@ typedef struct site_frame {
 typedef struct site_config {
 	site_descr_t mna[22];
 } __attribute__((packed)) site_config_t;
+
+#endif /* _HAS_VIRTEX2_CONFIG_H */

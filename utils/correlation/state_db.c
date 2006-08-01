@@ -19,9 +19,27 @@ get_file_data(gchar **data, unsigned *len, const gchar *file) {
   return -1;
 }
 
+static void
+set_pip_bit(const gchar *line, void *data) {
+  pip_db_t *db = data;
+  unsigned bit = get_pip_index(db, line);
+  (void) bit;
+  //set_bit();
+}
+
+static int
+get_file_txtdata(const pip_db_t *db,
+		 gchar **data, unsigned *len, const gchar *filename) {
+  /* allocate the data array */
+  /* fill the data array correctly */
+  iterate_over_lines(filename, set_pip_bit, NULL);
+  return 0;
+}
+
 /* Iterate over all sites to get all data */
 alldata_t *
-fill_all_data(const gchar **knw, const gchar **uknw) {
+fill_all_data(const pip_db_t *db,
+	      const gchar **knw, const gchar **uknw) {
   alldata_t *dat = g_new(alldata_t, 1);
   unsigned idx = 0;
   GArray *data_array;
@@ -32,7 +50,7 @@ fill_all_data(const gchar **knw, const gchar **uknw) {
     const gchar *inp = knw[idx], *outp = uknw[idx];
     state_t s;
     /* XXX Check data length */
-    get_file_data(&s.known_data, &dat->known_data_len, inp);
+    get_file_txtdata(db, &s.known_data, &dat->known_data_len, inp);
     get_file_data(&s.unknown_data, &dat->unknown_data_len, outp);
     g_array_append_val(data_array, s);
     idx++;

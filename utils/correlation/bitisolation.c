@@ -71,10 +71,8 @@ print_state(FILE *out,
     for(j = 0; j < 8; j++)
       if (data[i] & (1 << j)) {
 	unsigned offset = i*8 + j;
-	/* is the mna */
-	unsigned xpos = offset / (8 * sizeof(site_descr_t));
-	/* is the offset in the mna */
-	unsigned ypos = offset % (8 * sizeof(site_descr_t));
+	unsigned xpos = 0;
+	unsigned ypos = 0;
 	fprintf(out, "%i (%i,%i)\n", offset, xpos, ypos);
       }
 }
@@ -95,15 +93,16 @@ dump_state(const int bit, const alldata_t *dat, const state_t *state) {
 }
 
 static void
-dump_pips_db(const unsigned npips, const unsigned ulen) {
+dump_pips_db(const pip_db_t *pipdb, const unsigned ulen) {
+  const unsigned npips = pipdb->pip_num;
   int i;
-  /* loop throught the whole db */
+  /* loop throught the whole db -- iterate_over_states */
   for (i = 0; i < npips; i++) {
-    pip_ref_t *piprec = get_pip(i);
+    pip_ref_t *piprec = get_pip(pipdb, i);
     if (!piprec->isolated)
       continue;
     fprintf(stdout,"pip #%08i, %s -> %s\n",
-	    i,get_pip_start(i),get_pip_end(i));
+	    i,get_pip_start(pipdb,i),get_pip_end(pipdb,i));
     print_state(stdout, piprec->state.unknown_data, ulen);
   }
 }
@@ -285,7 +284,7 @@ isolate_bit_core(const state_t *state,
 /* Other possibility -> dichotomy, and do a descent with take/don't
    contake. There's more data to memoize, but it should be far faster */
 static void
-isolate_bit(const unsigned bit, alldata_t *dat) {
+isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   state_t state;
   core_status_t status;
   size_t len = dat->known_data_len;
@@ -293,7 +292,8 @@ isolate_bit(const unsigned bit, alldata_t *dat) {
 
   /* initial state. The printing should be specific and done outside of
      this pip-agnostic function */
-  fprintf(stdout,"doing pip #%08i, %s -> %s...",bit,get_pip_start(bit),get_pip_end(bit));
+  fprintf(stdout,"doing pip #%08i, %s -> %s...",bit,
+	  get_pip_start(pipdb,bit),get_pip_end(pipdb,bit));
   alloc_state(&state, len, ulen);
   init_state(&state, len, ulen);
 
@@ -344,15 +344,18 @@ check_collision(const unsigned bit, const state_t *s, alldata_t *dat) {
 }
 
 static void
-do_all_pips(alldata_t *dat, unsigned npips) {
+do_all_pips(const pip_db_t *pipdb, alldata_t *dat) {
+  unsigned npips = pipdb->pip_num;
   unsigned pip;
   for(pip = 0; pip < npips; pip++)
-    isolate_bit(pip, dat);
+    isolate_bit(pipdb, pip, dat);
 }
 
 static void
-do_filtered_pips(alldata_t *dat, unsigned npips,
+do_filtered_pips(const pip_db_t *pipdb,
+		 alldata_t *dat,
 		 const char *start, const char *end) {
+  unsigned npips = pipdb->pip_num;
   unsigned pip;
   state_t union_state, work_state;
   core_status_t status;
@@ -368,8 +371,8 @@ do_filtered_pips(alldata_t *dat, unsigned npips,
   /* check if the pip is okay, if it is, isolated it, then
      or all the bits */
   for(pip = 0; pip < npips; pip++) {
-    const char *pip_start = get_pip_start(pip);
-    const char *pip_end = get_pip_end(pip);
+    const char *pip_start = get_pip_start(pipdb, pip);
+    const char *pip_end = get_pip_end(pipdb, pip);
     init_state(&work_state, len, ulen);
     if ((start && !strcmp(pip_start,start)) ||
 	(end && !strcmp(pip_end,end))) {
@@ -413,10 +416,11 @@ count_bits(const void *dat, const size_t len) {
 
 /* Heuristic for marking a pip */
 static int __attribute__((unused))
-flag_pip(const state_t *s, const unsigned pip,
+flag_pip(const pip_db_t *pipdb,
+	 const state_t *s, const unsigned pip,
 	 const unsigned ulen) {
   unsigned nbits;
-  pip_ref_t *piprec = get_pip(pip);
+  pip_ref_t *piprec = get_pip(pipdb, pip);
   /* Very simple heuristic: if there are less than two bits left in the
      state, then the pip is considered isolated */
   nbits = count_bits(s->unknown_data, ulen);
@@ -432,9 +436,10 @@ flag_pip(const state_t *s, const unsigned pip,
 }
 
 static int
-flag_pip_aggressively(const state_t *s, const unsigned pip,
+flag_pip_aggressively(const pip_db_t *pipdb,
+		      const state_t *s, const unsigned pip,
 		      const unsigned ulen) {
-  pip_ref_t *piprec = get_pip(pip);
+  pip_ref_t *piprec = get_pip(pipdb,pip);
   /* Aggressive heuristic: it is sufficient for the pip to be isolated
      formally that we consider it isolated. The rationale behind this is
      that superfluous bits outside of this are not flagged in the xdl
@@ -451,20 +456,21 @@ flag_pip_aggressively(const state_t *s, const unsigned pip,
    after thorough isolation, have exactly the same left-hand-side (known
    state) */
 static int
-_is_grouped(const alldata_t *dat, const unsigned pip) {
+_is_grouped(const pip_db_t *pipdb,
+	    const alldata_t *dat, const unsigned pip) {
   size_t len = dat->known_data_len;
   const state_t *work_state;
   char *kdata;
   unsigned i;
 
-  work_state = get_pip_state(pip);
+  work_state = get_pip_state(pipdb,pip);
   kdata = work_state->known_data;
 
   for (i=0; i < len; i++) {
     if (kdata[i]) {
       /* check that the i element has the same lefthand side */
       if (i != pip) {
-	const state_t *state = get_pip_state(i);
+	const state_t *state = get_pip_state(pipdb,i);
 	fprintf(stderr, "comparing state %i and %i\n",i,pip);
 	if (memcmp(kdata, state->known_data, len))
 	  break;
@@ -477,19 +483,19 @@ _is_grouped(const alldata_t *dat, const unsigned pip) {
 }
 
 static unsigned
-mark_group(const alldata_t *dat, const unsigned pip) {
+mark_group(const pip_db_t *pipdb, const alldata_t *dat, const unsigned pip) {
   size_t len = dat->known_data_len;
   unsigned marked = 0;
   const state_t *work_state;
   char *kdata;
   unsigned i;
 
-  work_state = get_pip_state(pip);
+  work_state = get_pip_state(pipdb, pip);
   kdata = work_state->known_data;
 
   for (i=0; i < len; i++) {
     if (kdata[i]) {
-      pip_ref_t *piprec = get_pip(pip);
+      pip_ref_t *piprec = get_pip(pipdb, pip);
       piprec->isolated = 1;
       marked++;
     }
@@ -498,8 +504,9 @@ mark_group(const alldata_t *dat, const unsigned pip) {
 }
 
 static unsigned
-do_grouped_pips(const alldata_t *dat, const unsigned npips) {
+do_grouped_pips(const pip_db_t *pipdb, const alldata_t *dat) {
   /* mark as grouped pips which are in an equivalence class */
+  const unsigned npips = pipdb->pip_num;
   unsigned added = 0;
   unsigned pip;
 
@@ -507,9 +514,10 @@ do_grouped_pips(const alldata_t *dat, const unsigned npips) {
 
   for(pip = 0; pip < npips; pip++) {
     /* If we're not doing the first thing, then */
-    pip_ref_t *piprec = get_pip(pip);
+    pip_ref_t *piprec = get_pip(pipdb, pip);
 
-    fprintf(stderr,"doing pip #%08i, %s -> %s...",pip,get_pip_start(pip),get_pip_end(pip));
+    fprintf(stderr,"doing pip #%08i, %s -> %s...",pip,
+	    get_pip_start(pipdb, pip),get_pip_end(pipdb, pip));
 
     if (piprec->isolated) {
 	fprintf(stderr,"pip already isolated\n");
@@ -517,9 +525,9 @@ do_grouped_pips(const alldata_t *dat, const unsigned npips) {
     }
 
     fprintf(stderr,"checking for grouped pip\n");
-    if (!_is_grouped(dat,pip)) {
+    if (!_is_grouped(pipdb,dat,pip)) {
       fprintf(stderr,"pip is grouped !\n");
-      added += mark_group(dat,pip);
+      added += mark_group(pipdb,dat,pip);
     }
   }
 
@@ -527,7 +535,8 @@ do_grouped_pips(const alldata_t *dat, const unsigned npips) {
 }
 
 static void
-remove_known_pips(const alldata_t *dat, const state_t *s, const unsigned kpip) {
+remove_known_pips(const pip_db_t *pipdb,
+		  const alldata_t *dat, const state_t *s, const unsigned kpip) {
   char *remains = s->known_data;
   unsigned len = dat->known_data_len;
   unsigned ulen = dat->unknown_data_len;
@@ -536,7 +545,7 @@ remove_known_pips(const alldata_t *dat, const state_t *s, const unsigned kpip) {
    * and remove them if they are actually isolated
    */
   for(i = 0; i < len; i++) {
-    pip_ref_t *pip = get_pip(i);
+    pip_ref_t *pip = get_pip(pipdb, i);
     if (i != kpip && remains[i] && pip->isolated) {
       /* we can do something */
       fprintf(stderr, "remaining @%i can be wiped\n", i);
@@ -549,8 +558,10 @@ remove_known_pips(const alldata_t *dat, const state_t *s, const unsigned kpip) {
 
 /* Do one iteration of the loop */
 static unsigned
-do_thorough_pips(const alldata_t *dat, unsigned npips,
+do_thorough_pips(const pip_db_t *pipdb,
+		 const alldata_t *dat,
 		 const int first_iteration) {
+  unsigned npips = pipdb->pip_num;
   unsigned pip;
   core_status_t status;
   unsigned added = 0;
@@ -560,21 +571,22 @@ do_thorough_pips(const alldata_t *dat, unsigned npips,
   /* allocated and zeroed */
 
   for(pip = 0; pip < npips; pip++) {
-    const state_t *pip_state = get_pip_state(pip);
+    const state_t *pip_state = get_pip_state(pipdb, pip);
 
-    fprintf(stderr,"doing pip #%08i, %s -> %s...",pip,get_pip_start(pip),get_pip_end(pip));
+    fprintf(stderr,"doing pip #%08i, %s -> %s...",pip,
+	    get_pip_start(pipdb, pip),get_pip_end(pipdb, pip));
 
     status = isolate_bit_core(pip_state, dat, pip);
 
     if (first_iteration) {
       if (status != STATUS_NOTALONE)
-	if (!flag_pip_aggressively(pip_state, pip, ulen))
+	if (!flag_pip_aggressively(pipdb, pip_state, pip, ulen))
 	  added++;
       fprintf(stderr,"done\n");
       continue;
     } else {
       /* If we're not doing the first thing, then */
-      pip_ref_t *piprec = get_pip(pip);
+      pip_ref_t *piprec = get_pip(pipdb, pip);
       if (piprec->isolated) {
 	fprintf(stderr,"isolated at once\n");
 	continue;
@@ -583,10 +595,10 @@ do_thorough_pips(const alldata_t *dat, unsigned npips,
     fprintf(stderr,"doing big search\n");
     /* The we need to further hand-remove all already-known
        pips */
-    remove_known_pips(dat,pip_state,pip);
+    remove_known_pips(pipdb,dat,pip_state,pip);
     /* again test for completion */
     if (!_is_isolated(stderr,pip,pip_state->known_data, len) &&
-	!flag_pip_aggressively(pip_state,pip,ulen)) {
+	!flag_pip_aggressively(pipdb,pip_state,pip,ulen)) {
       /* This worked ! Very good ! */
       fprintf(stderr,"It Worked ! New PIP %i isolated !\n", pip);
       added++;
@@ -597,31 +609,32 @@ do_thorough_pips(const alldata_t *dat, unsigned npips,
 
 /* loop me */
 static void
-do_thorough_passes(alldata_t *dat, unsigned npips) {
+do_thorough_passes(const pip_db_t *pipdb,
+		   alldata_t *dat) {
   size_t ulen = dat->unknown_data_len;
   int first_pass = 1;
   unsigned added, pass = 0;
   do {
     fprintf(stderr,"Doing pass %i...", pass);
-    added = do_thorough_pips(dat, npips, first_pass);
+    added = do_thorough_pips(pipdb, dat, first_pass);
     fprintf(stderr,"%i pips done\n",added);
     first_pass = 0;
     pass++;
   } while (added != 0);
 
-  do_grouped_pips(dat, npips);
+  do_grouped_pips(pipdb, dat);
 
   /* redo a pass over this */
   do {
     fprintf(stderr,"Doing pass %i...", pass);
-    added = do_thorough_pips(dat, npips, first_pass);
+    added = do_thorough_pips(pipdb, dat, first_pass);
     fprintf(stderr,"%i pips done\n",added);
     first_pass = 0;
     pass++;
   } while (added != 0);
 
   /* Then dump the db of isolated pips */
-  dump_pips_db(npips,ulen);
+  dump_pips_db(pipdb, ulen);
 }
 
 /* TODO: we can also do the _reverse_ : given an unknown bit, eliminate
@@ -648,40 +661,42 @@ static GOptionEntry entries[] =
   { NULL }
 };
 
-static int do_real_work(void) {
+static int do_real_work() {
+  pip_db_t *pipdb;
   alldata_t *dat;
-  unsigned npips = 0;
+
+  pipdb = build_pip_db(dat_input);
 
   /* we fill the data and build the database along the way */
-  dat = fill_all_data(dat_input, dat_output);
+  dat = fill_all_data(pipdb, dat_input, dat_output);
 
   /* what is this now ? */
-  alloc_pips_state(npips,
+  alloc_pips_state(pipdb,
 		   dat->known_data_len,
 		   dat->unknown_data_len);
 
   /* */
 
   if (thorough) {
-    do_thorough_passes(dat, npips);
+    do_thorough_passes(pipdb, dat);
     goto exit;
   }
 
   if (unite) {
-    do_filtered_pips(dat, npips, start, end);
+    do_filtered_pips(pipdb, dat, start, end);
     goto exit;
   }
 
   /* Not exactly clever, more though for CL argument */
   if (allpips)
-    do_all_pips(dat, npips);
+    do_all_pips(pipdb, dat);
 /*   else { */
 /*     /\* XXX -- allow filtering on start / end *\/ */
 /*     isolate_bit(pip, dat); */
 /*   } */
 
  exit:
-  free_pips_state(npips);
+  free_pips_state(pipdb);
   free_all_data(dat);
 
   print_summary();
