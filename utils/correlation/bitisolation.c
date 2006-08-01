@@ -648,14 +648,13 @@ static gboolean allpips = FALSE;
 static gboolean unite = FALSE;
 static gboolean thorough = FALSE;
 
-static const char **dat_output = NULL;
-static const char **dat_input = NULL;
-
+static const char **data = NULL;
 
 static GOptionEntry entries[] =
 {
-  {"input", 'i', 0, G_OPTION_ARG_FILENAME_ARRAY, &dat_input, "Input values of the function we seek", NULL},
-  {"output", 'o', 0, G_OPTION_ARG_FILENAME_ARRAY, &dat_output, "Output values of the function we seek", NULL},
+  {"data", 'i', 0, G_OPTION_ARG_FILENAME_ARRAY, &data,
+   "<names>.bin and <names>.dat are input/output pairs of the binary function",
+   "names"},
   {"thorough", 't', 0, G_OPTION_ARG_NONE, &thorough, "be thorough", NULL},
   {"union", 'u', 0, G_OPTION_ARG_NONE, &unite, "Unite !", NULL},
   { NULL }
@@ -665,10 +664,10 @@ static int do_real_work() {
   pip_db_t *pipdb;
   alldata_t *dat;
 
-  pipdb = build_pip_db(dat_input);
+  pipdb = build_pip_db(data);
 
   /* we fill the data and build the database along the way */
-  dat = fill_all_data(pipdb, dat_input, dat_output);
+  dat = fill_all_data(pipdb, data);
 
   /* what is this now ? */
   alloc_pips_state(pipdb,

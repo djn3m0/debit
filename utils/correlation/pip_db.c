@@ -80,9 +80,11 @@ iterate_over_lines(const gchar *filename,
 }
 
 static void
-add_pip_file(const gchar *filename, void *data) {
+add_pip_file(const gchar *file, void *data) {
   pip_db_t *pipdb = data;
+  gchar *filename = g_strconcat(file,".dat",NULL);
   iterate_over_lines(filename, add_pip_line, pipdb);
+  g_free(filename);
 }
 
 static void
