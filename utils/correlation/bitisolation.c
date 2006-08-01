@@ -644,7 +644,7 @@ do_thorough_passes(const pip_db_t *pipdb,
 
 static char *start = NULL;
 static char *end = NULL;
-static gboolean allpips = FALSE;
+static gboolean allelems = FALSE;
 static gboolean unite = FALSE;
 static gboolean thorough = FALSE;
 
@@ -652,9 +652,10 @@ static const char **data = NULL;
 
 static GOptionEntry entries[] =
 {
-  {"data", 'i', 0, G_OPTION_ARG_FILENAME_ARRAY, &data,
+  {"data", 'd', 0, G_OPTION_ARG_FILENAME_ARRAY, &data,
    "<names>.bin and <names>.dat are input/output pairs of the binary function",
    "names"},
+  {"allelems", 'a', 0, G_OPTION_ARG_NONE, &allelems, "try to isolate all elements", NULL},
   {"thorough", 't', 0, G_OPTION_ARG_NONE, &thorough, "be thorough", NULL},
   {"union", 'u', 0, G_OPTION_ARG_NONE, &unite, "Unite !", NULL},
   { NULL }
@@ -674,7 +675,7 @@ static int do_real_work() {
 		   dat->known_data_len,
 		   dat->unknown_data_len);
 
-  /* */
+  /* real action */
 
   if (thorough) {
     do_thorough_passes(pipdb, dat);
@@ -687,7 +688,7 @@ static int do_real_work() {
   }
 
   /* Not exactly clever, more though for CL argument */
-  if (allpips)
+  if (allelems)
     do_all_pips(pipdb, dat);
 /*   else { */
 /*     /\* XXX -- allow filtering on start / end *\/ */

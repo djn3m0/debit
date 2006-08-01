@@ -19,8 +19,12 @@
 //#define n_pips 2827
 #define n_pips 2847
 
+#define BYTES_OF_BITS(x) ((x + 7) / 8)
+
 typedef struct alldata {
+  /** length in bytes of the known data array */
   size_t known_data_len;
+  /** length in bytes of the unknown data array */
   size_t unknown_data_len;
   size_t nstates;
   state_t *states;

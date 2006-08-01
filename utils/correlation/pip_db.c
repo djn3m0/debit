@@ -67,14 +67,15 @@ iterate_over_lines(const gchar *filename,
 		   line_iterator_t iter, void *data) {
   pip_db_t *pipdb = data;
   gchar *contents;
-  gchar **lines;
+  gchar **lines, *line;
+  unsigned i = 0;
 
   g_file_get_contents(filename, &contents, NULL, NULL);
   lines = g_strsplit(contents, "\n", 0);
   g_free(contents);
 
-  while(*lines != NULL)
-    iter(*lines++, pipdb);
+  while((line = lines[i++]) != NULL)
+    iter(line, pipdb);
 
   g_strfreev(lines);
 }

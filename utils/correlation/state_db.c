@@ -77,6 +77,7 @@ fill_all_data(const pip_db_t *db, const gchar **knw) {
     idx++;
   }
 
+  dat->known_data_len = BYTES_OF_BITS(db->pip_num);
   dat->nstates = data_array->len;
   dat->states = (state_t *)g_array_free(data_array, FALSE);
 
