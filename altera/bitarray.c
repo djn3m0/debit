@@ -250,9 +250,9 @@ bitarray_copy (bitarray_t *to, const bitarray_t *from)
 int
 bitarray_is_set (const bitarray_t *a, int bit)
 {
-  if (a && a->array){
-    return a->array[bit / 8 * sizeof(array_storage_t)] & (1 << (bit % 8 * sizeof(array_storage_t)));
-  }
+  const unsigned char *array = a->array;
+  if (array)
+    return array[bit / WORD_BITSIZE] & (1 << (bit % WORD_BITSIZE));
   else
     return 0;
 }

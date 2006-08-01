@@ -138,7 +138,8 @@ offset_array(const geo_stride_t *strides) {
 }
 
 /* the absolute coordinate of (1,1,30) -- adjusted for various offsets */
-#define BASE_BITS (6479737+34-1*2701)
+#define SLICE_ADJUST_OFFSET 0
+#define BASE_BITS (6479737+34-1*2701 - SLICE_ADJUST_OFFSET)
 
 typedef struct _coord_descr_t {
   unsigned max;
@@ -181,7 +182,7 @@ get_bit_offset(const altera_bitstream_t *bitstream,
   unsigned ret = BASE_BITS - y_offset - x_offset + slice_offset;
 
 /*   g_print("offset is %i, y %i, x %i, slice %i\n", */
-/* 	  ret, y_offset, x_offset, slice_offset); */
+/*  	  ret, y_offset, x_offset, slice_offset); */
   return ret;
 }
 
@@ -209,13 +210,13 @@ get_bit(const altera_bitstream_t *bitstream,
 static inline
 guint32 get_chunk(const altera_bitstream_t *bitstream,
 		  unsigned x, unsigned y, unsigned slice,
-		  unsigned start, unsigned end) {
+		  unsigned start, unsigned len) {
   bitarray_t *bitarray = bitstream->bitarray;
   unsigned basebit = get_bit_offset(bitstream,y,slice,x) + start;
   guint32 res = 0;
   unsigned i;
 
-  for (i = start; i < end; i++)
+  for (i = 0; i < len; i++)
     if (bitarray_is_set(bitarray,basebit++))
       res |= 1 << i;
 
@@ -234,13 +235,13 @@ bitarray_write_bit(bitarray_t *dest, unsigned offset,
 static inline
 void set_chunk(const altera_bitstream_t *bitstream,
 	       unsigned x, unsigned y, unsigned slice,
-	       unsigned start, unsigned end,
+	       unsigned start, unsigned len,
 	       guint32 data) {
   bitarray_t *bitarray = bitstream->bitarray;
   unsigned basebit = get_bit_offset(bitstream,y,slice,x) + start;
   unsigned i;
 
-  for (i = start; i < end; i++) {
+  for (i = 0; i < len; i++) {
     gboolean set = (data & (1 << i)) ? TRUE : FALSE;
     bitarray_write_bit(bitarray, basebit++, set);
   }
@@ -264,7 +265,7 @@ void zero_truth_table(const altera_bitstream_t *bitstream,
   slice = slice_from_index(N);
 
   for (i = 0; i < 4; i++)
-    set_chunk(bitstream, x, y, slice + i, 0, 4, 0);
+    set_chunk(bitstream, x, y, slice + i, SLICE_ADJUST_OFFSET, 4, 0);
 }
 
 static inline
@@ -277,7 +278,8 @@ guint16 get_truth_table(const altera_bitstream_t *bitstream,
 
   /* todo: bit reordering */
   for (i = 0; i < 4; i++) {
-    guint32 table = get_chunk(bitstream, x, y, slice + i, 0, 4);
+    guint32 table = get_chunk(bitstream, x, y, slice + i,
+			      SLICE_ADJUST_OFFSET, 4);
     res |= table << (4*i);
   }
 
@@ -408,7 +410,7 @@ table_display(const altera_bitstream_t *bitstream,
 	      unsigned x, unsigned y, unsigned n) {
   guint16 table = get_truth_table(bitstream,x,y,n);
   if (table != 0 && table != 0xffff)
-    g_print("(%i,%i,%i) is %04x\n",x,y,n,table);
+    g_print("lut (%i,%i,%i) is %04x\n",x,y,n,table);
 }
 
 void
