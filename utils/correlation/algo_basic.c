@@ -49,8 +49,8 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
 
   /* initial state. The printing should be specific and done outside of
      this pip-agnostic function */
-  g_print("doing pip #%08i, %s -> %s... ",bit,
-	  get_pip_start(pipdb,bit),get_pip_end(pipdb,bit));
+  g_print("doing pip #%08i, %s... ",
+	  bit, get_pip_start(pipdb,bit));
 
   alloc_state(&state, len, ulen);
   init_state(&state, len, ulen);
@@ -105,6 +105,7 @@ void
 do_all_pips(const pip_db_t *pipdb, alldata_t *dat) {
   unsigned npips = pipdb->pip_num;
   unsigned pip;
+  g_print("Trying to isolate %i pips\n", npips);
   for(pip = 0; pip < npips; pip++)
     isolate_bit(pipdb, pip, dat);
 }

@@ -5,6 +5,7 @@
  */
 
 #include <glib.h>
+#include <string.h>
 #include "bitisolation_db.h"
 
 const state_t *
@@ -53,6 +54,10 @@ add_pip_line(const gchar *line, void *data) {
   GHashTable *hash = db->hash;
   gpointer orig_key, value;
 
+  /* filter out empty lines */
+  if (strlen(line) == 0)
+    return;
+
   chunk = g_string_chunk_insert_const (db->chunk, line);
 
   /* query & insert it in the LUT */
@@ -84,6 +89,7 @@ static void
 add_pip_file(const gchar *file, void *data) {
   pip_db_t *pipdb = data;
   gchar *filename = g_strconcat(file,".dat",NULL);
+  g_print("Loading file %s\n", filename);
   iterate_over_lines(filename, add_pip_line, pipdb);
   g_free(filename);
 }
@@ -110,6 +116,7 @@ build_pip_db(const gchar **files) {
 
   db->chunk = g_string_chunk_new (16);
   db->hash = hash;
+
   iterate_over_input(files, add_pip_file, db);
 
   /* the summary of the table, nicely put */
