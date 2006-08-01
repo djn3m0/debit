@@ -124,28 +124,43 @@ void free_pip_db(pip_db_t *db) {
   g_free(db);
 }
 
-/* FIXME: move this to one big allocation array */
-int
-alloc_pips_state(const pip_db_t *pip_db,
-		 const size_t len, const size_t ulen) {
-  unsigned npips = pip_db->pip_num;
-  pip_ref_t *piparray = pip_db->pip_array;
-  unsigned i;
-  /* allocate state memory */
-  for(i = 0; i < npips; i++) {
-    state_t *state = &piparray[i].state;
-    alloc_state(state, len, ulen);
-    init_state(state, len, ulen);
+void
+iterate_over_pips(const pip_db_t *pipdb, pip_iterator_t iter, void *dat) {
+  pip_ref_t *piparray = pipdb->pip_array;
+  unsigned npips = pipdb->pip_num;
+  unsigned pip;
+  for(pip = 0; pip < npips; pip++) {
+    pip_ref_t *pipref = &piparray[pip];
+    iter(pipref, dat);
   }
-  return 0;
 }
 
-void free_pips_state(const pip_db_t *pip_db) {
-  unsigned npips = pip_db->pip_num;
-  pip_ref_t *piparray = pip_db->pip_array;
-  unsigned i;
-  for(i = 0; i < npips; i++) {
-    state_t *alloced = &piparray[i].state;
-    release_state(alloced);
-  }
+typedef struct _both {
+  unsigned len;
+  unsigned ulen;
+} both_t;
+
+void do_state(pip_ref_t *ref, void *dat) {
+  both_t *arg = dat;
+  unsigned len = arg->len, ulen = arg->ulen;
+  state_t *state = &ref->state;
+  alloc_state(state, len, ulen);
+  init_state(state, len, ulen);
+}
+
+/* FIXME: move this to one big allocation array */
+void
+alloc_pips_state(pip_db_t *pip_db,
+		 const size_t len, const size_t ulen) {
+  both_t arg = { .len = len, .ulen = ulen };
+  iterate_over_pips(pip_db, do_state, &arg);
+}
+
+static void free_state(pip_ref_t *ref, void *dat) {
+  (void) dat;
+  release_state(&ref->state);
+}
+
+void free_pips_state(pip_db_t *pipdb) {
+  iterate_over_pips(pipdb, free_state, NULL);
 }

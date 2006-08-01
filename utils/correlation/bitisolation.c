@@ -93,18 +93,18 @@ dump_state(const int bit, const alldata_t *dat, const state_t *state) {
 }
 
 static void
+print_pip(pip_ref_t *ref, void *data) {
+  unsigned ulen = GPOINTER_TO_UINT(data);
+  if (!ref->isolated)
+    return;
+
+  fprintf(stdout,"pip %s -> %s\n", ref->start, ref->end);
+  print_state(stdout, ref->state.unknown_data, ulen);
+}
+
+static void
 dump_pips_db(const pip_db_t *pipdb, const unsigned ulen) {
-  const unsigned npips = pipdb->pip_num;
-  int i;
-  /* loop throught the whole db -- iterate_over_states */
-  for (i = 0; i < npips; i++) {
-    pip_ref_t *piprec = get_pip(pipdb, i);
-    if (!piprec->isolated)
-      continue;
-    fprintf(stdout,"pip #%08i, %s -> %s\n",
-	    i,get_pip_start(pipdb,i),get_pip_end(pipdb,i));
-    print_state(stdout, piprec->state.unknown_data, ulen);
-  }
+  iterate_over_pips(pipdb, print_pip, GUINT_TO_POINTER(ulen));
 }
 
 static int __attribute__((unused))

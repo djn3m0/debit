@@ -57,11 +57,15 @@ void
 iterate_over_lines(const gchar *filename,
 		   line_iterator_t iter, void *data);
 
+/* iterator over the db */
+typedef void (*pip_iterator_t)(pip_ref_t *, void *);
+void iterate_over_pips(const pip_db_t *, pip_iterator_t, void *);
+
 pip_db_t *build_pip_db(const gchar **);
 void free_pip_db(pip_db_t *);
 
-int alloc_pips_state(const pip_db_t *pipdb, const size_t len, const size_t ulen);
-void free_pips_state(const pip_db_t *pipdb);
+void alloc_pips_state(pip_db_t *pipdb, const size_t len, const size_t ulen);
+void free_pips_state(pip_db_t *pipdb);
 
 const char *get_pip_start(const pip_db_t *pipdb, const unsigned i);
 const char *get_pip_end(const pip_db_t *pipdb, const unsigned i);
