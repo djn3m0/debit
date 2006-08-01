@@ -26,6 +26,8 @@
 #include <glib.h>
 #include "bitarray.h"
 
+#define WORD_BITSIZE (8 * sizeof(array_storage_t))
+
 static void
 print_int (int a)
 {
@@ -38,7 +40,7 @@ bitarray_create_data (char *data, int bits) {
 
   result        = g_new0 (bitarray_t, 1);
   result->bits  = bits;
-  result->size  = (bits + sizeof(array_storage_t) * 8 - 1) / (sizeof(array_storage_t)*8);
+  result->size  = (bits + WORD_BITSIZE - 1) / WORD_BITSIZE;
   result->array = (void*) data;
   return result;
 }
@@ -139,13 +141,10 @@ bitarray_ones (bitarray_t *a)
 void
 bitarray_set (bitarray_t *a, int bit)
 {
-  if (a == NULL)
-    return;
-
   if (bit > a->bits)
     return;
 
-  a->array[bit / 8 * sizeof(array_storage_t)] |= (1 << (bit % 8 * sizeof(array_storage_t)));
+  a->array[bit / WORD_BITSIZE] |= (1 << (bit % WORD_BITSIZE));
 }
 
 
@@ -153,13 +152,10 @@ bitarray_set (bitarray_t *a, int bit)
 void
 bitarray_unset (bitarray_t *a, int bit)
 {
-  if (a == NULL)
-    return;
-
   if (bit > a->bits)
     return;
 
-  a->array[bit / 8 * sizeof(array_storage_t)] &= ~ (1 << (bit % 8 * sizeof(array_storage_t)));
+  a->array[bit / WORD_BITSIZE] &= ~ (1 << (bit % WORD_BITSIZE));
 }
 
 
@@ -173,7 +169,7 @@ bitarray_change_bit (bitarray_t *a, int bit)
   if (bit > a->bits)
     return;
 
-  a->array[bit / 8 * sizeof(array_storage_t)] ^= (1 << (bit % 8 * sizeof(array_storage_t)));
+  a->array[bit / WORD_BITSIZE] ^= (1 << (bit % WORD_BITSIZE));
 }
 
 
@@ -272,9 +268,9 @@ bitarray_for_ones (bitarray_t *a, void (*fun)(int))
     return;
 
   for (i = 0; i < a->size; i++){
-    for (j = 0; j < 8 * sizeof(array_storage_t) && 8 * sizeof(array_storage_t) * i + j < a->bits; j++){
+    for (j = 0; j < WORD_BITSIZE && WORD_BITSIZE * i + j < a->bits; j++){
       if ((a->array[i] & (1 << j)) != 0)
-        fun (8 * sizeof(array_storage_t) * i + j);
+        fun (WORD_BITSIZE * i + j);
     }
   }
 }
@@ -316,9 +312,9 @@ bitarray_true_for_all (bitarray_t *a, int (*fun)(int))
   int j;
 
   for (i = 0; i < a->size; i++){
-    for (j = 0; j < 8 * sizeof(array_storage_t) && 8 * sizeof(array_storage_t) * i + j < a->bits; j++){
+    for (j = 0; j < WORD_BITSIZE && WORD_BITSIZE * i + j < a->bits; j++){
       if ((a->array[i] & (1 << j)) != 0)
-        if (! fun (8 * sizeof(array_storage_t) * i + j))
+        if (! fun (WORD_BITSIZE * i + j))
           return 0;
     }
   }
@@ -334,9 +330,9 @@ bitarray_first_set (const bitarray_t *a)
   int j;
 
   for (i = 0; i < a->size; i++){
-    for (j = 0; j < 8 * sizeof(array_storage_t) && 8 * sizeof(array_storage_t) * i + j < a->bits; j++){
+    for (j = 0; j < WORD_BITSIZE && WORD_BITSIZE * i + j < a->bits; j++){
       if ((a->array[i] & (1 << j)) != 0)
-        return 8 * sizeof(array_storage_t) * i + j;
+        return WORD_BITSIZE * i + j;
     }
   }
   return -1;

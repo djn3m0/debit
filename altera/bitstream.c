@@ -337,7 +337,7 @@ get_lab_data(const altera_bitstream_t *bitstream,
 
 static inline gchar *make_lab_string(unsigned x, unsigned y) {
   GString *string = g_string_sized_new (64);
-  g_string_printf(string, "lab_%u_%u.bin", x, y);
+  g_string_printf(string, "X%uY%u.bin", x, y);
   return g_string_free(string, FALSE);
 }
 
@@ -355,7 +355,7 @@ iterate_over_labs(const altera_bitstream_t *bitstream,
   for ( x = 1; x < EP35_X_SITES-1; x++) {
     unsigned chunk_len = get_chunk_len(bitstream,x);
     /* if we're of the right type. This is a rought filter */
-    if (chunk_len == 35 || chunk_len == 35 + 4) {
+    if (chunk_len == 35 || chunk_len == 4 + 35) {
       unsigned y;
       for ( y = 1; y <= EP35_Y_SITES; y++)
 	iter(bitstream, x, y, data);
@@ -447,15 +447,13 @@ static inline int dump_data(const gchar *odir,
 
 static inline int bitarray_dump(const gchar *odir, const gchar *filename,
 				const bitarray_t *data) {
-  return dump_data(odir, filename, (gchar *)data->array,
-		   data->size * sizeof(unsigned));
+  return dump_data(odir, filename, (gchar *)data->array, data->size);
 }
 
 int
 dump_raw_bit(const gchar *odir, const gchar *filename,
 	     const altera_bitstream_t *bitstream) {
-  return dump_data(odir, filename,
-		   bitstream->bitdata, bitstream->bitlength);
+  return dump_data(odir, filename, bitstream->bitdata, bitstream->bitlength);
 }
 
 altera_bitstream_t *

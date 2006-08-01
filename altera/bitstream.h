@@ -28,6 +28,8 @@ dump_lut_tables(const altera_bitstream_t *);
 int
 dump_raw_bit(const gchar *odir, const gchar *filename,
 	     const altera_bitstream_t *);
+void
+zero_lut_tables(const altera_bitstream_t *);
 
 void
 dump_lab_data(const gchar *odir,

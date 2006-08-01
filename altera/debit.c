@@ -34,6 +34,7 @@
 static gboolean labdump = FALSE;
 static gboolean pipdump = FALSE;
 static gboolean lutdump = FALSE;
+static gboolean clearlut = FALSE;
 
 static gchar *ifile = NULL;
 static gchar *bitdump = NULL;
@@ -52,17 +53,20 @@ debit_file(gchar *input_file, gchar *output_dir) {
     goto out_err_nofree;
   }
 
-  if (lutdump)
-    dump_lut_tables(altera);
-
-  if (labdump)
-    dump_lab_data(odir, altera);
-
   if (bitdump) {
     err = dump_raw_bit(odir, bitdump, altera);
     if (err)
       goto out_err;
   }
+
+  if (lutdump)
+    dump_lut_tables(altera);
+
+  if (clearlut)
+    zero_lut_tables(altera);
+
+  if (labdump)
+    dump_lab_data(odir, altera);
 
  out_err:
   free_bitstream(altera);
@@ -80,6 +84,7 @@ static GOptionEntry entries[] =
   {"lutdump", 'l', 0, G_OPTION_ARG_NONE, &lutdump, "dump lut tables", NULL},
   {"outdir", 'o', 0, G_OPTION_ARG_FILENAME, &odir, "Write data files in directory <odir>", "<odir>"},
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
+  {"clearlut", 'c', 0, G_OPTION_ARG_NONE, &clearlut, "Clear the LUT values before labdump", NULL},
   {"labdump", 'a', 0, G_OPTION_ARG_NONE, &labdump, "Dump raw lab data", NULL},
   {"pipdump", 'p', 0, G_OPTION_ARG_NONE, &pipdump, "Dump pips in the bitstream", NULL},
   { NULL }
