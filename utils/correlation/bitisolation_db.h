@@ -46,7 +46,7 @@ typedef struct _pip_db {
 } pip_db_t;
 
 /* raw data database -- (xdl data, bitstream) site data pairs */
-alldata_t *fill_all_data(const pip_db_t *, const gchar **);
+alldata_t *fill_all_data(const pip_db_t *, const gchar *, const gchar **);
 void free_all_data(alldata_t *);
 
 typedef void (*line_iterator_t)(const gchar *line, void *data);

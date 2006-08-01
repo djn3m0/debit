@@ -75,6 +75,7 @@ iterate_over_lines(const gchar *filename,
   gchar **lines, *line;
   unsigned i = 0;
 
+  /* XXX handle failure, ungracefully */
   g_file_get_contents(filename, &contents, NULL, NULL);
   lines = g_strsplit(contents, "\n", 0);
   g_free(contents);

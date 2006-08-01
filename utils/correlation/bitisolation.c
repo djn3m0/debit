@@ -25,6 +25,7 @@ static gboolean allelems = FALSE;
 static gboolean unite = FALSE;
 static gboolean thorough = FALSE;
 
+static const char *ref = NULL;
 static const char **data = NULL;
 
 static GOptionEntry entries[] =
@@ -32,6 +33,7 @@ static GOptionEntry entries[] =
   {"data", 'd', 0, G_OPTION_ARG_FILENAME_ARRAY, &data,
    "<names>.bin and <names>.dat are input/output pairs of the binary function",
    "names"},
+  {"ref", 'r', 0, G_OPTION_ARG_FILENAME, &ref, "take <zero>.bin as reference bit data (image of zero)", "<zero>"},
   {"allelems", 'a', 0, G_OPTION_ARG_NONE, &allelems, "try to isolate all elements", NULL},
   {"thorough", 't', 0, G_OPTION_ARG_NONE, &thorough, "be thorough", NULL},
   {"union", 'u', 0, G_OPTION_ARG_NONE, &unite, "Unite !", NULL},
@@ -43,9 +45,7 @@ static int do_real_work() {
   alldata_t *dat;
 
   pipdb = build_pip_db(data);
-
-  /* we fill the data and build the database along the way */
-  dat = fill_all_data(pipdb, data);
+  dat = fill_all_data(pipdb, ref, data);
 
   /* what is this now ? */
   alloc_pips_state(pipdb,
