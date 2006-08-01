@@ -4,46 +4,78 @@
  *
  */
 
+#ifndef _HAS_BITISOLATION_H
+#define _HAS_BITISOLATION_H
+
 #include <string.h>
 #include <glib.h>
-/* #include "virtex2_config.h" */
+#include "altera/bitarray.h"
 
 typedef struct state {
-  /* Maybe we'd better represent this loosely */
-  char *known_data;
-  /* Full data representation */
-  char *unknown_data;
+  bitarray_t *known_data;
+  bitarray_t *unknown_data;
 } state_t;
-
-/* state manipulation routines */
-/* static inline void */
-/* zero_lut(site_config_t *site) { */
-/*   /\* zero out the LUT data in mna 2,3 *\/ */
-/*   memset(&site->mna[1], 0, sizeof(site_descr_t)); */
-/*   memset(&site->mna[2], 0, sizeof(site_descr_t)); */
-/* } */
-
-/*
- * XXX use slice allocator
- */
 
 static inline int
 alloc_state(state_t *to, size_t len, size_t ulen) {
-  to->known_data = g_new0(char,len);
-  to->unknown_data = g_new0(char,ulen);
+  to->known_data = bitarray_create(len);
+  to->unknown_data = bitarray_create(ulen);
   return 0;
 }
 
 static inline void
 init_state(state_t *to, size_t len, size_t ulen) {
-  memset(to->known_data, 0xFF, len);
-  memset(to->unknown_data, 0xFF, ulen);
-/*   zero_lut((site_config_t *)to->known_data); */
-/*   zero_lut((site_config_t *)to->unknown_data); */
+  bitarray_ones(to->known_data);
+  bitarray_ones(to->unknown_data);
 }
 
 static inline void
 release_state(state_t *to) {
-  g_free(to->known_data);
-  g_free(to->unknown_data);
+  bitarray_free(to->known_data, TRUE);
+  bitarray_free(to->unknown_data, TRUE);
 }
+
+static inline void
+and_state(const state_t *s1, const state_t *s2) {
+  bitarray_intersect(s1->known_data, s2->known_data);
+  bitarray_intersect(s1->unknown_data, s2->unknown_data);
+}
+
+static inline void
+or_state(const state_t *s1, const state_t *s2) {
+  bitarray_sum (s1->known_data, s2->known_data);
+  bitarray_sum (s1->unknown_data, s2->unknown_data);
+}
+
+static inline void
+and_neg_state(state_t *s1, const state_t *s2) {
+  bitarray_subtract (s1->known_data, s2->known_data);
+  bitarray_subtract (s1->unknown_data, s2->unknown_data);
+}
+
+static inline int
+bit_is_present(const unsigned bit, const state_t *s) {
+  /* bitarray lookup in unknown data */
+  return bitarray_is_set (s->unknown_data, bit);
+}
+
+static inline int
+known_bit_is_present(const unsigned bit, const state_t *s) {
+  return bitarray_is_set (s->known_data, bit);
+}
+
+/* find first non-nil */
+static inline int
+unk_data_nil(const state_t *s) {
+  return bitarray_none_is_set (s->unknown_data);
+}
+
+/* */
+static inline int
+is_isolated(const state_t *s) {
+  unsigned count;
+  count = bitarray_ones_count (s->known_data);
+  return (count <= 1);
+}
+
+#endif /* _HAS_BITISOLATION_H */

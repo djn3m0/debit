@@ -5,19 +5,23 @@
  */
 
 #include <glib.h>
+#include "altera/bitarray.h"
 #include "bitisolation_db.h"
 
 static int
-get_file_bindata(gchar **data, unsigned *len, const gchar *file) {
+get_file_bindata(bitarray_t **data, unsigned *len, const gchar *file) {
   gchar *filename = g_strconcat(file,".dat",NULL);
   gboolean done;
   GError *error;
+  char *bindata;
 
-  done = g_file_get_contents (filename, data, len, &error);
+  done = g_file_get_contents (filename, &bindata, len, &error);
   g_free(filename);
 
-  if (done)
+  if (done) {
+    *data = bitarray_create_data(bindata, *len);
     return 0;
+  }
 
   g_warning("Could not load data from %s: %s", filename,
 	    error->message);
@@ -27,26 +31,26 @@ get_file_bindata(gchar **data, unsigned *len, const gchar *file) {
 
 typedef struct _set_pip_arg {
   const pip_db_t *pipdb;
-  char *data;
+  bitarray_t *data;
 } set_pip_arg_t;
 
 static void
 set_pip_bit(const gchar *line, void *data) {
   set_pip_arg_t *arg = data;
   const pip_db_t *db = arg->pipdb;
+  bitarray_t *dat = arg->data;
   unsigned bit = get_pip_index(db, line);
-  (void) bit;
-  //set_bit();
+  bitarray_set(dat,bit);
 }
 
 static int
-get_file_txtdata(const pip_db_t *db, gchar **data, const gchar *file) {
+get_file_txtdata(const pip_db_t *db, bitarray_t **data, const gchar *file) {
   gchar *filename = g_strconcat(file,".dat",NULL);
   set_pip_arg_t arg = { .pipdb = db };
-  gchar *bindata;
+  bitarray_t *bindata;
 
   /* allocate the data array */
-  bindata = g_malloc0(db->pip_num);
+  bindata = bitarray_create(db->pip_num);
   arg.data = bindata;
 
   /* fill the data array correctly */

@@ -8,8 +8,8 @@
  * include file common to pip_db.c and state_db.c
  */
 
-#ifndef _HAS_BITISOLATION_H
-#define _HAS_BITISOLATION_H
+#ifndef _HAS_BITISOLATION_DB_H
+#define _HAS_BITISOLATION_DB_H
 
 #include "bitisolation.h"
 
@@ -77,4 +77,4 @@ const state_t *get_pip_state(const pip_db_t *pipdb, const unsigned i);
 pip_ref_t  *get_pip(const pip_db_t *pipdb, const unsigned i);
 unsigned get_pip_index(const pip_db_t *pipdb, const gchar *pip);
 
-#endif /* _HAS_BITISOLATION_H */
+#endif /* _HAS_BITISOLATION_DB_H */
