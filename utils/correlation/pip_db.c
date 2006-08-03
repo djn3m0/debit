@@ -133,6 +133,7 @@ void free_pip_db(pip_db_t *db) {
   /* free states */
   g_hash_table_destroy(db->hash);
   g_string_chunk_free(db->chunk);
+  g_free(db->pip_array);
   g_free(db);
 }
 

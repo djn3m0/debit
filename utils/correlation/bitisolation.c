@@ -47,7 +47,11 @@ static int do_real_work() {
   pipdb = build_pip_db(data);
   dat = fill_all_data(pipdb, ref, data);
 
-  /* what is this now ? */
+  /*
+    Allocate the pip db state.
+    Maybe this could be done at build_pip_db time, or use another
+    dedicated structure.
+  */
   alloc_pips_state(pipdb,
 		   dat->known_data_len,
 		   dat->unknown_data_len);
@@ -75,6 +79,7 @@ static int do_real_work() {
  exit:
   free_pips_state(pipdb);
   free_all_data(dat);
+  free_pip_db(pipdb);
 
 /*   print_summary(); */
   return 0;

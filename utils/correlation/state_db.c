@@ -19,7 +19,7 @@ get_file_bindata(bitarray_t **data, unsigned *len, const gchar *file) {
   g_free(filename);
 
   if (done) {
-    *data = bitarray_create_data(bindata, *len);
+    *data = bitarray_create_data(bindata, *len * 8);
     return 0;
   }
 
@@ -63,48 +63,84 @@ get_file_txtdata(const pip_db_t *db, bitarray_t **data, const gchar *file) {
   return 0;
 }
 
+static int
+fill_state(state_t *s, const gchar *inp,
+	   const pip_db_t *db) {
+  bitarray_t *known, *unknown;
+  unsigned udl;
+  int err;
+
+  err = get_file_txtdata(db, &known, inp);
+  if (err) {
+    g_warning("Error processing txt data for %s, skipping...", inp);
+    goto out;
+  }
+
+  err = get_file_bindata(&unknown, &udl, inp);
+  if (err) {
+    g_warning("Error processing bin data for %s, skipping...", inp);
+    goto out_free;
+  }
+
+  s->known_data = known;
+  s->unknown_data = unknown;
+  return 0;
+
+ out_free:
+  bitarray_free(known, FALSE);
+ out:
+  return err;
+
+}
+
+static void
+process_data(GArray *data_array, const gchar *inp,
+	     const bitarray_t *ref, const pip_db_t *db) {
+  state_t s;
+  int err;
+
+  err = fill_state(&s, inp, db);
+
+  if (!err) {
+    unsigned bitcount;
+    bitcount = bitarray_ones_count(s.unknown_data);
+    g_print("Successfully loaded data from %s, %i bits set, ", inp, bitcount);
+
+    if (ref) {
+      bitarray_diffsym(s.unknown_data, ref);
+      bitcount = bitarray_ones_count(s.unknown_data);
+      g_print("after diff with default is %i, ", bitcount);
+    }
+
+    g_print("has index %i\n", data_array->len);
+    g_array_append_val(data_array, s);
+  }
+}
+
 /* Iterate over all sites to get all data */
 alldata_t *
 fill_all_data(const pip_db_t *db, const gchar *reffile, const gchar **knw) {
   alldata_t *dat = g_new(alldata_t, 1);
-  unsigned idx = 0;
   bitarray_t *ref = NULL;
+  unsigned udl_ref, idx = 0;
   GArray *data_array;
 
   data_array = g_array_new(FALSE, FALSE, sizeof(state_t));
 
   if (reffile)
-    get_file_bindata(&ref, &dat->unknown_data_len, reffile);
+    get_file_bindata(&ref, &udl_ref, reffile);
 
   while (knw[idx] != NULL) {
     const gchar *inp = knw[idx];
-    int err1, err2;
-    state_t s;
-
-    /* XXX Check data length */
-    err1 = get_file_txtdata(db, &s.known_data, inp);
-    err2 = get_file_bindata(&s.unknown_data, &dat->unknown_data_len, inp);
-
-    if (err1 || err2) {
-      g_warning("Error processing %s, skipping...", inp);
-      /* XXX Free */
-    } else {
-      unsigned bitcount;
-      bitcount = bitarray_ones_count(s.unknown_data);
-      g_print("Successfully loaded data from %s, %i bits set,", inp, bitcount);
-      if (ref) {
-	bitarray_diffsym(s.unknown_data, ref);
-	bitcount = bitarray_ones_count(s.unknown_data);
-	g_print("after diff with default is %i,", bitcount);
-      }
-      g_print("has index %i\n", data_array->len);
-      g_array_append_val(data_array, s);
-    }
-
+    process_data(data_array, inp, ref, db);
     idx++;
   }
 
+  if (reffile)
+    (void) bitarray_free(ref, FALSE);
+
   dat->known_data_len = BYTES_OF_BITS(db->pip_num);
+  dat->unknown_data_len = udl_ref;
   dat->nstates = data_array->len;
   dat->states = (state_t *)g_array_free(data_array, FALSE);
 
@@ -113,6 +149,12 @@ fill_all_data(const pip_db_t *db, const gchar *reffile, const gchar **knw) {
 
 void
 free_all_data(alldata_t *dat) {
-  g_free(dat->states);
+  unsigned i, nstates=dat->nstates;
+  state_t *array = dat->states;
+
+  for (i = 0; i < nstates; i++)
+    release_state(&array[i]);
+
+  g_free(array);
   g_free(dat);
 }

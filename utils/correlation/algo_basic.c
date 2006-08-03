@@ -56,7 +56,7 @@ static void
 isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   state_t state;
   core_status_t status;
-  size_t len = pipdb->pip_num;
+  size_t len = 8 * dat->known_data_len;
   size_t ulen = 8 * dat->unknown_data_len;
 
   /* initial state. The printing should be specific and done outside of

@@ -31,8 +31,8 @@ init_state(state_t *to, size_t len, size_t ulen) {
 
 static inline void
 release_state(state_t *to) {
-  bitarray_free(to->known_data, TRUE);
-  bitarray_free(to->unknown_data, TRUE);
+  (void) bitarray_free(to->known_data, FALSE);
+  (void) bitarray_free(to->unknown_data, FALSE);
 }
 
 static inline void
