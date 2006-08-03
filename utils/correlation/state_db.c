@@ -40,6 +40,7 @@ set_pip_bit(const gchar *line, void *data) {
   const pip_db_t *db = arg->pipdb;
   bitarray_t *dat = arg->data;
   unsigned bit = get_pip_index(db, line);
+  g_print("bitindex of %s is %i\n", line, bit);
   bitarray_set(dat,bit);
 }
 
@@ -86,10 +87,17 @@ fill_all_data(const pip_db_t *db, const gchar *reffile, const gchar **knw) {
 
     if (err1 || err2) {
       g_warning("Error processing %s, skipping...", inp);
+      /* XXX Free */
     } else {
-      g_print("Successfully loaded data from %s\n", inp);
-      if (ref)
+      unsigned bitcount;
+      bitcount = bitarray_ones_count(s.unknown_data);
+      g_print("Successfully loaded data from %s, %i bits set,", inp, bitcount);
+      if (ref) {
 	bitarray_diffsym(s.unknown_data, ref);
+	bitcount = bitarray_ones_count(s.unknown_data);
+	g_print("after diff with default is %i,", bitcount);
+      }
+      g_print("has index %i\n", data_array->len);
       g_array_append_val(data_array, s);
     }
 

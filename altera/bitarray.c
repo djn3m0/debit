@@ -189,7 +189,7 @@ void
 bitarray_sum (bitarray_t *a, const bitarray_t *b)
 {
   int i;
-
+  g_assert(a->size == b->size);
   for (i = 0; i < a->size; i++)
     a->array[i] |= b->array[i];
 }
@@ -200,7 +200,7 @@ void
 bitarray_intersect (bitarray_t *a, const bitarray_t *b)
 {
   int i;
-
+  g_assert(a->size == b->size);
   for (i = 0; i < a->size; i++)
     a->array[i] &= b->array[i];
 }
@@ -209,7 +209,7 @@ void
 bitarray_subtract (bitarray_t *a, const bitarray_t *b)
 {
   int i;
-
+  g_assert(a->size == b->size);
   for (i = 0; i < a->size; i++)
     a->array[i] &= ~ b->array[i];
 }
@@ -218,7 +218,7 @@ void
 bitarray_diffsym (bitarray_t *a, const bitarray_t *b)
 {
   int i;
-
+  g_assert(a->size == b->size);
   for (i = 0; i < a->size; i++)
     a->array[i] ^= b->array[i];
 }

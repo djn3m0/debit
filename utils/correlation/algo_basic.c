@@ -14,6 +14,11 @@ static unsigned isolated = 0;
 static unsigned unisolated = 0;
 static unsigned nil = 0;
 
+static inline void
+dump_state(const state_t *state) {
+  bitarray_print (state->unknown_data);
+}
+
 core_status_t
 isolate_bit_core(const state_t *state,
 		 const alldata_t *dat, const unsigned bit) {
@@ -21,12 +26,19 @@ isolate_bit_core(const state_t *state,
   unsigned i;
   /* loop over all available configuration */
   for(i = 0; i < dat->nstates; i++) {
+    state_t *config = &configs[i];
     /* fprintf(stderr,"Trying state %i\n",i); */
     /* Don't do anything if byte is not present, due to bit collision,
        for now unknown */
-    if (known_bit_is_present(bit,&configs[i]))
+    if (known_bit_is_present(bit,config)) {
+      unsigned bitcount = bitarray_ones_count(state->unknown_data);
+      g_print("intersecting bit %i (%i bits set) with config %i (%i bits set)\n",
+	      bit, bitcount, i, bitarray_ones_count(config->unknown_data));
       /* Our bit is present in this config, so we and directly */
-      and_state(state, &configs[i]);
+      and_state(state, config);
+      bitcount = bitarray_ones_count(state->unknown_data);
+      g_print("Only %i bits remaining\n", bitcount);
+    }
   }
 
   if (unk_data_nil(state))
@@ -68,7 +80,7 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   default:
     g_print("isolated\n");
     isolated++;
-//    dump_state(bit, dat, &state);
+    dump_state(&state);
   }
 
   /* check for and report collisions */

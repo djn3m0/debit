@@ -30,7 +30,8 @@ get_pip(const pip_db_t *pipdb, const unsigned i) {
 
 unsigned
 get_pip_index(const pip_db_t *pipdb, const gchar *pip) {
-  return GPOINTER_TO_UINT(g_hash_table_lookup (pipdb->hash, pip));
+  const gchar *chunk = g_string_chunk_insert_const (pipdb->chunk, pip);
+  return GPOINTER_TO_UINT(g_hash_table_lookup (pipdb->hash, chunk));
 }
 
 typedef void (*ifile_iterator_t)(const gchar*, void *data);
@@ -52,19 +53,18 @@ add_pip_line(const gchar *line, void *data) {
   pip_db_t *db = data;
   const gchar *chunk;
   GHashTable *hash = db->hash;
-  gpointer orig_key, value;
-
-  /* filter out empty lines */
-  if (strlen(line) == 0)
-    return;
+  guint value_int;
+  gpointer orig_key, value_ptr;
 
   chunk = g_string_chunk_insert_const (db->chunk, line);
 
   /* query & insert it in the LUT */
-  if (g_hash_table_lookup_extended (hash, chunk, &orig_key, &value))
+  if (g_hash_table_lookup_extended (hash, chunk, &orig_key, &value_ptr))
     return;
-
-  g_hash_table_insert (hash, (gpointer)chunk, GUINT_TO_POINTER(g_hash_table_size(hash)));
+  value_int = g_hash_table_size(hash);
+  value_ptr = GUINT_TO_POINTER(value_int);
+  g_print("Adding pip %s with value %u to the hashtable\n", chunk, value_int);
+  g_hash_table_insert (hash, (gpointer)chunk, value_ptr);
 }
 
 void
@@ -81,7 +81,8 @@ iterate_over_lines(const gchar *filename,
   g_free(contents);
 
   while((line = lines[i++]) != NULL)
-    iter(line, pipdb);
+    if (strlen(line) != 0)
+      iter(line, pipdb);
 
   g_strfreev(lines);
 }

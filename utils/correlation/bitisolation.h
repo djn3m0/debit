@@ -75,7 +75,7 @@ static inline int
 is_isolated(const state_t *s) {
   unsigned count;
   count = bitarray_ones_count (s->known_data);
-  return (count <= 1);
+  return (count == 1);
 }
 
 #endif /* _HAS_BITISOLATION_H */
