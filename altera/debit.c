@@ -41,6 +41,8 @@ static gchar *bitdump = NULL;
 static gchar *odir = ".";
 static gchar *datadir = DATADIR;
 
+static gint coord = -1;
+
 static int
 debit_file(gchar *input_file, gchar *output_dir) {
   altera_bitstream_t *altera;
@@ -77,6 +79,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
 static GOptionEntry entries[] =
 {
   {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Read bitstream (sof file) <ifile>", "<ifile>"},
+  {"coord", 'r', 0, G_OPTION_ARG_INT, &coord, "Translate offset coordinate into device coordinates", NULL},
 #if DEBIT_DEBUG > 0
   {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
 #endif
@@ -87,6 +90,9 @@ static GOptionEntry entries[] =
   {"clearlut", 'c', 0, G_OPTION_ARG_NONE, &clearlut, "Clear the LUT values before labdump", NULL},
   {"labdump", 'a', 0, G_OPTION_ARG_NONE, &labdump, "Dump raw lab data", NULL},
   {"pipdump", 'p', 0, G_OPTION_ARG_NONE, &pipdump, "Dump pips in the bitstream", NULL},
+  /* some bitstream parameters */
+  {"base_offset", 'f', 0, G_OPTION_ARG_INT, &base_off, "Initial offset in the bitfile", NULL},
+  {"slice_offset", 's', 0, G_OPTION_ARG_INT, &slice_off, "offset at the smallest change", NULL},
   { NULL }
 };
 

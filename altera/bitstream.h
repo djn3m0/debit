@@ -19,6 +19,10 @@ typedef struct _altera_bitstream_t {
   GMappedFile *file;
 } altera_bitstream_t;
 
+/* adjustable parameters */
+extern gint base_off;
+extern gint slice_off;
+
 altera_bitstream_t *
 parse_bitstream(const gchar *file);
 

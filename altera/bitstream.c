@@ -138,8 +138,8 @@ offset_array(const geo_stride_t *strides) {
 }
 
 /* the absolute coordinate of (1,1,30) -- adjusted for various offsets */
-#define SLICE_ADJUST_OFFSET 24
-#define BASE_BITS (6479737+34-1*2701 - SLICE_ADJUST_OFFSET)
+gint base_off = 6479737+34-1*2701;
+gint slice_off = 24;
 
 typedef struct _coord_descr_t {
   unsigned max;
@@ -179,7 +179,7 @@ get_bit_offset(const altera_bitstream_t *bitstream,
   unsigned slice_offset = coords[SLICE].offset * slice;
 
   /* yes. Don't ask. Another intern. */
-  unsigned ret = BASE_BITS - y_offset - x_offset + slice_offset;
+  unsigned ret = (base_off - slice_off) - y_offset - x_offset + slice_offset;
 
 /*   g_print("offset is %i, y %i, x %i, slice %i\n", */
 /*  	  ret, y_offset, x_offset, slice_offset); */
@@ -265,7 +265,7 @@ void zero_truth_table(const altera_bitstream_t *bitstream,
   slice = slice_from_index(N);
 
   for (i = 0; i < 4; i++)
-    set_chunk(bitstream, x, y, slice + i, SLICE_ADJUST_OFFSET, 4, 0);
+    set_chunk(bitstream, x, y, slice + i, slice_off, 4, 0);
 }
 
 static inline
@@ -278,8 +278,8 @@ guint16 get_truth_table(const altera_bitstream_t *bitstream,
 
   /* todo: bit reordering */
   for (i = 0; i < 4; i++) {
-    guint32 table = get_chunk(bitstream, x, y, slice + i,
-			      SLICE_ADJUST_OFFSET, 4);
+    guint32 table = get_chunk(bitstream, x, y,
+			      slice + i, slice_off, 4);
     res |= table << (4*i);
   }
 
