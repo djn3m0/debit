@@ -39,6 +39,10 @@ void
 dump_lab_data(const gchar *odir,
 	      const altera_bitstream_t *);
 
+void
+print_pos_from_bit_offset(const altera_bitstream_t *,
+			  unsigned offset);
+
 void free_bitstream(altera_bitstream_t *);
 
 #endif /* _ALTERA_BITSTREAM_H */

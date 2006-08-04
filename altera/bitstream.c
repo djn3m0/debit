@@ -186,6 +186,73 @@ get_bit_offset(const altera_bitstream_t *bitstream,
   return ret;
 }
 
+/* These are the reverse functions from the above. This allows us to
+   check that the function is indeed a bijection ! */
+#define GET_NUM(x,y) (( (x) + (y) - 1 ) / (y) )
+
+static inline unsigned
+get_y_from_bit_offset(const altera_bitstream_t *bit,
+		      const unsigned off) {
+  unsigned width = coords[Y].offset;
+  unsigned basebits = get_bit_offset(bit, 0, 0, 0);
+  /* what remains here is the term
+     + y_offset - (-x_offset + slice_offset)
+     with the second term negative (or nil). Thus we add
+  */
+  return GET_NUM( basebits - off, width );
+}
+
+static inline unsigned
+get_slice_from_bit_offset(const altera_bitstream_t *bit,
+			  const unsigned off) {
+  unsigned y = get_y_from_bit_offset(bit,off);
+  unsigned basebits = get_bit_offset(bit, y, 0, 0);
+  unsigned width = coords[SLICE].offset;
+  /* what remains here is the term
+     - x_offset + slice_offset
+     which is positive (hugh !)
+   */
+  return GET_NUM ( off - basebits, width);
+}
+
+static inline unsigned
+get_x_from_bit_offset(const altera_bitstream_t *bit,
+		      const unsigned off) {
+  unsigned y = get_y_from_bit_offset(bit,off);
+  unsigned slice = get_slice_from_bit_offset(bit,off);
+  unsigned basebits = get_bit_offset(bit, y, slice, 0);
+  /* the term with remains here is x_offset - offset remaints */
+  unsigned remains = basebits - off;
+  unsigned *xoffsets = bit->xoffsets;
+  unsigned x;
+
+  for (x = 0; x < coords[X].max && xoffsets[x] < remains; x++)
+    ;
+
+  return x;
+}
+
+static inline unsigned
+get_offset_from_bit_offset(const altera_bitstream_t *bit,
+			   unsigned off) {
+  unsigned y = get_y_from_bit_offset(bit,off);
+  unsigned slice = get_slice_from_bit_offset(bit,off);
+  unsigned x = get_x_from_bit_offset(bit,off);
+  unsigned basebits = get_bit_offset(bit, y, slice, x);
+  return (off - basebits);
+}
+
+void print_pos_from_bit_offset(const altera_bitstream_t *bit,
+			       unsigned bitoffset) {
+  unsigned x = get_x_from_bit_offset(bit, bitoffset);
+  unsigned y = get_y_from_bit_offset(bit, bitoffset);
+  unsigned slice = get_slice_from_bit_offset(bit, bitoffset);
+  unsigned offset = get_offset_from_bit_offset(bit, bitoffset);
+
+  g_assert( bitoffset == get_bit_offset(bit,y,slice,x) + offset);
+  g_print("%i @ (%i,%i,%i) + %i\n", bitoffset, x, y, slice, offset);
+}
+
 static inline unsigned
 get_chunk_len(const altera_bitstream_t *bitstream, unsigned x) {
   return (bitstream->xoffsets[x+1] - bitstream->xoffsets[x]);

@@ -55,6 +55,9 @@ debit_file(gchar *input_file, gchar *output_dir) {
     goto out_err_nofree;
   }
 
+  if (coord > -1)
+    print_pos_from_bit_offset(altera, coord);
+
   if (bitdump) {
     err = dump_raw_bit(odir, bitdump, altera);
     if (err)
