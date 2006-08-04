@@ -29,9 +29,19 @@
 #define WORD_BITSIZE (8 * sizeof(array_storage_t))
 
 static void
-print_int (int a)
+print_int (int a, void *dat)
 {
+  (void) dat;
   g_print (" %d", a);
+}
+
+static void
+print_int_2D (int a, void *dat)
+{
+  unsigned width = GPOINTER_TO_UINT(dat);
+  unsigned x = a / width;
+  unsigned y = a % width;
+  g_print (" (%d,%d)", x, y);
 }
 
 bitarray_t *
@@ -263,7 +273,7 @@ bitarray_is_set (const bitarray_t *a, int bit)
 
 
 void
-bitarray_for_ones (bitarray_t *a, void (*fun)(int))
+bitarray_for_ones (bitarray_t *a, void (*fun)(int, void*), void *dat)
 {
   int i, j;
 
@@ -273,7 +283,7 @@ bitarray_for_ones (bitarray_t *a, void (*fun)(int))
   for (i = 0; i < a->size; i++){
     for (j = 0; j < WORD_BITSIZE && WORD_BITSIZE * i + j < a->bits; j++){
       if ((a->array[i] & (1 << j)) != 0)
-        fun (WORD_BITSIZE * i + j);
+        fun (WORD_BITSIZE * i + j, dat);
     }
   }
 }
@@ -281,13 +291,18 @@ bitarray_for_ones (bitarray_t *a, void (*fun)(int))
 
 
 void
-bitarray_print (bitarray_t *a)
+bitarray_print (const bitarray_t *a)
 {
-  bitarray_for_ones (a, print_int);
+  bitarray_for_ones ((bitarray_t *)a, print_int, NULL);
   g_print ("\n");
 }
 
-
+void
+bitarray_print2D (const unsigned width, const bitarray_t *a)
+{
+  bitarray_for_ones ((bitarray_t *)a, print_int_2D, GUINT_TO_POINTER(width));
+  g_print ("\n");
+}
 
 int
 bitarray_ones_count (const bitarray_t *a)

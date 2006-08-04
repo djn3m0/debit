@@ -15,8 +15,12 @@ static unsigned unisolated = 0;
 static unsigned nil = 0;
 
 static inline void
-dump_state(const state_t *state) {
-  bitarray_print (state->unknown_data);
+dump_state(alldata_t *dat, const state_t *state) {
+  unsigned width = dat->width;
+  if (width)
+    bitarray_print2D (width, state->unknown_data);
+  else
+    bitarray_print (state->unknown_data);
 }
 
 core_status_t
@@ -80,7 +84,7 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   default:
     g_print("isolated\n");
     isolated++;
-    dump_state(&state);
+    dump_state(dat,&state);
   }
 
   /* check for and report collisions */

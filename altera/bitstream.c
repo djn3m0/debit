@@ -138,7 +138,7 @@ offset_array(const geo_stride_t *strides) {
 }
 
 /* the absolute coordinate of (1,1,30) -- adjusted for various offsets */
-#define SLICE_ADJUST_OFFSET 8
+#define SLICE_ADJUST_OFFSET 24
 #define BASE_BITS (6479737+34-1*2701 - SLICE_ADJUST_OFFSET)
 
 typedef struct _coord_descr_t {

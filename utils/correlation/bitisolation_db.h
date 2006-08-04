@@ -20,6 +20,7 @@ typedef struct alldata {
   size_t known_data_len;
   /** length in bytes of the unknown data array */
   size_t unknown_data_len;
+  unsigned width;
   size_t nstates;
   state_t *states;
 } alldata_t;

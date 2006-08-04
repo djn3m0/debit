@@ -24,6 +24,7 @@ static char *end = NULL;
 static gboolean allelems = FALSE;
 static gboolean unite = FALSE;
 static gboolean thorough = FALSE;
+static guint width = 0;
 
 static const char *ref = NULL;
 static const char **data = NULL;
@@ -34,6 +35,7 @@ static GOptionEntry entries[] =
    "<names>.bin and <names>.dat are input/output pairs of the binary function",
    "names"},
   {"ref", 'r', 0, G_OPTION_ARG_FILENAME, &ref, "take <zero>.bin as reference bit data (image of zero)", "<zero>"},
+  {"width", 'w', 0, G_OPTION_ARG_INT, &width, "set the width of the data for 2D representation of the data", NULL},
   {"allelems", 'a', 0, G_OPTION_ARG_NONE, &allelems, "try to isolate all elements", NULL},
   {"thorough", 't', 0, G_OPTION_ARG_NONE, &thorough, "be thorough", NULL},
   {"union", 'u', 0, G_OPTION_ARG_NONE, &unite, "Unite !", NULL},
@@ -46,6 +48,7 @@ static int do_real_work() {
 
   pipdb = build_pip_db(data);
   dat = fill_all_data(pipdb, ref, data);
+  dat->width = width;
 
   /*
     Allocate the pip db state.
