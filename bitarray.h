@@ -10,19 +10,13 @@
 #include <glib.h>
 #include <inttypes.h>
 #include <stdlib.h>
-
-typedef struct bitarray {
-  uint8_t *data; // data is written little-endian in there
-  size_t len;
-  off_t pos; // pos of next bit to read or to be replaced by a put
-} bitarray_t;
-//note to self: the cursor moves like fopen with "w+"
+#include <unistd.h>
 
 /* read-only byte-aligned array */
 typedef struct bytearray {
-  const gchar *data; // data is written little-endian in there
+  const gchar *data;
   size_t len;
-  off_t pos; // pos of next bit to read or to be replaced by a put
+  off_t pos;
 } bytearray_t;
 
 bytearray_t *new_bytearray_with_data(size_t len, const gchar *data);

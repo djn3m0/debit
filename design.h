@@ -219,10 +219,6 @@ type_of_v2pkt(const uint32_t v2pkt) {
 
 typedef uint32_t reg_t;
 
-typedef struct {
-  bitarray_t *data;
-} col_t;
-
 #define FAMILY_LEN 128
 
 typedef struct design {
