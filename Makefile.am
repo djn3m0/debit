@@ -1,4 +1,4 @@
-SUBDIRS = data debian rpm altera utils
+SUBDIRS = data debian rpm windows altera utils
 
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\"
 AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
