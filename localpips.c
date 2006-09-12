@@ -22,6 +22,8 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
+#include "keyfile.h"
+
 #include "bitstream.h"
 #include "localpips.h"
 #include "wiring.h"
@@ -38,34 +40,6 @@
 static int build_datatree_from_keyfiles(GKeyFile *data, GKeyFile *control,
 					wire_db_t *wires, GNode *head);
 static void destroy_datatree(GNode *head);
-
-static gint
-read_keyfile(GKeyFile **fill, const gchar *filename) {
-  GKeyFile *db;
-  GError *error = NULL;
-
-  g_log(G_LOG_DOMAIN, PIP_LOG_DATA, "Loading data from %s", filename);
-
-  db = g_key_file_new();
-  if (!db)
-    goto out_err;
-
-  g_key_file_load_from_file(db,filename,G_KEY_FILE_NONE,&error);
-
-  if (error != NULL) {
-    g_warning("could not read db %s: %s",filename,error->message);
-    g_error_free (error);
-    goto out_err_free;
-  }
-
-  *fill = db;
-  return 0;
-
- out_err_free:
-  g_key_file_free (db);
- out_err:
-  return -1;
-}
 
 static const gchar *basedbnames[SITE_TYPE_NEUTRAL] = {
   [CLB] = "clb",
@@ -194,32 +168,6 @@ free_pipdb(pip_db_t *pipdb) {
   g_free(pipdb);
 }
 
-typedef void (*group_hook_t)(gpointer, const gchar *);
-
-/** \brief Iterator over groups in keyfile
- *
- * @param pipdb the pip database
- * @param func the group iterator
- * @param closure the group iterator argument
- * @see group_hook_t
- */
-
-static void
-iterate_over_groups(GKeyFile *db,
-		    group_hook_t func,
-		    gpointer closure) {
-  gsize nends,i;
-  gchar **cends;
-  cends = g_key_file_get_groups(db, &nends);
-
-  for(i=0; i < nends; i++) {
-    const gchar *group = cends[i];
-    func(closure, group);
-  }
-
-  g_strfreev(cends);
-}
-
 /** \brief Iterator over endpoint nodes in memory db
  */
 
@@ -256,7 +204,6 @@ iterate_over_starts(GKeyFile *db, pip_hook_t func, gpointer closure,
 }
 
 typedef struct _pip_iterator {
-  GKeyFile *datadb;
   pip_hook_t pip_iterator;
   gpointer closure_iterator;
 } pip_iterator_t;
@@ -264,11 +211,11 @@ typedef struct _pip_iterator {
 /* Serialized version of the function */
 
 static void
-iterate_over_starts_hook(gpointer data, const gchar *endpoint)
+iterate_over_starts_hook(GKeyFile *datadb, const gchar *endpoint, gpointer data)
 {
   pip_iterator_t *iter = data;
 
-  iterate_over_starts(iter->datadb,
+  iterate_over_starts(datadb,
 		      iter->pip_iterator,
 		      iter->closure_iterator,
 		      endpoint);
@@ -290,7 +237,6 @@ iterate_over_pips(GKeyFile *db,
 		  pip_hook_t func,
 		  gpointer closure) {
   pip_iterator_t localclosure;
-  localclosure.datadb = db;
   localclosure.pip_iterator = func;
   localclosure.closure_iterator = closure;
   iterate_over_groups(db, iterate_over_starts_hook, &localclosure);
@@ -339,7 +285,6 @@ typedef struct _localpip_control_data {
 } localpip_control_data_t;
 
 typedef struct _build_groupnode {
-  GKeyFile *datadb;
   GKeyFile *ctrldb;
   wire_db_t *wires;
   GNode *head;
@@ -349,9 +294,9 @@ static inline gint *get_pip_structure_from_file(GKeyFile *keyfile,
 						const gchar *end,
 						gsize *length);
 
-static void build_groupnode(gpointer data, const gchar* endp) {
+static void build_groupnode(GKeyFile *datadb, const gchar* endp,
+			    gpointer data) {
   build_groupnode_t *exam = data;
-  GKeyFile *datadb = exam->datadb;
   wire_db_t *wires = exam->wires;
   localpip_control_data_t *dat = g_new(localpip_control_data_t, 1);
   GNode *groupnode;
@@ -381,7 +326,6 @@ static int
 build_datatree_from_keyfiles(GKeyFile *data, GKeyFile *control,
 			     wire_db_t *wires, GNode *head) {
   build_groupnode_t arg = {
-    .datadb = data,
     .ctrldb = control,
     .head = head,
     .wires = wires,

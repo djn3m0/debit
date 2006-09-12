@@ -3,14 +3,19 @@ SUBDIRS = data debian rpm windows altera utils
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\"
 AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
 
-bin_PROGRAMS	= debit
+bin_PROGRAMS	= debit sites_test
 debit_SOURCES	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
 		localpips.c bitstream.c wiring.c debit.c \
+		keyfile.c \
 		bitarray.h bitstream.h config.h design.h localpips.h \
 		virtex2_config.h bitheader.h bitstream_parser.h \
-		debitlog.h filedump.h sites.h wiring.h
+		debitlog.h filedump.h sites.h wiring.h keyfile.h
 debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDADD	= @GLIB_LIBS@
+
+sites_test_SOURCES = sites.c keyfile.c keyfile.h sites.h
+sites_test_CFLAGS = @GLIB_CFLAGS@
+sites_test_LDFLAGS = @GLIB_LIBS@
 
 #Distribution hook so that the tarballs are tagged with the git tree
 #SHA1 hash
