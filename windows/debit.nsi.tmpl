@@ -1,0 +1,143 @@
+;NSIS installer for debit
+;written by Jean-Baptiste Note
+;Based on Basic MUI script by Joost Verburg
+
+; these variables must be defined on the commandline
+!ifndef VERSION
+  !error "You must define the build version on the commandline"
+!endif
+!ifndef SRCDIR
+  !error "You must define the build version on the commandline"
+!endif
+
+;--------------------------------
+;Include Modern UI
+
+  !include "MUI.nsh"
+
+;--------------------------------
+;General
+
+  ;Name and file
+  Name "Ulogic's debitting tools"
+  OutFile "debit-${VERSION}.exe"
+
+  ;Default installation folder
+  InstallDir "$PROGRAMFILES\debit"
+
+  ;Get installation folder from registry if available
+  InstallDirRegKey HKCU "Software\debit" ""
+
+;--------------------------------
+;Interface Settings
+
+  ;!define MUI_HEADERIMAGE
+  ;!define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\orange.bmp" ; optional
+  ;!define MUI_ABORTWARNING
+
+;--------------------------------
+;Variables
+  Var STARTMENU_FOLDER
+
+;--------------------------------
+;Functions
+
+;Function .onInit
+;	InitPluginsDir
+;	File /oname=$PLUGINSDIR\splash.bmp "${SRCDIR}\windows\art\orange.bmp"
+;	splash::show 3000 $PLUGINSDIR\splash
+;	Pop $0
+;FunctionEnd
+
+;--------------------------------
+;Pages
+
+  !insertmacro MUI_PAGE_LICENSE "${SRCDIR}/COPYING"
+  !insertmacro MUI_PAGE_COMPONENTS
+  !insertmacro MUI_PAGE_DIRECTORY
+
+  ;Start Menu Folder Page Configuration
+  !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\Modern UI Test"
+  !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
+  !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
+
+
+  !insertmacro MUI_PAGE_INSTFILES
+
+  !insertmacro MUI_UNPAGE_CONFIRM
+  !insertmacro MUI_UNPAGE_INSTFILES
+
+;--------------------------------
+;Languages
+
+  !insertmacro MUI_LANGUAGE "English"
+
+;--------------------------------
+;Installer Sections
+
+Section "Debitting graphical tools" SecDisplay
+  DetailPrint "Installing debitting shell tools..."
+  SetOutPath "$INSTDIR\bin"
+SectionEnd
+
+Section "Debitting database" SecDatabase
+  DetailPrint "Installing debitting database..."
+  SetOutPath "$INSTDIR\data"
+  !include "xildb.nsh"
+SectionEnd
+
+Section "Debitting shell tools" SecXilinx
+
+  DetailPrint "Installing debitting shell tools..."
+  SetOutPath "$INSTDIR\bin"
+
+  File ..\altera\altera.exe
+  File ..\utils\correlation\bitisolation.exe
+  File ..\utils\diff_bin_pos.exe
+  File ..\debit.exe
+
+  ;Store installation folder
+  WriteRegStr HKCU "Software\debit" "" $INSTDIR
+
+  ;Create uninstaller
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+SectionEnd
+
+Section "Start Menu"
+  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
+    CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
+  !insertmacro MUI_STARTMENU_WRITE_END
+SectionEnd
+
+;--------------------------------
+;Descriptions
+
+  ;Language strings
+  LangString DESC_SecXilinx ${LANG_ENGLISH} "Command-line utilities for debitting"
+  LangString DESC_SecDisplay ${LANG_ENGLISH} "Graphical utilities for debitting"
+  LangString DESC_SecDatabase ${LANG_ENGLISH} "database for the Xilinx xc2v2000 chip"
+
+  ;Assign language strings to sections
+  !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecXilinx} $(DESC_SecXilinx)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecDisplay} $(DESC_SecDisplay)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecDatabase} $(DESC_SecDatabase)
+  !insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+;--------------------------------
+;Uninstaller Section
+
+Section "Uninstall"
+
+  ;ADD YOUR OWN FILES HERE...
+
+  Delete "$INSTDIR\Uninstall.exe"
+
+  RMDir "$INSTDIR"
+
+  DeleteRegKey /ifempty HKCU "Software\debit"
+
+SectionEnd
