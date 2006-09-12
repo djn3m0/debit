@@ -6,6 +6,7 @@
 #include <math.h> /* for M_PI */
 #include <cairo.h>
 #include "wiring.h"
+#include "localpips.h"
 #include "bitdraw.h"
 
 static inline void
@@ -143,3 +144,24 @@ draw_pip(const drawing_context_t *ctx, pip_t pip) {
   _draw_wire(ctx, pip.target);
   cairo_restore (cr);
 }
+
+/* so now let's talk good */
+
+/* iterate over the pips in the thing */
+/* void draw_all_things(const drawing_context_t *ctx, */
+/* 		     const site_details_t *site) { */
+/*   const pip_db_t *pipdb = ctx->pipdb; */
+/*   const bitstream_parsed_t *bitstream = ctx->bitstream; */
+/*   /\* dynamical, whoo-hoo ! Actually should be done after connexity */
+/*      analysis *\/ */
+/*   gsize size, i; */
+/*   pip_t *pips; */
+
+/*   pips = pips_of_site(pipdb, bitstream, site, &size); */
+
+/*   /\* for all of these *\/ */
+/*   for(i = 0; i < size; i++) */
+/*     draw_pip(ctx, pips[i]); */
+
+/*   g_free(pips); */
+/* } */

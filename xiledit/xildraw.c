@@ -144,6 +144,14 @@ xildraw_move(EggXildrawFace *xildraw,
   return;
 }
 
+static void
+xildraw_zoom(EggXildrawFace *xildraw,
+	     gdouble zoom_level) {
+  drawing_context_t *ctx = xildraw->ctx;
+  ctx->zoom *= zoom_level;
+  egg_xildraw_redraw (xildraw);
+}
+
 #include <gdk/gdkkeysyms.h>
 
 static gboolean
@@ -179,13 +187,14 @@ egg_xildraw_key_press_event(GtkWidget *widget,
 /*     netdraw_move(gui, 0,+4*step); */
 /*     break; */
 /*   case GDK_plus: */
-/*   case GDK_KP_Add: */
-/*     netdraw_zoom(gui, +1*step); */
-/*     break; */
-/*   case GDK_minus: */
-/*   case GDK_KP_Subtract: */
-/*     netdraw_zoom(gui, -1*step); */
-/*     break; */
+  case GDK_KP_Add:
+  case GDK_plus:
+    xildraw_zoom(xildraw, 0.75);
+    break;
+  case GDK_minus:
+  case GDK_KP_Subtract:
+    xildraw_zoom(xildraw, 1/0.75);
+    break;
   }
 
   if (x_move || y_move)

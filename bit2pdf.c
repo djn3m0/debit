@@ -8,6 +8,8 @@
 #include "sites.h"
 #include "bitdraw.h"
 
+unsigned debit_debug = 0;
+
 static void
 draw_pdf_chip(chip_descr_t *chip) {
   cairo_surface_t *sr;

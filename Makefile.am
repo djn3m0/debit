@@ -3,19 +3,19 @@ SUBDIRS = data debian rpm windows altera utils xiledit
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\"
 AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
 
+SHARED_SRC	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
+		localpips.c bitstream.c wiring.c keyfile.c
+
 bin_PROGRAMS	= debit sites_test
-debit_SOURCES	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
-		localpips.c bitstream.c wiring.c debit.c \
-		keyfile.c \
+debit_SOURCES	= $(SHARED_SRC) debit.c \
 		bitarray.h bitstream.h config.h design.h localpips.h \
 		virtex2_config.h bitheader.h bitstream_parser.h \
 		debitlog.h filedump.h sites.h wiring.h keyfile.h
 debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDADD	= @GLIB_LIBS@
 
-sites_test_SOURCES = sites.c keyfile.c bit2pdf.c \
-		     sites_draw.c wiring_draw.c \
-		     keyfile.h sites.h bitdraw.h
+sites_test_SOURCES = sites.c bit2pdf.c sites_draw.c wiring_draw.c \
+		     $(SHARED_SRC) sites.h bitdraw.h
 sites_test_CFLAGS = @GLIB_CFLAGS@ @CAIRO_CFLAGS@
 sites_test_LDFLAGS = @GLIB_LIBS@ @CAIRO_LIBS@
 

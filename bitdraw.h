@@ -10,6 +10,8 @@
 #include <glib.h>
 #include "sites.h"
 #include "wiring.h"
+#include "localpips.h"
+#include "bitstream_parser.h"
 
 #define SWITCH_CENTER_X 50.0
 #define SWITCH_CENTER_Y 50.0
@@ -29,6 +31,7 @@ typedef struct _drawing_context {
   /* Drawing parameters */
   gint x_offset;
   gint y_offset;
+  double zoom;
 
   /* structural information */
   chip_descr_t *chip;

@@ -88,6 +88,9 @@ draw_clb_pattern(drawing_context_t *ctx) {
   cairo_t *cr = ctx->cr;
   cairo_pattern_t *pat;
 
+  /* */
+  g_print("cr is %p", cr);
+
   cairo_save (cr);
 
   cairo_rectangle (cr, 0, 0, SITE_WIDTH, SITE_HEIGHT);
@@ -191,6 +194,26 @@ draw_full_clb_pattern(drawing_context_t *ctx,
   return cairo_pop_group (cr);
 }
 
+void
+draw_chip_for_window(drawing_context_t *ctx, chip_descr_t *chip) {
+  cairo_t *cr = ctx->cr;
+  double zoom = ctx->zoom;
+
+  cairo_save (cr);
+
+  cairo_scale (cr, zoom, zoom);
+
+  /* redraw the thing at the right zoom level */
+  ctx->site_sing_patterns[CLB] = draw_clb_pattern(ctx);
+
+  cairo_translate (cr, -ctx->x_offset, -ctx->y_offset);
+  iterate_over_sites(chip, draw_site, ctx);
+
+  cairo_pattern_destroy (ctx->site_sing_patterns[CLB]);
+
+  cairo_restore (cr);
+}
+
 /* Drawing of the whole bunch */
 void
 draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
@@ -215,8 +238,8 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
   cairo_set_font_size(cr, NAME_FONT_SIZE);
 
   /* initialize patterns -- once and for all ? */
-  if (!ctx->site_sing_patterns[CLB])
-    ctx->site_sing_patterns[CLB] = draw_clb_pattern(ctx);
+/*   if (!ctx->site_sing_patterns[CLB]) */
+/*     ctx->site_sing_patterns[CLB] = draw_clb_pattern(ctx); */
 
 /*   if (!ctx->site_full_patterns[CLB]) */
 /*     ctx->site_full_patterns[CLB] = draw_full_clb_pattern(ctx, chip); */
@@ -226,12 +249,7 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
 /*   cairo_restore (cr); */
 
   /* move from the context */
-  cairo_translate(cr, -ctx->x_offset, -ctx->y_offset);
-
-  iterate_over_sites(chip, draw_site, ctx);
-  cairo_surface_flush ( cairo_get_target(cr) );
-
-  cairo_translate(cr, ctx->x_offset, ctx->y_offset);
+  draw_chip_for_window(ctx, chip);
 
   g_print("End of draw chip\n");
 }
@@ -274,6 +292,8 @@ init_drawing_context(drawing_context_t *ctx) {
   ctx->text = FALSE;
   ctx->x_offset = 0;
   ctx->y_offset = 0;
+  ctx->zoom = 1.0;
+
   for (i = 0; i < NR_SITE_TYPE; i++) {
     ctx->site_sing_patterns[i] = NULL;
     ctx->site_line_patterns[i] = NULL;
@@ -281,6 +301,7 @@ init_drawing_context(drawing_context_t *ctx) {
   }
 }
 
+/* create a context from all of a parsed bitstream */
 drawing_context_t *
 drawing_context_create() {
   drawing_context_t *ctx = g_new(drawing_context_t, 1);

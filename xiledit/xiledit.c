@@ -8,6 +8,8 @@
 #include <glade/glade-init.h>
 #include "xildraw.h"
 
+unsigned int     debit_debug = 0;
+
 static void glade_do_init() {
   GladeXML *xml;
 

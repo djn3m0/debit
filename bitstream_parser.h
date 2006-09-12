@@ -26,6 +26,7 @@ typedef struct _bitstream_parsed {
 
   /* mmapped file information */
   GMappedFile *file;
+
 } bitstream_parsed_t;
 
 bitstream_parsed_t *parse_bitstream(const gchar*filename);
