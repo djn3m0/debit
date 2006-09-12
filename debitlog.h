@@ -1,6 +1,6 @@
 /*
-  Copyright Jean-Baptiste Note <jean-baptiste.note@m4x.org>
-*/
+ * Copyright Jean-Baptiste Note <jean-baptiste.note@m4x.org>
+ */
 
 #ifndef _HAS_DEBIT_DEBUG_H
 #define _HAS_DEBIT_DEBUG_H
@@ -23,6 +23,8 @@ enum {
 	L_WIRES = (DEBIT_DEBUG > 1) * 0x0010,
 	/* Connexity algorithms */
 	L_CONNEXITY = (DEBIT_DEBUG > 1) * 0x0020,
+	/* Correlation algorithms */
+	L_CORRELATE = (DEBIT_DEBUG > 1) * 0x0040,
 	L_ANY = 0xffff,
 };
 

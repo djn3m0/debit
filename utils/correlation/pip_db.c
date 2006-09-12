@@ -6,6 +6,7 @@
 
 #include <glib.h>
 #include <string.h>
+#include "debitlog.h"
 #include "bitisolation_db.h"
 
 const state_t *
@@ -63,7 +64,7 @@ add_pip_line(const gchar *line, void *data) {
     return;
   value_int = g_hash_table_size(hash);
   value_ptr = GUINT_TO_POINTER(value_int);
-  g_print("Adding pip %s with value %u to the hashtable\n", chunk, value_int);
+  debit_log(L_CORRELATE, "Adding pip %s with value %u to the hashtable\n", chunk, value_int);
   g_hash_table_insert (hash, (gpointer)chunk, value_ptr);
 }
 
@@ -91,7 +92,7 @@ static void
 add_pip_file(const gchar *file, void *data) {
   pip_db_t *pipdb = data;
   gchar *filename = g_strconcat(file,".dat",NULL);
-  g_print("Loading file %s\n", filename);
+  debit_log(L_CORRELATE, "Loading file %s\n", filename);
   iterate_over_lines(filename, add_pip_line, pipdb);
   g_free(filename);
 }

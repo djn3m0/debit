@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <glib.h>
 
+#include "debitlog.h"
+
 #include "bitisolation_db.h"
 #include "bitisolation.h"
 #include "algos.h"
@@ -59,12 +61,12 @@ isolate_bit_core(const state_t *state,
        for now unknown */
     if (known_bit_is_present(bit,config)) {
       unsigned bitcount = bitarray_ones_count(state->unknown_data);
-      g_print("intersecting bit %i (%i bits set) with config %i (%i bits set)\n",
-	      bit, bitcount, i, bitarray_ones_count(config->unknown_data));
+      debit_log(L_CORRELATE, "intersecting bit %i (%i bits set) with config %i (%i bits set)",
+		bit, bitcount, i, bitarray_ones_count(config->unknown_data));
       /* Our bit is present in this config, so we and directly */
       and_state(state, config);
       bitcount = bitarray_ones_count(state->unknown_data);
-      g_print("Only %i bits remaining\n", bitcount);
+      debit_log(L_CORRELATE, "Only %i bits remaining", bitcount);
     }
   }
 
@@ -88,7 +90,7 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   const gchar *pipname = get_pip_start(pipdb,bit);
   /* initial state. The printing should be specific and done outside of
      this pip-agnostic function */
-  g_print("doing pip #%08i, %s... ", bit, pipname);
+  debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pipname);
 
   alloc_state(&state, len, ulen);
   init_state(&state, len, ulen);
@@ -97,14 +99,14 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   switch(status) {
   case STATUS_NOTALONE:
     unisolated++;
-    g_print("not alone\n");
+    debit_log(L_CORRELATE, "not alone");
     break;
   case STATUS_NIL:
     nil++;
-    g_print("nil reached!\n");
+    debit_log(L_CORRELATE, "nil reached!");
     break;
   default:
-    g_print("isolated\n");
+    debit_log(L_CORRELATE, "isolated");
     isolated++;
     dump_result(dat,pipname,&state);
   }
@@ -143,7 +145,7 @@ void
 do_all_pips(const pip_db_t *pipdb, alldata_t *dat) {
   unsigned npips = pipdb->pip_num;
   unsigned pip;
-  g_print("Trying to isolate %i pips\n", npips);
+  debit_log(L_CORRELATE, "Trying to isolate %i pips", npips);
   for(pip = 0; pip < npips; pip++)
     isolate_bit(pipdb, pip, dat);
 }
@@ -162,7 +164,7 @@ do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
   alloc_state(&union_state, len, ulen);
   alloc_state(&work_state, len, ulen);
 
-  g_print("working on pip %s -> %s", start, end);
+  debit_log(L_CORRELATE, "working on pip %s -> %s", start, end);
 
   /* check if the pip is okay, if it is, isolated it, then
      or all the bits */

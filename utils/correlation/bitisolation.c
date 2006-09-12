@@ -11,6 +11,7 @@
 /* for memcmp */
 #include <string.h>
 
+#include "debitlog.h"
 #include "bitisolation_db.h"
 #include "algos.h"
 
@@ -29,11 +30,18 @@ static guint width = 0;
 static const char *ref = NULL;
 static const char **data = NULL;
 
+#if DEBIT_DEBUG > 0
+unsigned int debit_debug = L_ANY;
+#endif
+
 static GOptionEntry entries[] =
 {
   {"data", 'd', 0, G_OPTION_ARG_FILENAME_ARRAY, &data,
    "<names>.bin and <names>.dat are input/output pairs of the binary function",
    "names"},
+#if DEBIT_DEBUG > 0
+  {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
+#endif
   {"ref", 'r', 0, G_OPTION_ARG_FILENAME, &ref, "take <zero>.bin as reference bit data (image of zero)", "<zero>"},
   {"width", 'w', 0, G_OPTION_ARG_INT, &width, "set the width of the data for 2D representation of the data", NULL},
   {"allelems", 'a', 0, G_OPTION_ARG_NONE, &allelems, "try to isolate all elements", NULL},

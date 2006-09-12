@@ -5,6 +5,7 @@
  */
 
 #include <glib.h>
+#include "debitlog.h"
 #include "altera/bitarray.h"
 #include "bitisolation_db.h"
 
@@ -40,7 +41,7 @@ set_pip_bit(const gchar *line, void *data) {
   const pip_db_t *db = arg->pipdb;
   bitarray_t *dat = arg->data;
   unsigned bit = get_pip_index(db, line);
-  g_print("bitindex of %s is %i\n", line, bit);
+  debit_log(L_CORRELATE, "bitindex of %s is %i\n", line, bit);
   bitarray_set(dat,bit);
 }
 
@@ -104,15 +105,16 @@ process_data(GArray *data_array, const gchar *inp,
   if (!err) {
     unsigned bitcount;
     bitcount = bitarray_ones_count(s.unknown_data);
-    g_print("Successfully loaded data from %s, %i bits set, ", inp, bitcount);
+    debit_log(L_CORRELATE, "Successfully loaded data from %s, %i bits set",
+	      inp, bitcount);
 
     if (ref) {
       bitarray_diffsym(s.unknown_data, ref);
       bitcount = bitarray_ones_count(s.unknown_data);
-      g_print("after diff with default is %i, ", bitcount);
+      debit_log(L_CORRELATE, "after diff with default is %i", bitcount);
     }
 
-    g_print("has index %i\n", data_array->len);
+    debit_log(L_CORRELATE, "has index %i", data_array->len);
     g_array_append_val(data_array, s);
   }
 }
