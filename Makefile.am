@@ -13,9 +13,9 @@ debit_SOURCES	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
 debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDADD	= @GLIB_LIBS@
 
-sites_test_SOURCES = sites.c keyfile.c keyfile.h sites.h
-sites_test_CFLAGS = @GLIB_CFLAGS@
-sites_test_LDFLAGS = @GLIB_LIBS@
+sites_test_SOURCES = sites.c keyfile.c keyfile.h sites.h sites_draw.h sites_draw.c
+sites_test_CFLAGS = @GLIB_CFLAGS@ @CAIRO_CFLAGS@
+sites_test_LDFLAGS = @GLIB_LIBS@ @CAIRO_LIBS@
 
 #Distribution hook so that the tarballs are tagged with the git tree
 #SHA1 hash

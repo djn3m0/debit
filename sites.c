@@ -325,17 +325,8 @@ print_iterator(unsigned x, unsigned y,
   g_free(name);
 }
 
-static void
+void
 print_chip(chip_descr_t *chip) {
   iterate_over_sites(chip, print_iterator, NULL);
 }
 
-/* small testing utility */
-int main() {
-  chip_descr_t *chip = get_chip("/home/jb/chip/","xc2v2000");
-  if (chip) {
-    print_chip(chip);
-    release_chip(chip);
-  }
-  return 0;
-}

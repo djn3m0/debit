@@ -42,7 +42,7 @@ typedef struct _site_details {
   pip_t *pips;
 } __attribute__((packed)) site_details_t;
 
-/* My own, more compact vision of the data */
+/* more compact vision of the data */
 typedef struct _site_descr {
   site_type_t type;
   site_t type_coord;
@@ -67,11 +67,11 @@ get_global_site(const chip_descr_t *chip,
   return &chip->data[y * width + x];
 }
 
-typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
-				csite_descr_t *site, gpointer dat);
-
 /* The returned string is allocated and should be freed */
 gchar *print_csite(const csite_descr_t *site);
+
+typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
+				csite_descr_t *site, gpointer dat);
 
 void iterate_over_sites(const chip_descr_t *chip,
 			site_iterator_t fun, gpointer data);
@@ -81,6 +81,8 @@ void iterate_over_typed_sites(const chip_descr_t *chip,
 void release_chip(chip_descr_t *chip);
 chip_descr_t *get_chip(const gchar *datadir,
 		       const gchar *chipname);
+
+void print_chip(chip_descr_t *chip);
 
 #endif /* _SITES_H */
 
