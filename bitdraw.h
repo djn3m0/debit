@@ -14,6 +14,12 @@
 typedef struct _drawing_context {
   cairo_t *cr;
   gboolean text;
+  /* cairo information */
+  cairo_pattern_t *site_patterns[NR_SITE_TYPE];
+  cairo_pattern_t *site_line_patterns[NR_SITE_TYPE];
+
+  /* And I also want lazy patterns for wires */
+  cairo_pattern_t **pip_patterns;
 
   /* structural information */
   chip_descr_t *chip;

@@ -103,11 +103,10 @@ draw_clb_pattern(drawing_context_t *ctx) {
   return pat;
 }
 
-cairo_pattern_t *site_pattern = NULL;
-
 void
 _draw_clb_new(drawing_context_t *ctx, csite_descr_t *site) {
   cairo_t *cr = ctx->cr;
+  cairo_pattern_t *site_pattern = ctx->site_patterns[CLB];
 
   /* now let's draw !
      NB: could use the *whole* thing as pattern */
@@ -123,8 +122,8 @@ _draw_clb_new(drawing_context_t *ctx, csite_descr_t *site) {
   cairo_restore (cr);
 
   /* if text is enabled */
-  if (ctx->text)
-    _draw_name(cr, site);
+/*   if (ctx->text) */
+/*     _draw_name(cr, site); */
 }
 
 /* draw the CLB with absolute positioning */
@@ -153,9 +152,6 @@ draw_clb_new(drawing_context_t *ctx,
   /* can be computed incrementally with only one addition */
   double dx = x * SITE_WIDTH, dy = y * SITE_HEIGHT;
 
-  if (site_pattern == NULL)
-    site_pattern = draw_clb_pattern(ctx);
-
   /* don't draw, do a compositing operation */
   cairo_save (cr);
   cairo_translate(cr, dx, dy);
@@ -177,10 +173,6 @@ draw_site(unsigned x, unsigned y,
   if (fun)
     fun(ctx, x, y, site);
 }
-
-cairo_pattern_t *site_patterns[NR_SITE_TYPE] = {
-  [CLB] = NULL,
-};
 
 /* Drawing of the whole bunch */
 void
@@ -205,6 +197,10 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
 			 CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size(cr, NAME_FONT_SIZE);
 
+  /* initialize patterns -- once and for all ? */
+  if (!ctx->site_patterns[CLB])
+    ctx->site_patterns[CLB] = draw_clb_pattern(ctx);
+
 /*   if (!site_patterns[CLB]) { */
 /*     g_print("drawing the group"); */
 /*     cairo_push_group_with_content (cr, CAIRO_CONTENT_COLOR); */
@@ -216,6 +212,7 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
 /*   g_print("painting"); */
 /*   cairo_paint (cr); */
 /*   g_print("painting ended"); */
+
   iterate_over_sites(chip, draw_site, ctx);
   cairo_surface_flush ( cairo_get_target(cr) );
   g_print("End of draw chip\n");
@@ -254,8 +251,13 @@ draw_chip_monitored(drawing_context_t *ctx, chip_descr_t *chip) {
 
 static inline void
 init_drawing_context(drawing_context_t *ctx) {
+  unsigned i;
   ctx->cr = NULL;
   ctx->text = TRUE;
+  for (i = 0; i < NR_SITE_TYPE; i++) {
+    ctx->site_patterns[i] = NULL;
+    ctx->site_line_patterns[i] = NULL;
+  }
 }
 
 drawing_context_t *
@@ -265,8 +267,20 @@ drawing_context_create() {
   return ctx;
 }
 
+static inline void
+safe_cairo_pattern_destroy(cairo_pattern_t *pat) {
+  if (pat)
+    cairo_pattern_destroy(pat);
+}
+
 void
 drawing_context_destroy(drawing_context_t *ctx) {
+  unsigned i;
+  /* cleanup the patterns */
+  for (i = 0; i < NR_SITE_TYPE; i++) {
+    safe_cairo_pattern_destroy(ctx->site_patterns[i]);
+    safe_cairo_pattern_destroy(ctx->site_line_patterns[i]);
+  }
   g_free(ctx);
 }
 
