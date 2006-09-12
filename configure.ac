@@ -23,9 +23,20 @@ AC_SUBST(GLIB_LIBS)
 dnl Check for Cairo
 CAIRO_REQUIRED=1.2.0
 PKG_CHECK_MODULES(CAIRO, [cairo >= $CAIRO_REQUIRED])
-#PKG_CHECK_MODULES(CAIRO-PDF, [cairo >= $CAIRO_REQUIRED])
 AC_SUBST(CAIRO_CFLAGS)
 AC_SUBST(CAIRO_LIBS)
+
+dnl First version which supports cairo ?
+GTK_REQUIRED=2.8.0
+PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= $GTK_REQUIRED])
+AC_SUBST(GTK_CFLAGS)
+AC_SUBST(GTK_LIBS)
+
+dnl completely random requirement
+LIBGLADE_REQUIRED=2.4.0
+PKG_CHECK_MODULES(LIBGLADE, [libglade-2.0 >= $LIBGLADE_REQUIRED])
+AC_SUBST(LIBGLADE_CFLAGS)
+AC_SUBST(LIBGLADE_LIBS)
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -44,6 +55,8 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([memset munmap regcomp strdup strerror strtoul])
 
 AC_CONFIG_FILES([Makefile data/Makefile \
-		debian/Makefile rpm/Makefile windows/Makefile altera/Makefile \
-		utils/Makefile utils/correlation/Makefile])
+		debian/Makefile rpm/Makefile windows/Makefile \
+		altera/Makefile \
+		utils/Makefile utils/correlation/Makefile \
+		xiledit/Makefile])
 AC_OUTPUT

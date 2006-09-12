@@ -66,7 +66,6 @@ _draw_name(cairo_t *cr, csite_descr_t *site) {
 
 void
 _draw_clb_pattern(cairo_t *cr) {
-  /* cairo_append_path ? */
   _draw_box(cr);
   _draw_switchbox(cr);
   _draw_luts(cr);
@@ -79,8 +78,8 @@ _draw_clb(drawing_context_t *ctx, csite_descr_t *site) {
   _draw_clb_pattern(cr);
 
   /* if text is enabled */
-  if (ctx->text)
-    _draw_name(cr, site);
+/*   if (ctx->text) */
+/*     _draw_name(cr, site); */
 }
 
 cairo_pattern_t *
@@ -88,13 +87,13 @@ draw_clb_pattern(drawing_context_t *ctx) {
   cairo_t *cr = ctx->cr;
   cairo_pattern_t *pat;
   cairo_save (cr);
-  cairo_rectangle (cr, SITE_MARGIN_X, SITE_MARGIN_Y,
-		   SITE_WIDTH - 2 * SITE_MARGIN_X,
-		   SITE_HEIGHT - 2 * SITE_MARGIN_Y);
+
+  cairo_rectangle (cr, 0, 0, SITE_WIDTH, SITE_HEIGHT);
   cairo_clip (cr);
   cairo_push_group (cr);
   _draw_clb_pattern (cr);
   pat = cairo_pop_group (cr);
+
   cairo_restore (cr);
   return pat;
 }
@@ -107,17 +106,15 @@ _draw_clb_new(drawing_context_t *ctx, csite_descr_t *site) {
 
   /* now let's draw !
      NB: could use the *whole* thing as pattern */
-  g_print("painting the thing @(%i,%i)\n",
-	  site->type_coord.x,site->type_coord.y);
+
   /* clip */
   cairo_save (cr);
 
-  cairo_rectangle (cr, SITE_MARGIN_X, SITE_MARGIN_Y,
-		   SITE_WIDTH - 2 * SITE_MARGIN_X,
-		   SITE_HEIGHT - 2 * SITE_MARGIN_Y);
+  /* possibly slower with the clip */
+  cairo_rectangle (cr, 0, 0, SITE_WIDTH, SITE_HEIGHT);
   cairo_clip (cr);
-/*   cairo_set_source(cr,  */
-/*   cairo_paint (cr); */
+
+  cairo_paint (cr);
 
   cairo_restore (cr);
 
@@ -154,9 +151,10 @@ draw_clb_new(drawing_context_t *ctx,
 
   if (site_pattern == NULL)
     site_pattern = draw_clb_pattern(ctx);
-  //  cairo_set_source (cr, site_pattern);
 
+  /* don't draw, do a compositing operation */
   cairo_translate(cr, dx, dy);
+  cairo_set_source (cr, site_pattern);
   _draw_clb_new(ctx, site);
   cairo_translate(cr, -dx, -dy);
 }
@@ -180,10 +178,10 @@ cairo_pattern_t *site_patterns[NR_SITE_TYPE] = {
 };
 
 /* Drawing of the whole bunch */
-static void
+void
 draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
   cairo_t *cr = ctx->cr;
-
+  g_print("Start of draw chip\n");
   cairo_rectangle(cr, 0., 0.,
 		  chip->width * SITE_WIDTH,
 		  chip->height * SITE_HEIGHT);
@@ -195,7 +193,7 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
 
   /* draw everything in white. This could be per-site or per-site-type */
   cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
-  cairo_set_line_width (cr, .1);
+  cairo_set_line_width (cr, 1);
 
   cairo_select_font_face(cr, "bitstream vera sans mono",
 			 CAIRO_FONT_SLANT_NORMAL,
@@ -214,6 +212,7 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
 /*   cairo_paint (cr); */
 /*   g_print("painting ended"); */
   iterate_over_sites(chip, draw_site, ctx);
+  g_print("End of draw chip\n");
 }
 
 /* exported functions do a bunch of initialization */
@@ -224,23 +223,20 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
 */
 
 static void
-init_drawing_context(drawing_context_t *ctx, const cairo_t *cr) {
-  ctx->cr = (void *)cr;
+init_drawing_context(drawing_context_t *ctx) {
+  ctx->cr = NULL;
   ctx->text = TRUE;
 }
 
 drawing_context_t *
-create_drawing_context(const cairo_t *cr) {
+drawing_context_create() {
   drawing_context_t *ctx = g_new(drawing_context_t, 1);
-  init_drawing_context(ctx, cr);
   return ctx;
 }
 
-cairo_t *
-destroy_drawing_context(drawing_context_t *ctx) {
-  cairo_t *ret = ctx->cr;
+void
+drawing_context_destroy(drawing_context_t *ctx) {
   g_free(ctx);
-  return ret;
 }
 
 /*
@@ -252,7 +248,8 @@ draw_surface_chip(chip_descr_t *chip, cairo_surface_t *sr) {
   cairo_t *cr;
   drawing_context_t ctx;
   cr = cairo_create(sr);
-  init_drawing_context(&ctx, cr);
+  init_drawing_context(&ctx);
+  set_cairo_context(&ctx, cr);
 
   draw_chip(&ctx, chip);
 

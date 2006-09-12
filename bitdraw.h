@@ -3,6 +3,9 @@
  * All rights reserved.
  */
 
+#ifndef _HAS_BITDRAW_H
+#define _HAS_BITDRAW_H
+
 #include <cairo.h>
 #include <glib.h>
 #include "sites.h"
@@ -27,9 +30,9 @@ create_drawing_context(const cairo_t *cr);
 cairo_t *
 destroy_drawing_context(drawing_context_t *ctx);
 
-/* draw onto surface the chip.
-   This is bad, as it does a host of uneeded initializations which
-   should be isolated and not redone for redraws */
+void draw_chip(drawing_context_t *ctx, chip_descr_t *chip);
+
+/* draw onto surface the chip */
 void draw_surface_chip(chip_descr_t *chip, cairo_surface_t *sr);
 
 /* wire drawing primitives */
