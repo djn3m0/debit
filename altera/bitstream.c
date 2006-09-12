@@ -71,6 +71,29 @@ static const geo_stride_t x_offsets_descr[] = {
     .length = 0, },
 };
 
+#define y_max 35
+
+/* the absolute coordinate of (1,1,30) -- adjusted for various offsets */
+gint base_off = 6479737 + 34 - 0*2701 - (y_max - 1) * 70 * 2701 - (2701 - 34);
+gint slice_off = 24;
+
+typedef struct _coord_descr_t {
+  unsigned max;
+  unsigned offset;
+} coord_descr_t;
+
+typedef enum coords_types {
+  Y = 0, SLICE, X, COORD_NUM,
+} coord_type_t;
+
+static const coord_descr_t coords[COORD_NUM] = {
+  [Y] = { .max = 35, .offset = 70 * 2701 },
+  [SLICE] = { .max = 69, .offset = 2701 /*could be computed from above
+					  too, this is the offset_total*/ },
+  /* For X, a bit complicated, see above */
+  [X] = { .max = 65, .offset = 0 /* computed normally from above */},
+};
+
 static inline unsigned
 width_total(const geo_stride_t *strides) {
   unsigned offset_tot = 0;
@@ -103,7 +126,7 @@ check_consistency(const altera_bitstream_t *bit) {
   unsigned offset = offset_total(x_offsets_descr);
 /*   unsigned nx = width_total(x_offsets_descr); */
 /*   g_print("offset total is %i for %i sites\n", offset, nx); */
-  g_assert( offset == 2701 );
+  g_assert( offset == coords[SLICE].offset );
 }
 
 /* accumulate the x_offsets_descr and build corresponding
@@ -124,6 +147,7 @@ offset_array(const geo_stride_t *strides) {
 
     for (i = 0; i < steps; i++) {
       posarray[i] = offset;
+      g_print("posarray[%i] = %i\n",i,offset);
       offset += stepping;
     }
 
@@ -134,27 +158,6 @@ offset_array(const geo_stride_t *strides) {
 
   return array;
 }
-
-/* the absolute coordinate of (1,1,30) -- adjusted for various offsets */
-gint base_off = 6479737+34-1*2701;
-gint slice_off = 24;
-
-typedef struct _coord_descr_t {
-  unsigned max;
-  unsigned offset;
-} coord_descr_t;
-
-typedef enum coords_types {
-  Y = 0, SLICE, X, COORD_NUM,
-} coord_type_t;
-
-static const coord_descr_t coords[COORD_NUM] = {
-  [Y] = { .max = 35, .offset = 70 * 2701 },
-  [SLICE] = { .max = 69, .offset = 2701 /*could be computed from above
-					  too, this is the offset_total*/ },
-  /* For X, a bit complicated, see above */
-  [X] = { .max = 65, .offset = 0 /* computed normally from above */},
-};
 
 /*
   NB: slices seem ordered in a bizarre fashion. Reordering them would
@@ -172,15 +175,20 @@ static inline unsigned
 get_bit_offset(const altera_bitstream_t *bitstream,
 	       unsigned y, unsigned slice, unsigned x) {
   /* start from beginning */
-  unsigned y_offset = coords[Y].offset * (y-1);
-  unsigned x_offset = bitstream->xoffsets[x];
+  unsigned y_offset = coords[Y].offset * (y_max - y);
+  unsigned x_offset = (2667 - bitstream->xoffsets[x]);
   unsigned slice_offset = coords[SLICE].offset * slice;
 
   /* yes. Don't ask. Another intern. */
-  unsigned ret = (base_off - slice_off) - y_offset - x_offset + slice_offset;
+  unsigned ret = (base_off - slice_off) + y_offset + x_offset + slice_offset;
 
 /*   g_print("offset is %i, y %i, x %i, slice %i\n", */
-/*  	  ret, y_offset, x_offset, slice_offset); */
+/* 	  ret, y_offset, x_offset, slice_offset); */
+
+  g_assert(y_offset >= 0 && y_offset < 35 * 70 * 2701);
+  g_assert(x_offset >= 0 && x_offset < 2701);
+  g_assert(slice_offset >= 0 && slice_offset < (2701 * 70));
+
   return ret;
 }
 
@@ -192,12 +200,13 @@ static inline unsigned
 get_y_from_bit_offset(const altera_bitstream_t *bit,
 		      const unsigned off) {
   unsigned width = coords[Y].offset;
-  unsigned basebits = get_bit_offset(bit, 0, 0, 0);
+  unsigned basebits = get_bit_offset(bit, 1, 0, 0);
+  unsigned remains = basebits - off;
   /* what remains here is the term
      + y_offset - (-x_offset + slice_offset)
      with the second term negative (or nil). Thus we add
   */
-  return GET_NUM( basebits - off, width );
+  return (GET_NUM(remains, width) + 1);
 }
 
 static inline unsigned
@@ -206,11 +215,14 @@ get_slice_from_bit_offset(const altera_bitstream_t *bit,
   unsigned y = get_y_from_bit_offset(bit,off);
   unsigned basebits = get_bit_offset(bit, y, 0, 0);
   unsigned width = coords[SLICE].offset;
+  unsigned remains = off - basebits;
   /* what remains here is the term
      - x_offset + slice_offset
      which is positive (hugh !)
    */
-  return GET_NUM ( off - basebits, width);
+  g_print("remains %i bits for slice coord\n", remains);
+  g_assert(remains < coords[Y].offset);
+  return GET_NUM (remains, width);
 }
 
 static inline unsigned
@@ -224,10 +236,13 @@ get_x_from_bit_offset(const altera_bitstream_t *bit,
   unsigned *xoffsets = bit->xoffsets;
   unsigned x;
 
+  g_assert(remains < coords[SLICE].offset);
+  g_print("remains %i bits for x coord\n", remains);
   for (x = 0; x < coords[X].max && xoffsets[x] < remains; x++)
     ;
 
-  return x;
+  g_print("returning x=%i\n", x-1);
+  return (x-1);
 }
 
 static inline unsigned
@@ -237,7 +252,9 @@ get_offset_from_bit_offset(const altera_bitstream_t *bit,
   unsigned slice = get_slice_from_bit_offset(bit,off);
   unsigned x = get_x_from_bit_offset(bit,off);
   unsigned basebits = get_bit_offset(bit, y, slice, x);
-  return (off - basebits);
+  unsigned remains = off - basebits;
+  g_print("remains %i bits finally\n", remains);
+  return remains;
 }
 
 void print_pos_from_bit_offset(const altera_bitstream_t *bit,
@@ -317,9 +334,9 @@ unsigned slice_from_index(unsigned N) {
   g_assert(N % 2 == 0);
 
   if (N < 16)
-    return 1 + 2*N;
+    return 2*N;
   else
-    return 69 + 2 - 4 - (N-16)*2;
+    return 69 + 1 - 4 - (N-16)*2;
 }
 
 static inline
@@ -340,6 +357,8 @@ guint16 get_truth_table(const altera_bitstream_t *bitstream,
   unsigned slice, i;
 
   slice = slice_from_index(N);
+
+/*   g_print("N is %i, and slice index is %i\n", N, slice); */
 
   /* todo: bit reordering */
   for (i = 0; i < 4; i++) {
