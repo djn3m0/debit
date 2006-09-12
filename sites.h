@@ -31,16 +31,16 @@ typedef enum _site_type {
   NR_SITE_TYPE,
 } __attribute__((packed)) site_type_t;
 
-typedef struct _site_details {
-  /* coordinates of the site on the global grid */
-  site_t global_coord;
-  /* type-local coordinates */
-  site_type_t type;
-  site_t type_coord;
-  /* associated pips, if any */
-  gsize npips;
-  pip_t *pips;
-} __attribute__((packed)) site_details_t;
+/* typedef struct _site_details { */
+/*   /\* coordinates of the site on the global grid *\/ */
+/*   site_t global_coord; */
+/*   /\* type-local coordinates *\/ */
+/*   site_type_t type; */
+/*   site_t type_coord; */
+/*   /\* associated pips, if any *\/ */
+/*   gsize npips; */
+/*   pip_t *pips; */
+/* } __attribute__((packed)) site_details_t; */
 
 /* more compact vision of the data */
 typedef struct _site_descr {
@@ -68,9 +68,7 @@ get_global_site(const chip_descr_t *chip,
 }
 
 /* The returned string is allocated and should be freed */
-gchar *print_csite(const csite_descr_t *site);
-void
-sprint_csite(gchar *data, const csite_descr_t *site);
+void sprint_csite(gchar *data, const csite_descr_t *site);
 
 typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
 				csite_descr_t *site, gpointer dat);

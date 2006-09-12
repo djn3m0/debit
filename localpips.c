@@ -468,7 +468,7 @@ static void examine_node_memory (GNode *node,
 
 typedef struct _examine_endpoint_memory {
   const bitstream_parsed_t *bitstream;
-  const site_details_t *site;
+  const csite_descr_t *site;
   /* at some point get rid of wiredb */
   wire_db_t *wiredb;
   GArray *array;
@@ -520,7 +520,7 @@ static void examine_groupnode (GNode *node,
  */
 pip_t *__pips_of_site_memory(const pip_db_t *pipdb,
 			     const bitstream_parsed_t *bitstream,
-			     const site_details_t *site,
+			     const csite_descr_t *site,
 			     gsize *size) {
   GArray *pips_array = g_array_new(FALSE, FALSE, sizeof(pip_t));
   GNode *head = pipdb->memorydb[site->type];
@@ -539,7 +539,7 @@ pip_t *__pips_of_site_memory(const pip_db_t *pipdb,
 
 pip_t *pips_of_site(const pip_db_t *pipdb,
 		    const bitstream_parsed_t *bitstream,
-		    const site_details_t *site,
+		    const csite_descr_t *site,
 		    gsize *size) {
   if (!pipdb->memorydb[site->type]) {
     *size = 0;

@@ -98,74 +98,15 @@ typedef struct _nets_t {
  * Very simple analysis function which only dumps the pips to stdout
  */
 
-/*
- *
- *
- *
- */
-
 static inline void
-print_site(gchar *data, const site_details_t *site) {
-  const guint x = site->type_coord.x;
-  const guint y = site->type_coord.y;
-
-  switch (site->type) {
-  case CLB:
-    sprintf(data, "R%iC%i", y+1, x+1);
-    break;
-  case RTERM:
-    sprintf(data, "RTERMR%i", y+1);
-    break;
-  case LTERM:
-    sprintf(data, "LTERMR%i", y+1);
-    break;
-  case TTERM:
-    sprintf(data, "TTERMC%i", x+1);
-    break;
-  case BTERM:
-    sprintf(data, "BTERMC%i", x+1);
-    break;
-  case TIOI:
-    sprintf(data, "TIOIC%i", x+1);
-    break;
-  case BIOI:
-    sprintf(data, "BIOIC%i", x+1);
-    break;
-  case LIOI:
-    sprintf(data, "LIOIR%i", y+1);
-    break;
-  case RIOI:
-    sprintf(data, "RIOIR%i", y+1);
-    break;
-  case TTERMBRAM:
-    sprintf(data, "TTERMBRAMC%i", x+1);
-    break;
-  case BTERMBRAM:
-    sprintf(data, "BTERMBRAMC%i", x+1);
-    break;
-  case TIOIBRAM:
-    sprintf(data, "TIOIBRAMC%i", x+1);
-    break;
-  case BIOIBRAM:
-    sprintf(data, "BIOIBRAMC%i", x+1);
-    break;
-  case BRAM:
-    sprintf(data, "BRAMR%iC%i", y+1, x+1);
-    break;
-  default:
-    break;
-  }
-}
-
-static inline void
-print_pip(const site_details_t *site, const gchar *start, const gchar *end) {
-  gchar site_buf[20];
-  print_site(site_buf,site);
+print_pip(const csite_descr_t *site, const gchar *start, const gchar *end) {
+  gchar site_buf[32];
+  sprint_csite(site_buf, site);
   g_printf("pip %s %s -> %s\n", site_buf, start, end);
 }
 
 void
-print_bram_data(const site_details_t *site, const guint16 *data) {
+print_bram_data(const csite_descr_t *site, const guint16 *data) {
   guint i,j;
   g_printf("BRAM_%02x_%02x\n",
 	   site->type_coord.x,
@@ -179,7 +120,7 @@ print_bram_data(const site_details_t *site, const guint16 *data) {
 }
 
 void
-print_lut_data(const site_details_t *site, const guint16 data[]) {
+print_lut_data(const csite_descr_t *site, const guint16 data[]) {
   guint i;
   g_printf("CLB_%02x_%02x\n",
 	   site->type_coord.x,
@@ -232,7 +173,7 @@ static const guint ysize[SITE_TYPE_NEUTRAL] = {
 };
 
 static void print_site_db(const wire_db_t *wiredb,
-			  const site_details_t *site,
+			  const csite_descr_t *site,
 			  const pip_t *pips,
 			  const gsize size) {
   gsize i;
@@ -260,7 +201,7 @@ static void dump_all_pips(pip_db_t *pipdb,
   for (x = 0; x < 4; x++)
     for (y = 0; y < 14; y++) {
       guint16 *bram;
-      site_details_t site = {
+      csite_descr_t site = {
 	.type_coord = { .x = x, .y = y },
       };
       bram = query_bitstream_bram_data(bitstream, &site);
@@ -273,7 +214,7 @@ static void dump_all_pips(pip_db_t *pipdb,
   for(y = 0; y < ysize[CLB]; y++) {
     for(x = 0; x < xsize[CLB]; x++) {
       guint16 luts[4];
-      site_details_t site = {
+      csite_descr_t site = {
 	.type_coord = { .x = x, .y = y },
 	.type = CLB,
       };
@@ -289,7 +230,7 @@ static void dump_all_pips(pip_db_t *pipdb,
       for(x = 0; x < xsize[type]; x++) {
 	pip_t *pips;
 	gsize size;
-	site_details_t site = {
+	csite_descr_t site = {
 	  .type_coord = { .x = x, .y = y },
 	  .type = type,
 	};

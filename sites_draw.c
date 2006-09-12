@@ -57,12 +57,12 @@ _draw_luts(cairo_t *cr) {
 
 static inline void
 _draw_name(cairo_t *cr, csite_descr_t *site) {
-  gchar *name = print_csite(site);
+  gchar name[32];
+  sprint_csite(name, site);
   //g_print("printing %s", name);
   cairo_move_to(cr, NAME_OFFSET_X, NAME_OFFSET_Y);
   cairo_show_text(cr, name);
   cairo_stroke(cr);
-  g_free(name);
 }
 
 void

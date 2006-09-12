@@ -211,7 +211,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
 
 static inline gboolean
 query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
-			 const site_details_t *site,
+			 const csite_descr_t *site,
 			 const guint cfgbit) {
   /* first indirected implementation */
   const guint site_type = site->type;
@@ -254,7 +254,7 @@ query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
 
 guint32
 query_bitstream_site_bits(const bitstream_parsed_t * bitstream,
-			  const site_details_t *site,
+			  const csite_descr_t *site,
 			  const guint *cfgbits, const gsize nbits) {
   /* unsigned char *data = bitstream->bincols[pip_type]; */
   /* The data has already been sliced according to its type. It is not
@@ -272,7 +272,7 @@ query_bitstream_site_bits(const bitstream_parsed_t * bitstream,
 
 static guchar
 query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
-			  const site_details_t *site,
+			  const csite_descr_t *site,
 			  const int cfgbyte) {
   /* first indirected implementation */
   const guint site_type = site->type;
@@ -308,7 +308,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
  */
 
 guint32
-query_bitstream_site_bytes(const bitstream_parsed_t * bitstream, const site_details_t *site,
+query_bitstream_site_bytes(const bitstream_parsed_t * bitstream, const csite_descr_t *site,
 			   const guint *cfgbytes, const gsize nbytes) {
   /* unsigned char *data = bitstream->bincols[pip_type]; */
   /* The data has already been sliced according to its type. It is not
@@ -351,7 +351,7 @@ guint16 reverse_bits(guint16 input) {
  */
 void
 query_bitstream_luts(const bitstream_parsed_t *bitstream,
-		     const site_details_t *site, guint16 luts[]) {
+		     const csite_descr_t *site, guint16 luts[]) {
   guint i;
 
   /* query four luts. Bits are MSB first, but in reverse order */
@@ -405,7 +405,7 @@ gchar bram_offset_for_bit[16] = {
 
 guint16 *
 query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
-			  const site_details_t *site) {
+			  const csite_descr_t *site) {
   /* Actually this is only bit reordering */
   /* for now exctract the data from the bram coordinates ? */
   const guint x = site->type_coord.x;

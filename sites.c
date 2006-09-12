@@ -3,8 +3,10 @@
  * All rights reserved.
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <glib.h>
+
 #include "keyfile.h"
 
 #include "sites.h"
@@ -118,11 +120,6 @@ init_group_chip_type(GKeyFile *file, const gchar *group,
   g_error_free(error);
   return;
 }
-
-/* void */
-/* iterate_over_typed_sites(const chip_descr_t *chip, */
-/* 			 site_iterator_t fun, gpointer data) { */
-/* } */
 
 void
 iterate_over_sites(const chip_descr_t *chip,
@@ -259,70 +256,68 @@ release_chip(chip_descr_t *chip) {
  * Utility function
  */
 
-gchar *
-print_csite(const csite_descr_t *site) {
+void
+sprint_csite(gchar *data, const csite_descr_t *site) {
   /* Use a string chunk ? */
   const guint x = site->type_coord.x + 1;
   const guint y = site->type_coord.y + 1;
-  gchar *ret;
 
   switch (site->type) {
   case CLB:
-    ret = g_strdup_printf("R%iC%i", y, x);
+    sprintf(data, "R%iC%i", y, x);
     break;
   case RTERM:
-    ret = g_strdup_printf("RTERMR%i", y);
+    sprintf(data, "RTERMR%i", y);
     break;
   case LTERM:
-    ret = g_strdup_printf("LTERMR%i", y);
+    sprintf(data, "LTERMR%i", y);
     break;
   case TTERM:
-    ret = g_strdup_printf("TTERMC%i", x);
+    sprintf(data, "TTERMC%i", x);
     break;
   case BTERM:
-    ret = g_strdup_printf("BTERMC%i", x);
+    sprintf(data, "BTERMC%i", x);
     break;
   case TIOI:
-    ret = g_strdup_printf("TIOIC%i", x);
+    sprintf(data, "TIOIC%i", x);
     break;
   case BIOI:
-    ret = g_strdup_printf("BIOIC%i", x);
+    sprintf(data, "BIOIC%i", x);
     break;
   case LIOI:
-    ret = g_strdup_printf("LIOIR%i", y);
+    sprintf(data, "LIOIR%i", y);
     break;
   case RIOI:
-    ret = g_strdup_printf("RIOIR%i", y);
+    sprintf(data, "RIOIR%i", y);
     break;
   case TTERMBRAM:
-    ret = g_strdup_printf("TTERMBRAMC%i", x);
+    sprintf(data, "TTERMBRAMC%i", x);
     break;
   case BTERMBRAM:
-    ret = g_strdup_printf("BTERMBRAMC%i", x);
+    sprintf(data, "BTERMBRAMC%i", x);
     break;
   case TIOIBRAM:
-    ret = g_strdup_printf("TIOIBRAMC%i", x);
+    sprintf(data, "TIOIBRAMC%i", x);
     break;
   case BIOIBRAM:
-    ret = g_strdup_printf("BIOIBRAMC%i", x);
+    sprintf(data, "BIOIBRAMC%i", x);
     break;
   case BRAM:
-    ret = g_strdup_printf("BRAMR%iC%i", y, x);
+    sprintf(data, "BRAMR%iC%i", y, x);
     break;
   default:
-    ret = g_strdup_printf("GLOBALR%iC%i", y, x);
+    sprintf(data, "GLOBALR%iC%i", y, x);
     break;
   }
-  return ret;
 }
 
 static void
 print_iterator(unsigned x, unsigned y,
 	       csite_descr_t *site, gpointer dat) {
-  gchar *name = print_csite(site);
+  gchar name[32];
+  sprint_csite(name, site);
   (void) dat;
   g_print("Global site (%i,%i) is %s\n", x, y, name);
-  g_free(name);
 }
 
 void

@@ -35,7 +35,7 @@ void free_pipdb(pip_db_t *pipdb);
 /* utility functions */
 pip_t *pips_of_site(const pip_db_t *pipdb,
 		    const bitstream_parsed_t *bitstream,
-		    const site_details_t *site,
+		    const csite_descr_t *site,
 		    gsize *size);
 
 #endif /* _LOCALPIPS_H */
