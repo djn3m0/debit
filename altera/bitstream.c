@@ -21,6 +21,7 @@
    The border causes problems and we don't want it */
 #define EP35_Y_SITES 35
 #define EP35_LAB_SITES 32
+#define EP35_SLICE_SITES 70
 
 typedef struct _geo_stride {
   unsigned offset;
@@ -187,9 +188,12 @@ get_bit_offset(const altera_bitstream_t *bitstream,
 /*   g_print("offset is %i, y %i, x %i, slice %i\n", */
 /*  	  ret, y_offset, x_offset, slice_offset); */
 
-  g_assert(y_offset >= 0 && y_offset < 35 * 70 * 2701);
-  g_assert(slice_offset >= 0 && slice_offset < (2701 * 70));
-  g_assert(x_offset >= 0 && x_offset < 2701);
+  g_assert(y_offset >= 0);
+  //  g_assert(y_offset < 35 * 70 * 2701);
+  g_assert(slice_offset >= 0);
+  g_assert(slice_offset < (2701 * 70));
+  g_assert(x_offset >= 0);
+  g_assert(x_offset < 2701);
 
   return ret;
 }
@@ -263,7 +267,7 @@ void print_pos_from_bit_offset(const altera_bitstream_t *bit,
   unsigned offset = get_offset_from_bit_offset(bit, bitoffset);
 
   g_assert( bitoffset == get_bit_offset(bit,y,slice,x) + offset);
-  g_print("%i @ (%i,%i,%i) + %i\n", bitoffset, x, y, slice, offset);
+  g_print("%i@(%i,%i,%i)+%i\n", bitoffset, x, y, slice, offset);
 }
 
 static inline unsigned
@@ -409,7 +413,7 @@ get_lab_data(const altera_bitstream_t *bitstream,
   bitarray_t *bitarray = bitarray_create(size);
   unsigned i, bitindex = 0;
 
-  for (i = 0; i < EP35_LAB_SITES; i++) {
+  for (i = 0; i < EP35_SLICE_SITES; i++) {
     bitstream_to_bitarray(bitarray, bitindex,
 			  bitstream, x, y, i,
 			  width);
