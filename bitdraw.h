@@ -39,3 +39,14 @@ void draw_surface_chip(chip_descr_t *chip, cairo_surface_t *sr);
 void draw_wire(const drawing_context_t *ctx, wire_atom_t wire);
 void draw_interconnect(const drawing_context_t *ctx, pip_t pip);
 void draw_pip(const drawing_context_t *ctx, pip_t pip);
+
+/* bad, this. The drawing context should be separated from the cairo_t */
+drawing_context_t *drawing_context_create();
+void drawing_context_destroy(drawing_context_t *ctx);
+
+static inline
+void set_cairo_context(drawing_context_t *ctx, cairo_t *cr) {
+  ctx->cr = cr;
+}
+
+#endif /* _HAS_BITDRAW_H */

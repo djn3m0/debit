@@ -11,7 +11,8 @@
 
 #define NAME_OFFSET_X 20.0
 #define NAME_OFFSET_Y 20.0
-#define NAME_FONT_SITE 8.0
+#define NAME_FONT_SIZE 8.0
+#define NAME_FONT_TYPE "bitstream vera sans mono"
 
 #define SITE_MARGIN_X 10.0
 #define SITE_MARGIN_Y 10.0
@@ -58,6 +59,7 @@ _draw_luts(cairo_t *cr) {
 static inline void
 _draw_name(cairo_t *cr, csite_descr_t *site) {
   gchar *name = print_csite(site);
+  //g_print("printing %s", name);
   cairo_move_to(cr, NAME_OFFSET_X, NAME_OFFSET_Y);
   cairo_show_text(cr, name);
   cairo_stroke(cr);
@@ -114,6 +116,7 @@ _draw_clb_new(drawing_context_t *ctx, csite_descr_t *site) {
   cairo_rectangle (cr, 0, 0, SITE_WIDTH, SITE_HEIGHT);
   cairo_clip (cr);
 
+  cairo_set_source (cr, site_pattern);
   cairo_paint (cr);
 
   cairo_restore (cr);
@@ -153,10 +156,11 @@ draw_clb_new(drawing_context_t *ctx,
     site_pattern = draw_clb_pattern(ctx);
 
   /* don't draw, do a compositing operation */
+  cairo_save (cr);
   cairo_translate(cr, dx, dy);
-  cairo_set_source (cr, site_pattern);
   _draw_clb_new(ctx, site);
-  cairo_translate(cr, -dx, -dy);
+  cairo_restore (cr);
+  //  cairo_translate(cr, -dx, -dy);
 }
 
 /* Drawing of regular LUT */
@@ -195,10 +199,10 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
   cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
   cairo_set_line_width (cr, 1);
 
-  cairo_select_font_face(cr, "bitstream vera sans mono",
+  cairo_select_font_face(cr, NAME_FONT_TYPE,
 			 CAIRO_FONT_SLANT_NORMAL,
 			 CAIRO_FONT_WEIGHT_NORMAL);
-  cairo_set_font_size(cr, NAME_FONT_SITE);
+  cairo_set_font_size(cr, NAME_FONT_SIZE);
 
 /*   if (!site_patterns[CLB]) { */
 /*     g_print("drawing the group"); */
@@ -222,7 +226,7 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
    or to screen)
 */
 
-static void
+static inline void
 init_drawing_context(drawing_context_t *ctx) {
   ctx->cr = NULL;
   ctx->text = TRUE;
@@ -231,6 +235,7 @@ init_drawing_context(drawing_context_t *ctx) {
 drawing_context_t *
 drawing_context_create() {
   drawing_context_t *ctx = g_new(drawing_context_t, 1);
+  init_drawing_context(ctx);
   return ctx;
 }
 
