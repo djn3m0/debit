@@ -9,10 +9,6 @@
 #include "sites.h"
 #include "bitdraw.h"
 
-/* All sites have the same width and height. Simpler. */
-#define SITE_WIDTH 100.0
-#define SITE_HEIGHT 100.0
-
 #define NAME_OFFSET_X 20.0
 #define NAME_OFFSET_Y 20.0
 #define NAME_FONT_SITE 8.0
@@ -172,12 +168,13 @@ destroy_drawing_context(drawing_context_t *ctx) {
    Then callbacks for redrawing etc, as needed for the windowing
    environment. For now pdf-only, so that's it
 */
-static void
-_draw_surface_chip(chip_descr_t *chip, cairo_surface_t *sr) {
+void
+draw_surface_chip(chip_descr_t *chip, cairo_surface_t *sr) {
   cairo_t *cr;
   drawing_context_t ctx;
   cr = cairo_create(sr);
   init_drawing_context(&ctx, cr);
+
   draw_chip(&ctx, chip);
 
   cairo_surface_flush(sr);
@@ -186,37 +183,3 @@ _draw_surface_chip(chip_descr_t *chip, cairo_surface_t *sr) {
   cairo_destroy(cr);
 }
 
-#include <cairo-pdf.h>
-
-static void
-draw_pdf_chip(chip_descr_t *chip) {
-  cairo_surface_t *sr;
-
-  /* extract size from chip size */
-  sr = cairo_pdf_surface_create ("bitfile.pdf",
-				 chip->width * SITE_WIDTH,
-				 chip->height * SITE_HEIGHT);
-  cairo_surface_set_fallback_resolution (sr, 600, 600);
-
-  _draw_surface_chip(chip, sr);
-
-  cairo_surface_destroy(sr);
-}
-
-/* main, test function */
-
-/* small testing utility */
-int main() {
-  chip_descr_t *chip = get_chip("/home/jb/chip/","xc2v2000");
-  if (!chip)
-    return -1;
-
-  /* stdout dump */
-  print_chip(chip);
-
-  /* cairo thingy */
-  draw_pdf_chip(chip);
-
-  release_chip(chip);
-  return 0;
-}
