@@ -64,13 +64,62 @@ _draw_name(cairo_t *cr, csite_descr_t *site) {
   g_free(name);
 }
 
-static void
-_draw_clb(drawing_context_t *ctx, csite_descr_t *site) {
-  cairo_t *cr = ctx->cr;
+void
+_draw_clb_pattern(cairo_t *cr) {
   /* cairo_append_path ? */
   _draw_box(cr);
   _draw_switchbox(cr);
   _draw_luts(cr);
+}
+
+static void
+_draw_clb(drawing_context_t *ctx, csite_descr_t *site) {
+  cairo_t *cr = ctx->cr;
+
+  _draw_clb_pattern(cr);
+
+  /* if text is enabled */
+  if (ctx->text)
+    _draw_name(cr, site);
+}
+
+cairo_pattern_t *
+draw_clb_pattern(drawing_context_t *ctx) {
+  cairo_t *cr = ctx->cr;
+  cairo_pattern_t *pat;
+  cairo_save (cr);
+  cairo_rectangle (cr, SITE_MARGIN_X, SITE_MARGIN_Y,
+		   SITE_WIDTH - 2 * SITE_MARGIN_X,
+		   SITE_HEIGHT - 2 * SITE_MARGIN_Y);
+  cairo_clip (cr);
+  cairo_push_group (cr);
+  _draw_clb_pattern (cr);
+  pat = cairo_pop_group (cr);
+  cairo_restore (cr);
+  return pat;
+}
+
+cairo_pattern_t *site_pattern = NULL;
+
+void
+_draw_clb_new(drawing_context_t *ctx, csite_descr_t *site) {
+  cairo_t *cr = ctx->cr;
+
+  /* now let's draw !
+     NB: could use the *whole* thing as pattern */
+  g_print("painting the thing @(%i,%i)\n",
+	  site->type_coord.x,site->type_coord.y);
+  /* clip */
+  cairo_save (cr);
+
+  cairo_rectangle (cr, SITE_MARGIN_X, SITE_MARGIN_Y,
+		   SITE_WIDTH - 2 * SITE_MARGIN_X,
+		   SITE_HEIGHT - 2 * SITE_MARGIN_Y);
+  cairo_clip (cr);
+/*   cairo_set_source(cr,  */
+/*   cairo_paint (cr); */
+
+  cairo_restore (cr);
 
   /* if text is enabled */
   if (ctx->text)
@@ -82,7 +131,7 @@ typedef void (*site_draw_t)(drawing_context_t *ctx,
 			    unsigned x, unsigned y,
 			    csite_descr_t *);
 
-static void
+void
 draw_clb(drawing_context_t *ctx,
 	 unsigned x, unsigned y,
 	 csite_descr_t *site) {
@@ -91,15 +140,30 @@ draw_clb(drawing_context_t *ctx,
   double dx = x * SITE_WIDTH, dy = y * SITE_HEIGHT;
   /* move to the right place */
   cairo_translate(cr, dx, dy);
-  //  g_print("drawing clb %f, %f", dx, dy);
   _draw_clb(ctx, site);
-  /* remove the transformation */
+  cairo_translate(cr, -dx, -dy);
+}
+
+void
+draw_clb_new(drawing_context_t *ctx,
+	 unsigned x, unsigned y,
+	 csite_descr_t *site) {
+  cairo_t *cr = ctx->cr;
+  /* can be computed incrementally with only one addition */
+  double dx = x * SITE_WIDTH, dy = y * SITE_HEIGHT;
+
+  if (site_pattern == NULL)
+    site_pattern = draw_clb_pattern(ctx);
+  //  cairo_set_source (cr, site_pattern);
+
+  cairo_translate(cr, dx, dy);
+  _draw_clb_new(ctx, site);
   cairo_translate(cr, -dx, -dy);
 }
 
 /* Drawing of regular LUT */
 site_draw_t draw_table[NR_SITE_TYPE] = {
-  [CLB] = draw_clb,
+  [CLB] = draw_clb_new,
 };
 
 void
@@ -110,6 +174,10 @@ draw_site(unsigned x, unsigned y,
   if (fun)
     fun(ctx, x, y, site);
 }
+
+cairo_pattern_t *site_patterns[NR_SITE_TYPE] = {
+  [CLB] = NULL,
+};
 
 /* Drawing of the whole bunch */
 static void
@@ -134,6 +202,17 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
 			 CAIRO_FONT_WEIGHT_NORMAL);
   cairo_set_font_size(cr, NAME_FONT_SITE);
 
+/*   if (!site_patterns[CLB]) { */
+/*     g_print("drawing the group"); */
+/*     cairo_push_group_with_content (cr, CAIRO_CONTENT_COLOR); */
+/*     iterate_over_sites(chip, draw_site, ctx); */
+/*     site_patterns[CLB] = cairo_pop_group (cr); */
+/*   } */
+
+/*   cairo_set_source (cr, site_patterns[CLB]); */
+/*   g_print("painting"); */
+/*   cairo_paint (cr); */
+/*   g_print("painting ended"); */
   iterate_over_sites(chip, draw_site, ctx);
 }
 

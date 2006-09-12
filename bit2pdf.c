@@ -32,7 +32,7 @@ int main() {
     return -1;
 
   /* stdout dump */
-  print_chip(chip);
+  //print_chip(chip);
 
   /* cairo thingy */
   draw_pdf_chip(chip);
