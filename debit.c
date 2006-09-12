@@ -26,7 +26,7 @@
 #include "bitstream_parser.h"
 #include "debitlog.h"
 #include "filedump.h"
-#include "localpips.h"
+#include "analysis.h"
 
 static gboolean framedump = FALSE;
 static gboolean pipdump = FALSE;
@@ -56,10 +56,10 @@ debit_file(gchar *input_file, gchar *output_dir) {
     design_write_frames(bit,NULL);
 
   if (pipdump) {
-    pip_db_t *pipdb = get_pipdb(datadir);
-    if (pipdb != NULL) {
-      dump_all_pips(pipdb, bit);
-      free_pipdb(pipdb);
+    bitstream_analyzed_t *analysis = analyze_bitstream(bit, datadir);
+    if (analysis != NULL) {
+      dump_pips(analysis);
+      free_analysis(analysis);
     }
   }
 

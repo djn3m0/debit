@@ -5,9 +5,10 @@ DATAPREFIX=clb tterm bterm rterm lterm lioi rioi tioi bioi \
 
 DATCONTROL=$(addsuffix /control.db,$(DATAPREFIX))
 DATDATA=$(addsuffix /data.db,$(DATAPREFIX))
+CHIPDB=xc2v2000/chip_control xc2v2000/chip_data
 
 WIRES_DB=wires.db
 
-ALLDATA=$(DATCONTROL) $(DATDATA) $(WIRES_DB)
+ALLDATA=$(DATCONTROL) $(DATDATA) $(WIRES_DB) $(CHIP_DB)
 
 nobase_dist_pkgdata_DATA=$(ALLDATA)

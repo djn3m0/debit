@@ -4,9 +4,13 @@
  */
 
 #include <glib.h>
+#include <glib/gprintf.h>
+
 #include "wiring.h"
 #include "localpips.h"
-#include "connexity.h"
+#include "bitstream.h"
+#include "analysis.h"
+
 
 /*
  * Connexity analysis
@@ -227,6 +231,19 @@ static const guint ysize[SITE_TYPE_NEUTRAL] = {
   [BRAM] = Y_SITES,
 };
 
+static void print_site_db(const wire_db_t *wiredb,
+			  const site_details_t *site,
+			  const pip_t *pips,
+			  const gsize size) {
+  gsize i;
+  for (i = 0; i < size; i++ ) {
+    pip_t pip = pips[i];
+    print_pip(site,
+	      wire_name(wiredb,pip.source),
+	      wire_name(wiredb,pip.target));
+  }
+}
+
 /** \brief Test function which dumps the pips of a bitstream on stdout
  *
  * @param pipdb the pip database
@@ -234,8 +251,8 @@ static const guint ysize[SITE_TYPE_NEUTRAL] = {
  *
  */
 
-void dump_all_pips(const pip_db_t *pipdb,
-		   const bitstream_parsed_t *bitstream) {
+static void dump_all_pips(pip_db_t *pipdb,
+			  const bitstream_parsed_t *bitstream) {
   guint type_ref;
   guint x, y;
 
@@ -284,6 +301,9 @@ void dump_all_pips(const pip_db_t *pipdb,
   }
 }
 
+void dump_pips(bitstream_analyzed_t *bitstream) {
+  dump_all_pips(bitstream->pipdb, bitstream->bitstream);
+}
 
 
 /*

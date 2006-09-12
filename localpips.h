@@ -12,8 +12,6 @@
 
 /** \file */
 
-#define ATTR_UNUSED_OK __attribute__((unused))
-
 typedef enum
   {
     /* log flags */
@@ -39,9 +37,5 @@ pip_t *pips_of_site(const pip_db_t *pipdb,
 		    const bitstream_parsed_t *bitstream,
 		    const site_details_t *site,
 		    gsize *size);
-
-void print_pipdb(GKeyFile *pipdb);
-void dump_all_pips(const pip_db_t *pipdb,
-		   const bitstream_parsed_t *bitstream);
 
 #endif /* _LOCALPIPS_H */

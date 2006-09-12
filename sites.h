@@ -69,6 +69,8 @@ get_global_site(const chip_descr_t *chip,
 
 /* The returned string is allocated and should be freed */
 gchar *print_csite(const csite_descr_t *site);
+void
+sprint_csite(gchar *data, const csite_descr_t *site);
 
 typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
 				csite_descr_t *site, gpointer dat);
