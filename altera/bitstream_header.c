@@ -5,6 +5,7 @@
 #include <glib.h>
 #include <stdint.h>
 
+#include "debitlog.h"
 #include "bitstream.h"
 #include "bitstream_header.h"
 
@@ -43,37 +44,37 @@ parse_option(altera_bitstream_t *altera,
   guint32 length = GUINT32_FROM_LE(opt->length);
   const char *data = opt->data;
 
-  g_print("option code %i, length %i\n", code, length);
+  debit_log(L_BITSTREAM, "option code %i, length %i\n", code, length);
 
   switch(code) {
   case BUILDTOOL:
-    g_print("This bitstream build courtesy of %.*s. We love you !\n", length, data);
+    debit_log(L_BITSTREAM, "This bitstream build courtesy of %.*s. We love you !\n", length, data);
     break;
   case CHIPTYPE:
-    g_print("Chip is a %.*s\n", length, data);
+    debit_log(L_BITSTREAM, "Chip is a %.*s\n", length, data);
     break;
   case NAME:
-    g_print("This bitstream's joyfull nickname is %.*s\n", length, data);
+    debit_log(L_BITSTREAM, "This bitstream's joyfull nickname is %.*s\n", length, data);
     break;
   case BITSTREAM:
-    g_print("Got the bitstream data. The meat. What you want. (length %i)\n", length);
+    debit_log(L_BITSTREAM, "Got the bitstream data. The meat. What you want. (length %i)\n", length);
     altera->bitdata = data;
     altera->bitlength = length;
     break;
   case PACKAGE:
     {
       guint32 id = GUINT32_FROM_LE(get_32(data));
-      g_print("Something, maybe the package is %04x\n", id);
+      debit_log(L_BITSTREAM, "Something, maybe the package is %04x\n", id);
     }
     break;
   case CRC:
     {
       guint32 crc = GUINT32_FROM_LE(get_32(data));
-      g_print("CRC for the bitstream is %08x\n", crc);
+      debit_log(L_BITSTREAM, "CRC for the bitstream is %08x\n", crc);
     }
     break;
   default:
-    g_print("Unknown option code. Cheers ! And do not forget to contact me.\n");
+    debit_log(L_BITSTREAM, "Unknown option code. Cheers ! And do not forget to contact me.\n");
   }
 
   *rcode = code;

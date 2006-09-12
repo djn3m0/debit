@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include <glib.h>
+#include "debitlog.h"
 #include "bitarray.h"
 #include "bitstream.h"
 
@@ -43,6 +44,10 @@ static gchar *odir = ".";
 static gchar *datadir = DATADIR;
 
 static const gchar **coords = NULL;
+
+#if DEBIT_DEBUG > 0
+unsigned int debit_debug = 0;
+#endif
 
 static void
 debit_reverse(const altera_bitstream_t *altera,
