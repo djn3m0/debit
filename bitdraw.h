@@ -11,15 +11,24 @@
 #include "sites.h"
 #include "wiring.h"
 
+#define SWITCH_CENTER_X 50.0
+#define SWITCH_CENTER_Y 50.0
+#define SWITCH_RADIUS   20.0
+
 typedef struct _drawing_context {
   cairo_t *cr;
   gboolean text;
   /* cairo information */
-  cairo_pattern_t *site_patterns[NR_SITE_TYPE];
+  cairo_pattern_t *site_sing_patterns[NR_SITE_TYPE];
   cairo_pattern_t *site_line_patterns[NR_SITE_TYPE];
+  cairo_pattern_t *site_full_patterns[NR_SITE_TYPE];
 
   /* And I also want lazy patterns for wires */
   cairo_pattern_t **pip_patterns;
+
+  /* Drawing parameters */
+  gint x_offset;
+  gint y_offset;
 
   /* structural information */
   chip_descr_t *chip;

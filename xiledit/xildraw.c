@@ -17,7 +17,8 @@ G_DEFINE_TYPE (EggXildrawFace, egg_xildraw_face, GTK_TYPE_DRAWING_AREA);
 static gboolean egg_xildraw_face_expose (GtkWidget *xildraw, GdkEventExpose *event);
 
 static void egg_xildraw_face_finalize (EggXildrawFace *self);
-
+static gboolean egg_xildraw_key_press_event(GtkWidget *widget,
+					    GdkEventKey *event);
 static void
 egg_xildraw_face_class_init (EggXildrawFaceClass *class)
 {
@@ -26,6 +27,7 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
   widget_class = GTK_WIDGET_CLASS (class);
 
   widget_class->expose_event = egg_xildraw_face_expose;
+  widget_class->key_press_event = egg_xildraw_key_press_event;
 
   /* bind finalizing function */
   G_OBJECT_CLASS (class)->finalize =
@@ -60,55 +62,18 @@ egg_xildraw_face_init (EggXildrawFace *xildraw)
   xildraw->ctx = NULL;
   xildraw->chip = NULL;
 
+  /* gtk initialization */
+  GTK_WIDGET_SET_FLAGS(GTK_WIDGET (xildraw), GTK_CAN_FOCUS);
+  /*   gtk_widget_set_flags(GTK_WIDGET (xildraw), GTK_CAN_FOCUS); */
+  /*   drawing_area.grab_focus() */
+  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_KEY_PRESS_MASK);
+
   g_print("init\n");
 }
 
 static void
 draw (EggXildrawFace *draw, cairo_t *cr)
 {
-/* 	double x, y; */
-/* 	double radius; */
-/* 	int i; */
-
-/* 	x = xildraw->allocation.x + xildraw->allocation.width / 2; */
-/* 	y = xildraw->allocation.y + xildraw->allocation.height / 2; */
-/* 	radius = MIN (xildraw->allocation.width / 2, */
-/* 		      xildraw->allocation.height / 2) - 5; */
-
-/* 	/\* xildraw back *\/ */
-/* 	cairo_arc (cr, x, y, radius, 0, 2 * M_PI); */
-/* 	cairo_set_source_rgb (cr, 1, 1, 1); */
-/* 	cairo_fill_preserve (cr); */
-/* 	cairo_set_source_rgb (cr, 0, 0, 0); */
-/* 	cairo_stroke (cr); */
-
-/* 	/\* xildraw ticks *\/ */
-/* 	for (i = 0; i < 12; i++) */
-/* 	{ */
-/* 		int inset; */
-
-/* 		cairo_save (cr); /\* stack-pen-size *\/ */
-
-/* 		if (i % 3 == 0) */
-/* 		{ */
-/* 			inset = 0.2 * radius; */
-/* 		} */
-/* 		else */
-/* 		{ */
-/* 			inset = 0.1 * radius; */
-/* 			cairo_set_line_width (cr, 0.5 * */
-/* 					      cairo_get_line_width (cr)); */
-/* 		} */
-
-/* 		cairo_move_to (cr, */
-/* 			       x + (radius - inset) * cos (i * M_PI / 6), */
-/* 			       y + (radius - inset) * sin (i * M_PI / 6)); */
-/* 		cairo_line_to (cr, */
-/* 			       x + radius * cos (i * M_PI / 6), */
-/* 			       y + radius * sin (i * M_PI / 6)); */
-/* 		cairo_stroke (cr); */
-/* 		cairo_restore (cr); /\* stack-pen-size *\/ */
-/* 	} */
   drawing_context_t *ctx = draw->ctx;
   chip_descr_t *chip = draw->chip;
   g_print("draw\n");
@@ -116,13 +81,16 @@ draw (EggXildrawFace *draw, cairo_t *cr)
 }
 
 static gboolean
-egg_xildraw_face_expose (GtkWidget *_xildraw, GdkEventExpose *event)
+egg_xildraw_face_expose (GtkWidget *widget, GdkEventExpose *event)
 {
   cairo_t *cr;
-  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(_xildraw);
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
+  (void) event;
+
+  g_print("expose event");
 
   /* get a cairo_t */
-  cr = gdk_cairo_create (_xildraw->window);
+  cr = gdk_cairo_create (widget->window);
 
   cairo_rectangle (cr,
 		   event->area.x, event->area.y,
@@ -137,6 +105,25 @@ egg_xildraw_face_expose (GtkWidget *_xildraw, GdkEventExpose *event)
   return FALSE;
 }
 
+static void
+egg_xildraw_redraw (EggXildrawFace *xildraw)
+{
+  GtkWidget *widget;
+  GdkRegion *region;
+
+  widget = GTK_WIDGET (xildraw);
+
+  if (!widget->window)
+    return;
+
+  region = gdk_drawable_get_clip_region (widget->window);
+  /* redraw the cairo canvas completely by exposing it */
+  gdk_window_invalidate_region (widget->window, region, TRUE);
+  gdk_window_process_updates (widget->window, TRUE);
+
+  gdk_region_destroy (region);
+}
+
 GtkWidget *
 egg_xildraw_face_new (void)
 {
@@ -145,4 +132,64 @@ egg_xildraw_face_new (void)
   ret->chip = get_chip("/home/jb/chip/","xc2v2000");
   ret->ctx = drawing_context_create();
   return GTK_WIDGET(ret);
+}
+
+static void
+xildraw_move(EggXildrawFace *xildraw,
+	     unsigned dx, unsigned dy) {
+  drawing_context_t *ctx = xildraw->ctx;
+  ctx->x_offset += dx;
+  ctx->y_offset += dy;
+  egg_xildraw_redraw (xildraw);
+  return;
+}
+
+#include <gdk/gdkkeysyms.h>
+
+static gboolean
+egg_xildraw_key_press_event(GtkWidget *widget,
+			    GdkEventKey *event)
+{
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
+  gint k, step = 100;
+  gint x_move = 0, y_move = 0;
+  //  step = 100 / net->zooms[net->level];
+
+  g_print("key press event !");
+
+  k = event->keyval;
+
+  switch(k) {
+  case GDK_Left:
+    x_move = -1;
+    break;
+  case GDK_Right:
+    x_move = 1;
+    break;
+  case GDK_Up:
+    y_move = -1;
+    break;
+  case GDK_Down:
+    y_move = 1;
+    break;
+/*   case GDK_Page_Up: */
+/*     netdraw_move(gui, 0,-4*step); */
+/*     break; */
+/*   case GDK_Page_Down: */
+/*     netdraw_move(gui, 0,+4*step); */
+/*     break; */
+/*   case GDK_plus: */
+/*   case GDK_KP_Add: */
+/*     netdraw_zoom(gui, +1*step); */
+/*     break; */
+/*   case GDK_minus: */
+/*   case GDK_KP_Subtract: */
+/*     netdraw_zoom(gui, -1*step); */
+/*     break; */
+  }
+
+  if (x_move || y_move)
+    xildraw_move(xildraw, x_move * step, y_move * step);
+
+  return FALSE;
 }

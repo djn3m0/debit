@@ -20,10 +20,6 @@
 #define SITE_MARGIN_X 10.0
 #define SITE_MARGIN_Y 10.0
 
-#define SWITCH_CENTER_X 50.0
-#define SWITCH_CENTER_Y 50.0
-#define SWITCH_RADIUS   20.0
-
 #define LUT_WIDTH  10.0
 #define LUT_HEIGHT 10.0
 #define LUT_BASE_X 80.0
@@ -91,6 +87,7 @@ cairo_pattern_t *
 draw_clb_pattern(drawing_context_t *ctx) {
   cairo_t *cr = ctx->cr;
   cairo_pattern_t *pat;
+
   cairo_save (cr);
 
   cairo_rectangle (cr, 0, 0, SITE_WIDTH, SITE_HEIGHT);
@@ -100,13 +97,14 @@ draw_clb_pattern(drawing_context_t *ctx) {
   pat = cairo_pop_group (cr);
 
   cairo_restore (cr);
+
   return pat;
 }
 
 void
 _draw_clb_new(drawing_context_t *ctx, csite_descr_t *site) {
   cairo_t *cr = ctx->cr;
-  cairo_pattern_t *site_pattern = ctx->site_patterns[CLB];
+  cairo_pattern_t *site_pattern = ctx->site_sing_patterns[CLB];
 
   /* now let's draw !
      NB: could use the *whole* thing as pattern */
@@ -122,8 +120,8 @@ _draw_clb_new(drawing_context_t *ctx, csite_descr_t *site) {
   cairo_restore (cr);
 
   /* if text is enabled */
-/*   if (ctx->text) */
-/*     _draw_name(cr, site); */
+  if (ctx->text)
+    _draw_name(cr, site);
 }
 
 /* draw the CLB with absolute positioning */
@@ -174,6 +172,25 @@ draw_site(unsigned x, unsigned y,
     fun(ctx, x, y, site);
 }
 
+static void
+draw_site_simple(unsigned x, unsigned y,
+		 csite_descr_t *site, gpointer data) {
+  drawing_context_t *ctx = data;
+  if (site->type == CLB)
+    draw_clb(ctx, x, y, site);
+}
+
+cairo_pattern_t *
+draw_full_clb_pattern(drawing_context_t *ctx,
+		      chip_descr_t *chip) {
+  cairo_t *cr = ctx->cr;
+
+  cairo_push_group (cr);
+  /* draw the thing only using vector operations */
+  iterate_over_sites(chip, draw_site_simple, ctx);
+  return cairo_pop_group (cr);
+}
+
 /* Drawing of the whole bunch */
 void
 draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
@@ -184,8 +201,8 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
 		  chip->height * SITE_HEIGHT);
   cairo_clip (cr);
 
-  cairo_set_source_rgb (cr, 0., 0., 0.);
   /* paint the clip region */
+  cairo_set_source_rgb (cr, 0., 0., 0.);
   cairo_paint (cr);
 
   /* draw everything in white. This could be per-site or per-site-type */
@@ -198,23 +215,24 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
   cairo_set_font_size(cr, NAME_FONT_SIZE);
 
   /* initialize patterns -- once and for all ? */
-  if (!ctx->site_patterns[CLB])
-    ctx->site_patterns[CLB] = draw_clb_pattern(ctx);
+  if (!ctx->site_sing_patterns[CLB])
+    ctx->site_sing_patterns[CLB] = draw_clb_pattern(ctx);
 
-/*   if (!site_patterns[CLB]) { */
-/*     g_print("drawing the group"); */
-/*     cairo_push_group_with_content (cr, CAIRO_CONTENT_COLOR); */
-/*     iterate_over_sites(chip, draw_site, ctx); */
-/*     site_patterns[CLB] = cairo_pop_group (cr); */
-/*   } */
-
-/*   cairo_set_source (cr, site_patterns[CLB]); */
-/*   g_print("painting"); */
+/*   if (!ctx->site_full_patterns[CLB]) */
+/*     ctx->site_full_patterns[CLB] = draw_full_clb_pattern(ctx, chip); */
+/*   cairo_save (cr); */
+/*   cairo_set_source (cr, ctx->site_full_patterns[CLB]); */
 /*   cairo_paint (cr); */
-/*   g_print("painting ended"); */
+/*   cairo_restore (cr); */
+
+  /* move from the context */
+  cairo_translate(cr, -ctx->x_offset, -ctx->y_offset);
 
   iterate_over_sites(chip, draw_site, ctx);
   cairo_surface_flush ( cairo_get_target(cr) );
+
+  cairo_translate(cr, ctx->x_offset, ctx->y_offset);
+
   g_print("End of draw chip\n");
 }
 
@@ -253,10 +271,13 @@ static inline void
 init_drawing_context(drawing_context_t *ctx) {
   unsigned i;
   ctx->cr = NULL;
-  ctx->text = TRUE;
+  ctx->text = FALSE;
+  ctx->x_offset = 0;
+  ctx->y_offset = 0;
   for (i = 0; i < NR_SITE_TYPE; i++) {
-    ctx->site_patterns[i] = NULL;
+    ctx->site_sing_patterns[i] = NULL;
     ctx->site_line_patterns[i] = NULL;
+    ctx->site_full_patterns[i] = NULL;
   }
 }
 
@@ -278,8 +299,9 @@ drawing_context_destroy(drawing_context_t *ctx) {
   unsigned i;
   /* cleanup the patterns */
   for (i = 0; i < NR_SITE_TYPE; i++) {
-    safe_cairo_pattern_destroy(ctx->site_patterns[i]);
+    safe_cairo_pattern_destroy(ctx->site_sing_patterns[i]);
     safe_cairo_pattern_destroy(ctx->site_line_patterns[i]);
+    safe_cairo_pattern_destroy(ctx->site_full_patterns[i]);
   }
   g_free(ctx);
 }
