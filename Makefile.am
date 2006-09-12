@@ -72,6 +72,8 @@ DOCSOURCES=$(shell find ./ -name '*.c' -or -name '*.h')
 DOXYCONFIG=doc/doxygen.cfg
 DOXYDIR=doc
 
+.PHONY: debian rpms doc
+
 doc: $(DOCSOURCES) $(DOXYCONFIG)
 	doxygen $(DOXYCONFIG) #&& make -C $(DOXYDIR)/latex/
 
@@ -80,10 +82,8 @@ deb: dist
 	rm -f $(DIST_ARCHIVES) && \
 	dpkg-buildpackage -rfakeroot -i'(trash|.git)' -Itrash -I.git
 
-rpm: dist
+rpms: dist
 	mkdir -p rpm/SOURCES rpm/BUILD && mv $(PACKAGE)-$(VERSION).tar.gz rpm/SOURCES && cd rpm && \
 	rpmbuild --sign -bb --target noarch debit-data-0.1-1.spec && \
 	rpmbuild --sign -bb debit-0.1-1.spec && \
 	rm -rf rpm/SOURCES rpm/BUILD
-
-.PHONY: debian rpm

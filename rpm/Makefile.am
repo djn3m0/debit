@@ -3,7 +3,9 @@ RPMFILES=$(shell ls *.rpm)
 dist_noinst_DATA=$(SPECFILES)
 CLEANFILES=$(RPMFILES)
 
-rpm:
+.PHONY: rpms
+
+rpms:
 	mkdir -p SOURCES BUILD && mv ../$(PACKAGE)-$(VERSION).tar.gz SOURCES \
 	rpmbuild --sign -bb --target noarch debit-data-0.1-1.spec && \
 	rpmbuild --sign -bb debit-0.1-1.spec
