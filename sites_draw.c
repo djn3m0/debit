@@ -9,6 +9,9 @@
 #include "sites.h"
 #include "bitdraw.h"
 
+#include <sys/time.h>
+#include <time.h>
+
 #define NAME_OFFSET_X 20.0
 #define NAME_OFFSET_Y 20.0
 #define NAME_FONT_SIZE 8.0
@@ -80,8 +83,8 @@ _draw_clb(drawing_context_t *ctx, csite_descr_t *site) {
   _draw_clb_pattern(cr);
 
   /* if text is enabled */
-/*   if (ctx->text) */
-/*     _draw_name(cr, site); */
+  if (ctx->text)
+    _draw_name(cr, site);
 }
 
 cairo_pattern_t *
@@ -111,11 +114,9 @@ _draw_clb_new(drawing_context_t *ctx, csite_descr_t *site) {
 
   /* clip */
   cairo_save (cr);
-
-  /* possibly slower with the clip */
-  cairo_rectangle (cr, 0, 0, SITE_WIDTH, SITE_HEIGHT);
-  cairo_clip (cr);
-
+  /* slower with the clip */
+/*   cairo_rectangle (cr, 0, 0, SITE_WIDTH, SITE_HEIGHT); */
+/*   cairo_clip (cr); */
   cairo_set_source (cr, site_pattern);
   cairo_paint (cr);
 
@@ -160,7 +161,7 @@ draw_clb_new(drawing_context_t *ctx,
   cairo_translate(cr, dx, dy);
   _draw_clb_new(ctx, site);
   cairo_restore (cr);
-  //  cairo_translate(cr, -dx, -dy);
+  //cairo_translate(cr, -dx, -dy);
 }
 
 /* Drawing of regular LUT */
@@ -216,9 +217,34 @@ draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
 /*   cairo_paint (cr); */
 /*   g_print("painting ended"); */
   iterate_over_sites(chip, draw_site, ctx);
+  cairo_surface_flush ( cairo_get_target(cr) );
   g_print("End of draw chip\n");
 }
 
+static void
+diff_time(struct timeval *start, struct timeval *end) {
+  long usec, sec;
+  /* returns the time difference in microseconds */
+  /*   diff = (unsigned long)(difftime(end->tv_sec,start->tv_sec) *
+       1,000,000,000); */
+  usec = end->tv_usec - start->tv_usec;
+  sec = end->tv_sec - start->tv_sec;
+  if (usec < 0) {
+    sec--;
+    usec+=1000000;
+  }
+  g_print("%li seconds and %li microseconds\n",sec, usec);
+}
+
+void
+draw_chip_monitored(drawing_context_t *ctx, chip_descr_t *chip) {
+  struct timeval start, end;
+
+  gettimeofday(&start,NULL);
+  draw_chip(ctx, chip);
+  gettimeofday(&end, NULL);
+  diff_time(&start, &end);
+}
 /* exported functions do a bunch of initialization */
 
 /* First, initialize the structure to default value. cairo_t is passed

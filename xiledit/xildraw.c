@@ -112,7 +112,7 @@ draw (EggXildrawFace *draw, cairo_t *cr)
   drawing_context_t *ctx = draw->ctx;
   chip_descr_t *chip = draw->chip;
   g_print("draw\n");
-  draw_chip(ctx, chip);
+  draw_chip_monitored(ctx, chip);
 }
 
 static gboolean

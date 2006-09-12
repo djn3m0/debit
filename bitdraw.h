@@ -30,7 +30,8 @@ create_drawing_context(const cairo_t *cr);
 cairo_t *
 destroy_drawing_context(drawing_context_t *ctx);
 
-void draw_chip(drawing_context_t *ctx, chip_descr_t *chip);
+//void draw_chip(drawing_context_t *ctx, chip_descr_t *chip);
+void draw_chip_monitored(drawing_context_t *ctx, chip_descr_t *chip);
 
 /* draw onto surface the chip */
 void draw_surface_chip(chip_descr_t *chip, cairo_surface_t *sr);
