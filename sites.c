@@ -96,7 +96,7 @@ init_group_chip_type(GKeyFile *file, const gchar *group,
 		     gpointer data) {
   chip_descr_t *chip = data;
   GError *error = NULL;
-  gint *intervals[2];
+  gint *intervals[2] = {0, 0};
   gsize sizes[2];
   unsigned type;
 
@@ -112,12 +112,17 @@ init_group_chip_type(GKeyFile *file, const gchar *group,
     goto out_err;
   g_assert(type < NR_SITE_TYPE);
   init_chip_type(chip, type, intervals[0], sizes[0], intervals[1], sizes[1]);
-  return;
 
  out_err:
-  g_warning("Error treating group %s: %s",
-	    group, error->message);
-  g_error_free(error);
+  if (intervals[0])
+    g_free(intervals[0]);
+  if (intervals[1])
+    g_free(intervals[1]);
+  if (error) {
+    g_warning("Error treating group %s: %s",
+	      group, error->message);
+    g_error_free(error);
+  }
   return;
 }
 
