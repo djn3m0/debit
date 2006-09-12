@@ -20,6 +20,8 @@ static int
 compare_data(const gchar *dat1, const unsigned l1,
 	     const gchar *dat2, const unsigned l2) {
   unsigned i;
+  unsigned long differences = 0;
+
   if (l1 != l2) {
     g_warning("File sizes differ");
     return -1;
@@ -37,6 +39,7 @@ compare_data(const gchar *dat1, const unsigned l1,
 	unsigned bit1 = val1 & mask, bit2 = val2 & mask;
 	if (bit1 != bit2) {
 	  unsigned pos = 8*i+j;
+	  differences += 1;
 	  if (!valdump)
 	    g_print("%i\n", pos);
 	  else
@@ -46,7 +49,7 @@ compare_data(const gchar *dat1, const unsigned l1,
     }
   }
 
-  return 0;
+  return (int) differences;
 
 }
 
