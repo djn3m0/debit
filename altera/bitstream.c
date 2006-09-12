@@ -514,7 +514,10 @@ static inline int dump_data(const gchar *odir,
   gboolean ret;
 
   /* Assemble the filename */
-  name = g_build_filename(odir, filename, NULL);
+  if (odir)
+    name = g_build_filename(odir, filename, NULL);
+  else
+    name = g_build_filename(filename, NULL);
 
   /* Actually write the file */
   ret = g_file_set_contents(name, data, length, &error);

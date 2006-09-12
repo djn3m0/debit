@@ -73,7 +73,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
   debit_reverse(altera, coords);
 
   if (bitdump) {
-    err = dump_raw_bit(odir, bitdump, altera);
+    err = dump_raw_bit(NULL, bitdump, altera);
     if (err)
       goto out_err;
   }
