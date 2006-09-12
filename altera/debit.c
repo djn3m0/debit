@@ -27,6 +27,7 @@
     but the data must not.
 */
 
+#include <stdlib.h>
 #include <glib.h>
 #include "bitarray.h"
 #include "bitstream.h"
@@ -41,7 +42,21 @@ static gchar *bitdump = NULL;
 static gchar *odir = ".";
 static gchar *datadir = DATADIR;
 
-static gint coord = -1;
+static const gchar **coords = NULL;
+
+static void
+debit_reverse(const altera_bitstream_t *altera,
+	      const gchar ** coords) {
+  const gchar *scoord;
+
+  if (!coords)
+    return;
+
+  while ( (scoord = *coords++) != NULL) {
+    unsigned long coord = strtoul(scoord, NULL, 0);
+    print_pos_from_bit_offset(altera, coord);
+  }
+}
 
 static int
 debit_file(gchar *input_file, gchar *output_dir) {
@@ -55,8 +70,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
     goto out_err_nofree;
   }
 
-  if (coord > -1)
-    print_pos_from_bit_offset(altera, coord);
+  debit_reverse(altera, coords);
 
   if (bitdump) {
     err = dump_raw_bit(odir, bitdump, altera);
@@ -82,7 +96,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
 static GOptionEntry entries[] =
 {
   {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Read bitstream (sof file) <ifile>", "<ifile>"},
-  {"coord", 'r', 0, G_OPTION_ARG_INT, &coord, "Translate offset coordinate into device coordinates", NULL},
+  {"coord", 'r', 0, G_OPTION_ARG_STRING_ARRAY, &coords, "Translate offset coordinate into device coordinates", NULL},
 #if DEBIT_DEBUG > 0
   {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
 #endif
@@ -123,5 +137,12 @@ main(int argc, char *argv[])
   }
 
   err = debit_file(ifile, odir);
+
+  /* cleanup of arguments -- should we do this ? */
+/*   if (coords) */
+/*     g_strfreev((gchar **)coords); */
+/*   if (ifile) */
+/*     g_free(ifile); */
+
   return err;
 }
