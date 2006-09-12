@@ -1,3 +1,8 @@
+scriptutils=convert.sh xcompile.sh gendb.sh
+
+EXTRA_DIST=debit.nsi.tmpl cross.env $(scriptutils)
+
+
 xildb.nsh:
 	$(srcdir)/gendb.sh $(top_srcdir) $@
 

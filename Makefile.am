@@ -76,8 +76,8 @@ doc: $(DOCSOURCES) $(DOXYCONFIG)
 	doxygen $(DOXYCONFIG) #&& make -C $(DOXYDIR)/latex/
 
 deb: dist
-#could also be $(DIST_ARCHIVES)
 	mv $(PACKAGE)-$(VERSION).tar.gz ../$(PACKAGE)_$(VERSION).orig.tar.gz && \
+	rm -f $(DIST_ARCHIVES) && \
 	dpkg-buildpackage -rfakeroot -i'(trash|.git)' -Itrash -I.git
 
 rpm: dist
@@ -86,4 +86,4 @@ rpm: dist
 	rpmbuild --sign -bb debit-0.1-1.spec && \
 	rm -rf rpm/SOURCES rpm/BUILD
 
-.PHONY: debian
+.PHONY: debian rpm
