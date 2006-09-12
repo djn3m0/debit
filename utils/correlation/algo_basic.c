@@ -4,6 +4,7 @@
  *
  */
 
+#include <stdio.h>
 #include <glib.h>
 
 #include "bitisolation_db.h"
@@ -14,6 +15,19 @@ static unsigned isolated = 0;
 static unsigned unisolated = 0;
 static unsigned nil = 0;
 
+/*
+ * Dump of results in a log file
+ */
+
+static FILE *result_log = NULL;
+static void
+dump_to_log(const gchar *string) {
+  if (result_log)
+    fputs(string, result_log);
+  else
+    fputs(string, stdout);
+}
+
 static inline void
 dump_state(alldata_t *dat, const state_t *state) {
   unsigned width = dat->width;
@@ -21,6 +35,15 @@ dump_state(alldata_t *dat, const state_t *state) {
     bitarray_print2D (width, state->unknown_data);
   else
     bitarray_print (state->unknown_data);
+}
+
+static void
+dump_result(alldata_t *dat, const gchar *name, const state_t *state) {
+  GPrintFunc handler;
+  handler = g_set_print_handler (dump_to_log);
+  g_print("%s ", name);
+  dump_state(dat, state);
+  (void) g_set_print_handler (handler);
 }
 
 core_status_t
@@ -62,11 +85,10 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   core_status_t status;
   size_t len = 8 * dat->known_data_len;
   size_t ulen = 8 * dat->unknown_data_len;
-
+  const gchar *pipname = get_pip_start(pipdb,bit);
   /* initial state. The printing should be specific and done outside of
      this pip-agnostic function */
-  g_print("doing pip #%08i, %s... ",
-	  bit, get_pip_start(pipdb,bit));
+  g_print("doing pip #%08i, %s... ", bit, pipname);
 
   alloc_state(&state, len, ulen);
   init_state(&state, len, ulen);
@@ -84,7 +106,7 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   default:
     g_print("isolated\n");
     isolated++;
-    dump_state(dat,&state);
+    dump_result(dat,pipname,&state);
   }
 
   /* check for and report collisions */
