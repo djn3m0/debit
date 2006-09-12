@@ -106,6 +106,11 @@ main(int argc, char *argv[])
 
   g_option_context_free(context);
 
+  if (!files) {
+	  g_warning("parse error: you must specify input files");
+	  return -1;
+  }
+
   /* Get the remaining arguments */
   return compare_files(files[0], files[1]);
 }
