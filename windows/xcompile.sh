@@ -18,10 +18,10 @@ mkdir $BUILD_DIR || exit 1
 pushd $BUILD_DIR
 $SOURCE_DIR/configure --target=${TARGET} --host=${TARGET} --prefix=${PREFIX} && \
 make && \
-make -C windows/ installer
+make -C windows/ debit-installer.exe
 popd
 
 #get back the resulting installer, this is what we want after all
-cp $BUILD_DIR/windows/debit-*.exe .
+cp $BUILD_DIR/windows/debit-installer.exe .
 
-rm -Rf $BUILD_DIR
+#rm -Rf $BUILD_DIR

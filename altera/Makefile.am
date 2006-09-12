@@ -1,4 +1,4 @@
-AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\"
+AM_CPPFLAGS	= -I$(top_srcdir) -DDATADIR=\"$(pkgdatadir)\"
 AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
 
 bin_PROGRAMS	= altera

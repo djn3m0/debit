@@ -3,11 +3,8 @@
 ;Based on Basic MUI script by Joost Verburg
 
 ; these variables must be defined on the commandline
-!ifndef VERSION
-  !error "You must define the build version on the commandline"
-!endif
 !ifndef SRCDIR
-  !error "You must define the build version on the commandline"
+  !error "You must define the source directory"
 !endif
 
 ;--------------------------------
@@ -20,7 +17,7 @@
 
   ;Name and file
   Name "Ulogic's debitting tools"
-  OutFile "debit-${VERSION}.exe"
+  OutFile "debit-installer.exe"
 
   ;Default installation folder
   InstallDir "$PROGRAMFILES\debit"
