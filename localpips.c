@@ -156,8 +156,9 @@ free_pipdb(pip_db_t *pipdb) {
     free_wiredb(pipdb->wiredb);
 
   for(i = 0; i < SITE_TYPE_NEUTRAL; i++) {
-    if (pipdb->memorydb[i])
-      destroy_datatree(pipdb->memorydb[i]);
+    GNode *tree = pipdb->memorydb[i];
+    if (tree)
+      destroy_datatree(tree);
     pipdb->memorydb[i] = NULL;
   }
 
@@ -541,10 +542,8 @@ pip_t *pips_of_site(const pip_db_t *pipdb,
 		    const bitstream_parsed_t *bitstream,
 		    const csite_descr_t *site,
 		    gsize *size) {
-  if (!pipdb->memorydb[site->type]) {
-    *size = 0;
+  if (!pipdb->memorydb[site->type])
     return NULL;
-  }
   return __pips_of_site_memory(pipdb, bitstream, site, size);
 }
 
@@ -613,7 +612,7 @@ examine_bit_groupnode (GNode *node, gpointer data) {
   g_node_children_foreach(node,G_TRAVERSE_ALL, examine_bit_node_memory, &pass_arg);
 
   if (pass_arg.found)
-    exam_arg->func(data, pass_arg.startwire, endwire, exam_arg->site);
+    exam_arg->func(exam_arg->data, pass_arg.startwire, endwire, exam_arg->site);
 }
 
 /** \brief Iterator over pips in the bitstream
@@ -633,39 +632,10 @@ iterate_over_bitpips(const pip_db_t *pipdb,
     .data = data, .func = fun,
   };
 
+  if (!head)
+    return;
+
   iterate_over_groups_memory(head, examine_bit_groupnode, &exam_arg);
-}
-
-/** \brief Query the wiring database to get the copper startpoint of
- * the orig wire
- *
- * Ask the wiring database so as to get back to the wire startpoint
- *
- * @param pipdb the pip database
- * @param wire the wire to fill in
- * @param orig the source wire
- *
- * @return error return
- */
-
-int get_wire_startpoint(const pip_db_t *pipdb,
-			const chip_descr_t *chipdb,
-			sited_wire_t *wire,
-			const sited_wire_t *orig) {
-  wire_simple_t *wo = &pipdb->wiredb->wires[orig->wire];
-  wire_atom_t ep = wo->ep;
-  site_ref_t site = orig->site, ep_site;
-
-  g_print("getting startpoint of wire %s\n",
-	  wire_name(pipdb->wiredb, orig->wire));
-
-  ep_site = translate_global_site(chipdb, site, wo->dx, wo->dy);
-  if ((ep == 0) || (ep_site == NULL))
-    return -1;
-
-  wire->wire = ep;
-  wire->site = ep_site;
-  return 0;
 }
 
 typedef struct _find_endpoint_memory {

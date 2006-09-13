@@ -73,7 +73,7 @@ translate_global_site(const chip_descr_t *chip,
 void sprint_csite(gchar *data, const csite_descr_t *site);
 
 typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
-				csite_descr_t *site, gpointer dat);
+				site_ref_t site, gpointer dat);
 
 void iterate_over_sites(const chip_descr_t *chip,
 			site_iterator_t fun, gpointer data);

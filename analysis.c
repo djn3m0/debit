@@ -31,6 +31,18 @@ print_pip(const csite_descr_t *site, const gchar *start, const gchar *end) {
   g_printf("pip %s %s -> %s\n", site_buf, start, end);
 }
 
+static inline void
+print_pip_iter(gpointer data,
+	       wire_atom_t start, wire_atom_t end,
+	       site_ref_t site) {
+  pip_db_t *pipdb = data;
+  wire_db_t *wiredb = pipdb->wiredb;
+  gchar site_buf[32];
+  sprint_csite(site_buf, site);
+  g_printf("pip %s %s -> %s\n", site_buf,
+	   wire_name(wiredb,start), wire_name(wiredb,end));
+}
+
 void
 print_bram_data(const csite_descr_t *site, const guint16 *data) {
   guint i,j;
@@ -111,7 +123,7 @@ static void print_site_db(const wire_db_t *wiredb,
   }
 }
 
-static void
+/*static*/ void
 print_all_pips(pip_db_t *pipdb,
 	       const bitstream_parsed_t *bitstream) {
   guint type_ref;
@@ -131,6 +143,28 @@ print_all_pips(pip_db_t *pipdb,
 	pips = pips_of_site(pipdb, bitstream, &site, &size);
 	print_site_db(pipdb->wiredb, &site, pips, size);
 	g_free(pips);
+      }
+    }
+  }
+}
+
+/*static*/ void
+print_all_pips_direct(pip_db_t *pipdb,
+		      const bitstream_parsed_t *bitstream) {
+  guint type_ref;
+  guint x, y;
+
+  /* pips */
+  for (type_ref = 0; type_ref < ARRAY_SIZE(types); type_ref++) {
+    site_type_t type = types[type_ref];
+    for(y = 0; y < ysize[type]; y++) {
+      for(x = 0; x < xsize[type]; x++) {
+	csite_descr_t site = {
+	  .type_coord = { .x = x, .y = y },
+	  .type = type,
+	};
+	iterate_over_bitpips(pipdb, bitstream, &site,
+			     print_pip_iter, pipdb);
       }
     }
   }
@@ -181,7 +215,7 @@ static void dump_all_pips(pip_db_t *pipdb,
 			  const bitstream_parsed_t *bitstream) {
   print_all_bram(bitstream);
   print_all_luts(bitstream);
-  print_all_pips(pipdb, bitstream);
+  print_all_pips_direct(pipdb, bitstream);
 }
 
 void dump_pips(bitstream_analyzed_t *bitstream) {

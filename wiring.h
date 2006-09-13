@@ -119,6 +119,11 @@ typedef struct _pip {
 
 gint parse_wire_simple(const wire_db_t *, wire_atom_t*, const gchar *);
 
+gboolean get_wire_startpoint(const wire_db_t *wiredb,
+			     const chip_descr_t *chipdb,
+			     sited_wire_t *wire,
+			     const sited_wire_t *orig);
+
 wire_db_t *get_wiredb(const gchar *datadir);
 void free_wiredb(wire_db_t *wires);
 

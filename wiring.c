@@ -214,3 +214,34 @@ gint parse_wire_simple(const wire_db_t *db, wire_atom_t* res,
   return -1;
 }
 
+/** \brief Query the wiring database to get the copper startpoint of
+ * the orig wire
+ *
+ * Ask the wiring database so as to get back to the wire startpoint
+ *
+ * @param pipdb the pip database
+ * @param wire the wire to fill in
+ * @param orig the source wire
+ *
+ * @return error return
+ */
+
+int get_wire_startpoint(const wire_db_t *wiredb,
+			const chip_descr_t *chipdb,
+			sited_wire_t *wire,
+			const sited_wire_t *orig) {
+  wire_simple_t *wo = &wiredb->wires[orig->wire];
+  wire_atom_t ep = wo->ep;
+  site_ref_t site = orig->site, ep_site;
+
+  g_print("getting startpoint of wire %s\n",
+	  wire_name(wiredb, orig->wire));
+
+  ep_site = translate_global_site(chipdb, site, wo->dx, wo->dy);
+  if ((ep == 0) || (ep_site == NULL))
+    return -1;
+
+  wire->wire = ep;
+  wire->site = ep_site;
+  return 0;
+}

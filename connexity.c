@@ -24,25 +24,30 @@ alloc_wire_table(const pip_db_t *pipdb, const chip_descr_t *chip) {
 /* Be dumb again */
 static inline unsigned
 net_offset_of(const chip_descr_t *chip,
+	      const wire_db_t *wiredb,
 	      const sited_wire_t *wire) {
   unsigned site_offset = wire->site - chip->data;
-  return wire->wire + site_offset * chip->width * chip->height;
+  g_print("net_offset_of is %i\n", site_offset);
+  return wire->wire + site_offset * wiredb->dblen;
 }
 
 static inline GNode *
-net_of(GNode **db, const chip_descr_t *chip,
+net_of(GNode **db,
+       const wire_db_t *wiredb,
+       const chip_descr_t *chip,
        const sited_wire_t *wire) {
-  unsigned index = net_offset_of(chip, wire);
+  unsigned index = net_offset_of(chip, wiredb, wire);
   return db[index];
 }
 
 static inline GNode *
 net_register(GNode **db,
+	     const wire_db_t *wiredb,
 	     const chip_descr_t *chip,
 	     const sited_wire_t *wire) {
   sited_wire_t *newwire = g_new(sited_wire_t, 1);
   GNode *added = g_node_new(newwire);
-  unsigned index = net_offset_of(chip, wire);
+  unsigned index = net_offset_of(chip, wiredb, wire);
   *newwire = *wire;
   db[index] = added;
   return added;
@@ -63,18 +68,20 @@ net_register(GNode **db,
 
 static inline  GNode *
 net_add(GNode *net, GNode **nodetable,
+	const wire_db_t *wiredb,
 	const chip_descr_t *chip,
 	const sited_wire_t *wire) {
-  GNode *added = net_register(nodetable, chip, wire);
+  GNode *added = net_register(nodetable, wiredb, chip, wire);
   g_node_append(net, added);
   return added;
 }
 
 static inline GNode *
 add_new_net(nets_t *nets, GNode **nodetable,
+	    const wire_db_t *wiredb,
 	    const chip_descr_t *chip,
 	    const sited_wire_t *wire) {
-  return net_add(nets->head, nodetable, chip, wire);
+  return net_add(nets->head, nodetable, wiredb, chip, wire);
 }
 
 /*
@@ -104,7 +111,7 @@ gboolean get_endpoint(sited_wire_t *start,
 	  wire_name(pipdb->wiredb, wire->wire));
 
   return (get_interconnect_startpoint(pipdb, bitstream, start, wire) ||
-	  get_wire_startpoint(pipdb, cdb, start, wire));
+	  get_wire_startpoint(pipdb->wiredb, cdb, start, wire));
 }
 
 static GNode *
@@ -115,6 +122,7 @@ build_net_from(nets_t *nets,
 	       const bitstream_parsed_t *bitstream,
 	       const sited_wire_t *wire) {
   GNode *father, *child = NULL;
+  wire_db_t *wiredb = pipdb->wiredb;
   gboolean found;
   sited_wire_t orig = *wire, start;
 
@@ -124,7 +132,7 @@ build_net_from(nets_t *nets,
     g_print("BIP getting startpoint of wire %s\n",
 	    wire_name(pipdb->wiredb, wire->wire));
 
-    father = net_of(nodetable, cdb, &orig);
+    father = net_of(nodetable, wiredb, cdb, &orig);
     if (father) {
       if (child)
 	g_node_append(father, child);
@@ -132,7 +140,7 @@ build_net_from(nets_t *nets,
     }
 
     /* else create the node and add a child */
-    father = net_register(nodetable, cdb, &orig);
+    father = net_register(nodetable, wiredb, cdb, &orig);
     if (child)
 	g_node_append(father, child);
 
@@ -145,7 +153,7 @@ build_net_from(nets_t *nets,
     found = get_endpoint(&start, pipdb, cdb, bitstream, &orig);
 
     if (!found)
-      return add_new_net(nets, nodetable, cdb, &orig);
+      return add_new_net(nets, nodetable, wiredb, cdb, &orig);
 
     /* prepare to loop */
     orig = start;
@@ -156,21 +164,57 @@ build_net_from(nets_t *nets,
   return NULL;
 }
 
+/*
+ *
+ */
+
+typedef struct _net_iterator {
+  nets_t *nets;
+  GNode **nodetable;
+  const pip_db_t *pipdb;
+  const chip_descr_t *cdb;
+  const bitstream_parsed_t *bitstream;
+} net_iterator_t;
+
+static void
+build_net_iter(gpointer data,
+	       wire_atom_t start,
+	       wire_atom_t end,
+	       site_ref_t site) {
+  net_iterator_t *arg = data;
+  sited_wire_t wire = {
+    .wire = end,
+    .site = site,
+  };
+  build_net_from(arg->nets, arg->nodetable,
+		 arg->pipdb, arg->cdb, arg->bitstream,
+		 &wire);
+}
+
+static void
+net_site_iter(unsigned x, unsigned y, site_ref_t site,
+	      gpointer dat) {
+  net_iterator_t *arg = dat;
+  iterate_over_bitpips(arg->pipdb, arg->bitstream, site,
+		       build_net_iter, dat);
+}
+
 static int
 _build_nets(nets_t *nets,
 	    const pip_db_t *pipdb,
 	    const chip_descr_t *cdb,
 	    const bitstream_parsed_t *bitstream) {
   GNode **nodetable = alloc_wire_table(pipdb, cdb);
-  /* Then do a particular net */
-  site_ref_t site = get_global_site(cdb, 3, 3);
-
-  sited_wire_t wire = {
-    .site = site,
-    .wire = 30,
+  net_iterator_t net_iter = {
+    .nets = nets,
+    .nodetable = nodetable,
+    .pipdb = pipdb,
+    .cdb = cdb,
+    .bitstream = bitstream,
   };
 
-  build_net_from(nets, nodetable, pipdb, cdb, bitstream, &wire);
+  iterate_over_sites(cdb, net_site_iter, &net_iter);
+
   g_free(nodetable);
   return 0;
 }
