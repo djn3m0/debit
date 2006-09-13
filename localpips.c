@@ -20,6 +20,7 @@
 
 #define G_LOG_DOMAIN  "LOCALPIPS"
 #include <glib.h>
+#include "debitlog.h"
 
 #include "keyfile.h"
 
@@ -475,8 +476,8 @@ typedef struct _examine_endpoint_memory {
   GArray *array;
 } examine_endpoint_memory_t;
 
-static void examine_groupnode (GNode *node,
-			       gpointer data) {
+static void
+examine_groupnode (GNode *node, gpointer data) {
   localpip_control_data_t *ctrldat = node->data;
   examine_endpoint_memory_t *exam_arg = data;
   wire_db_t * wiredb = exam_arg->wiredb;
@@ -507,6 +508,25 @@ static void examine_groupnode (GNode *node,
   }
 }
 
+static void
+__pips_of_site_append(const pip_db_t *pipdb,
+		      const bitstream_parsed_t *bitstream,
+		      const csite_descr_t *site,
+		      GArray *pips_array) {
+  GNode *head = pipdb->memorydb[site->type];
+  examine_endpoint_memory_t exam_arg = {
+    .bitstream = bitstream,
+    .site = site,
+    .array = pips_array,
+    .wiredb = pipdb->wiredb,
+  };
+
+  if (!pipdb->memorydb[site->type])
+    return;
+
+  iterate_over_groups_memory(head, examine_groupnode, &exam_arg);
+}
+
 /** \brief Query a bitstream for the pips contained in a site, in-memory version
  *
  * This is a very raw unoptimized version which should be must faster already
@@ -519,21 +539,13 @@ static void examine_groupnode (GNode *node,
  * @return the list of pips which are present at the location
  * @return the length of this pip list
  */
-pip_t *__pips_of_site_memory(const pip_db_t *pipdb,
-			     const bitstream_parsed_t *bitstream,
-			     const csite_descr_t *site,
-			     gsize *size) {
+static pip_t *
+__pips_of_site_memory(const pip_db_t *pipdb,
+		      const bitstream_parsed_t *bitstream,
+		      const csite_descr_t *site,
+		      gsize *size) {
   GArray *pips_array = g_array_new(FALSE, FALSE, sizeof(pip_t));
-  GNode *head = pipdb->memorydb[site->type];
-  examine_endpoint_memory_t exam_arg = {
-    .bitstream = bitstream,
-    .site = site,
-    .array = pips_array,
-    .wiredb = pipdb->wiredb,
-  };
-
-  iterate_over_groups_memory(head, examine_groupnode, &exam_arg);
-
+  __pips_of_site_append(pipdb, bitstream, site, pips_array);
   *size = pips_array->len;
   return (pip_t *) g_array_free (pips_array, FALSE);
 }
@@ -542,115 +554,87 @@ pip_t *pips_of_site(const pip_db_t *pipdb,
 		    const bitstream_parsed_t *bitstream,
 		    const csite_descr_t *site,
 		    gsize *size) {
-  if (!pipdb->memorydb[site->type])
-    return NULL;
   return __pips_of_site_memory(pipdb, bitstream, site, size);
 }
 
-/*
- * Iterate over bitstreams in the bitstream
- * For now this duplicates a lot of code.
- * Code sharing with pip dumping should be restored at some point.
- */
-
-typedef struct _examine_bitstream_memory {
-  guint32 bitstream_data;
-  wire_atom_t startwire;
-  gboolean found;
-} examine_bitstream_memory_t;
-
-static void
-examine_bit_node_memory (GNode *node, gpointer data) {
-  examine_bitstream_memory_t *exam_arg = data;
-  localpip_data_t *cfgarg = node->data;
-  const guint32 cfgdata = cfgarg->cfgdata;
-  const guint32 bitdata = exam_arg->bitstream_data;
-
-  /* Please keep these warnings on, they indicate debitting
-     idiosyncrasies that we don't fully get yet */
-  if ( bitdata == cfgdata ) {
-    exam_arg->found = TRUE;
-    exam_arg->startwire = cfgarg->startwire;
-    return;
-  }
-
-  if ( (cfgdata & bitdata) == cfgdata ) {
-    if (!exam_arg->found) {
-      exam_arg->found = TRUE;
-      exam_arg->startwire = cfgarg->startwire;
-    }
-  }
-}
-
-typedef struct _examine_endpoint_bit_memory {
-  const bitstream_parsed_t *bitstream;
-  const site_ref_t site;
-  bitpip_iterator_t func;
-  gpointer data;
-} examine_endpoint_bit_memory_t;
-
-static void
-examine_bit_groupnode (GNode *node, gpointer data) {
-  localpip_control_data_t *ctrldat = node->data;
-  examine_endpoint_bit_memory_t *exam_arg = data;
-  const wire_atom_t endwire = ctrldat->endwire;
-  examine_bitstream_memory_t pass_arg = {
-    .found = FALSE,
-  };
-  guint32 bitdata;
-
-  /* query the bitstream about the endpoint */
-  bitdata = query_bitstream_site_bits(exam_arg->bitstream, exam_arg->site,
-				      ctrldat->data, ctrldat->size);
-
-  if (bitdata == 0)
-    return;
-
-  pass_arg.bitstream_data = bitdata;
-
-  /* iterate over pips to find out who is okay. This could just be an array. */
-  g_node_children_foreach(node,G_TRAVERSE_ALL, examine_bit_node_memory, &pass_arg);
-
-  if (pass_arg.found)
-    exam_arg->func(exam_arg->data, pass_arg.startwire, endwire, exam_arg->site);
-}
-
-/** \brief Iterator over pips in the bitstream
- */
-
-void
-iterate_over_bitpips(const pip_db_t *pipdb,
-		     const bitstream_parsed_t *bitstream,
-		     const site_ref_t site,
-		     bitpip_iterator_t fun,
-		     gpointer data) {
-
-  GNode *head = pipdb->memorydb[site->type];
-  examine_endpoint_bit_memory_t exam_arg = {
-    .bitstream = bitstream,
-    .site = site,
-    .data = data, .func = fun,
-  };
-
-  if (!head)
-    return;
-
-  iterate_over_groups_memory(head, examine_bit_groupnode, &exam_arg);
-}
-
-typedef struct _find_endpoint_memory {
-  const bitstream_parsed_t *bitstream;
-  const csite_descr_t *site;
-  const wire_atom_t endpoint;
-  wire_db_t *wiredb;
-  gboolean found;
-  wire_atom_t startpoint;
-} find_endpoint_memory_t;
-
-/** \brief Query the wiring database to get the coopper startpoint of
- * the orig wire
+/** \brief Do the bitstream pip interpretation in an ad-hoc, fast lookup
+ * structure. This is the read/write mode, which is vaguely unoptimized,
+ * but will allow for read-write operation. This is the filling
+ * function, which takes an already-allocated structure.
  *
- * Ask the wiring database so as to get back to the wire startpoint
+ * @param pipdb the pip database
+ * @param chipdb the chip description
+ * @param bitstream the bitstream data to read from
+ *
+ * @return a pip_parsed_t structure containing the bitstream structure
+ */
+
+typedef struct _allpips_iter {
+  const bitstream_parsed_t *bitstream;
+  const pip_db_t *pipdb;
+  unsigned site_idx;
+  unsigned *site_index;
+  GArray *array;
+} allpips_iter_t;
+
+static void
+_pips_of_bitstream_iter(unsigned site_x, unsigned site_y,
+			csite_descr_t *site, gpointer dat) {
+  allpips_iter_t *data = dat;
+  unsigned *site_index = data->site_index;
+  GArray *pips_array = data->array;
+
+  (void) site_x;
+  (void) site_y;
+
+  /* Register the current pip index */
+  site_index[data->site_idx++] = pips_array->len;
+  /* Get back our pips */
+  __pips_of_site_append(data->pipdb, data->bitstream, site, pips_array);
+}
+
+int
+_pips_of_bitstream(const pip_db_t *pipdb, const chip_descr_t *chipdb,
+		   const bitstream_parsed_t *bitstream,
+		   pip_parsed_dense_t *fill) {
+  /* This array will hold *all* of the pips */
+  GArray *pips_array = g_array_new(FALSE, FALSE, sizeof(pip_t));
+  gsize nsites = chipdb->width * chipdb->height;
+  unsigned *site_index = g_new0(unsigned, nsites + 1);
+
+  allpips_iter_t arg = {
+    .bitstream = bitstream,
+    .pipdb = pipdb,
+    .array = pips_array,
+    .site_idx = 0,
+    .site_index = site_index,
+  };
+
+  iterate_over_sites(chipdb, _pips_of_bitstream_iter, &arg);
+
+  site_index[nsites] = pips_array->len;
+  debit_log(L_PIPS, "Got %i explicit pips", pips_array->len);
+
+  fill->site_index = site_index;
+  fill->bitpips = (pip_t *)g_array_free (pips_array, FALSE);
+
+  return 0;
+}
+
+pip_parsed_dense_t *
+pips_of_bitstream(const pip_db_t *pipdb, const chip_descr_t *chipdb,
+		  const bitstream_parsed_t *bitstream) {
+  pip_parsed_dense_t *dense = g_new(pip_parsed_dense_t, 1);
+  int err;
+  err = _pips_of_bitstream(pipdb, chipdb, bitstream, dense);
+  if (err) {
+    g_free(dense);
+    return NULL;
+  }
+  return dense;
+}
+
+/** \brief Query the pip database to get the origin of a pip
  *
  * @param pipdb the pip database
  * @param wire the wire to fill in
@@ -659,55 +643,61 @@ typedef struct _find_endpoint_memory {
  * @return error return
  */
 
-static void find_groupnode (GNode *node,
-			    gpointer data) {
-  localpip_control_data_t *ctrldat = node->data;
-  find_endpoint_memory_t *find_arg = data;
-  wire_db_t * wiredb = find_arg->wiredb;
-  const wire_atom_t endwire = ctrldat->endwire;
-  examine_data_memory_t pass_arg = {
-    .endwire = endwire,
-    .found = FALSE,
-    .wiredb = wiredb,
-  };
-  guint32 bitdata;
-
-  if (endwire == find_arg->endpoint)
-    return;
-
-  /* query the bitstream about the endpoint */
-  bitdata = query_bitstream_site_bits(find_arg->bitstream, find_arg->site,
-				      ctrldat->data, ctrldat->size);
-  pass_arg.bitstream_data = bitdata;
-
-  /* iterate over pips to find out who is okay. This could just be an array. */
-  g_node_children_foreach(node,G_TRAVERSE_ALL,examine_node_memory,&pass_arg);
-
-  find_arg->startpoint = pass_arg.startwire;
-  find_arg->found = pass_arg.found;
-}
-
 gboolean
 get_interconnect_startpoint(const pip_db_t *pipdb,
-			    const bitstream_parsed_t *bitstream,
+			    const chip_descr_t *chip,
+			    const pip_parsed_dense_t *pipdat,
 			    sited_wire_t *wire,
 			    const sited_wire_t *orig) {
-  GNode *head = pipdb->memorydb[orig->site->type];
-  find_endpoint_memory_t find_arg = {
-    .bitstream = bitstream,
-    .endpoint = orig->wire,
-    .site = orig->site,
-    .wiredb = pipdb->wiredb,
-  };
+  unsigned stidx = site_index(chip, orig->site);
+  unsigned *indexes = pipdat->site_index;
+  unsigned start = indexes[stidx], end = indexes[stidx+1];
 
-  /* Iterate to find the node containing the origin */
-  iterate_over_groups_memory(head, find_groupnode, &find_arg);
-
-  if (find_arg.found) {
-    wire->site = orig->site;
-    wire->wire = find_arg.startpoint;
-    return TRUE;
+  /* Do a run over the set points for a site */
+  while (start < end) {
+    pip_t *pip = &pipdat->bitpips[start++];
+    if (pip->target == orig->wire) {
+      wire->wire = pip->source;
+      /* XXX should not be needed */
+      wire->site = orig->site;
+      return TRUE;
+    }
   }
-
   return FALSE;
+}
+
+pip_t *
+pips_of_site_dense(const pip_parsed_dense_t *pipdat,
+		   const chip_descr_t *chip,
+		   const csite_descr_t *site,
+		   gsize *size) {
+  unsigned stidx = site_index(chip, site);
+  unsigned *indexes = pipdat->site_index;
+  unsigned start = indexes[stidx], end = indexes[stidx+1];
+
+  *size = (end - start);
+  return &pipdat->bitpips[start];
+}
+
+/** \brief Iterator over pips in the bitstream
+ */
+
+void
+iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
+		     const chip_descr_t *chip,
+		     bitpip_iterator_t fun, gpointer data) {
+  unsigned nsites = chip->width * chip->height;
+  site_ref_t site = chip->data;
+  unsigned *indexes = pipdat->site_index;
+  unsigned start = 0, i;
+
+  for (i = 0; i < nsites; i++) {
+    unsigned end = indexes[i+1];
+    for ( ; start < end; start++) {
+      pip_t *pip=&pipdat->bitpips[start];
+      fun(data, pip->source, pip->target, site);
+    }
+    start = end;
+    site++;
+  }
 }

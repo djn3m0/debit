@@ -110,70 +110,60 @@ static const guint ysize[SITE_TYPE_NEUTRAL] = {
   [BRAM] = Y_SITES,
 };
 
-static void print_site_db(const wire_db_t *wiredb,
-			  const csite_descr_t *site,
-			  const pip_t *pips,
-			  const gsize size) {
-  gsize i;
-  for (i = 0; i < size; i++ ) {
-    pip_t pip = pips[i];
-    print_pip(site,
-	      wire_name(wiredb,pip.source),
-	      wire_name(wiredb,pip.target));
-  }
-}
+/* static void */
+/* print_site_db(const wire_db_t *wiredb, */
+/* 	      const csite_descr_t *site, */
+/* 	      const pip_t *pips, */
+/* 	      const gsize size) { */
+/*   gsize i; */
+/*   for (i = 0; i < size; i++ ) { */
+/*     pip_t pip = pips[i]; */
+/*     print_pip(site, */
+/* 	      wire_name(wiredb,pip.source), */
+/* 	      wire_name(wiredb,pip.target)); */
+/*   } */
+/* } */
 
-/*static*/ void
-print_all_pips(pip_db_t *pipdb,
-	       const bitstream_parsed_t *bitstream) {
-  guint type_ref;
-  guint x, y;
+/* static void */
+/* print_all_pips(pip_db_t *pipdb, */
+/* 	       const bitstream_parsed_t *bitstream) { */
+/*   guint type_ref; */
+/*   guint x, y; */
 
-  /* pips */
-  for (type_ref = 0; type_ref < ARRAY_SIZE(types); type_ref++) {
-    site_type_t type = types[type_ref];
-    for(y = 0; y < ysize[type]; y++) {
-      for(x = 0; x < xsize[type]; x++) {
-	pip_t *pips;
-	gsize size;
-	csite_descr_t site = {
-	  .type_coord = { .x = x, .y = y },
-	  .type = type,
-	};
-	pips = pips_of_site(pipdb, bitstream, &site, &size);
-	print_site_db(pipdb->wiredb, &site, pips, size);
-	g_free(pips);
-      }
-    }
-  }
-}
+/*   /\* pips *\/ */
+/*   for (type_ref = 0; type_ref < ARRAY_SIZE(types); type_ref++) { */
+/*     site_type_t type = types[type_ref]; */
+/*     for(y = 0; y < ysize[type]; y++) { */
+/*       for(x = 0; x < xsize[type]; x++) { */
+/* 	pip_t *pips; */
+/* 	gsize size; */
+/* 	csite_descr_t site = { */
+/* 	  .type_coord = { .x = x, .y = y }, */
+/* 	  .type = type, */
+/* 	}; */
+/* 	pips = pips_of_site(pipdb, bitstream, &site, &size); */
+/* 	print_site_db(pipdb->wiredb, &site, pips, size); */
+/* 	g_free(pips); */
+/*       } */
+/*     } */
+/*   } */
+/* } */
 
-/*static*/ void
-print_all_pips_direct(pip_db_t *pipdb,
+static void
+print_all_pips_direct(const pip_db_t *pipdb, const chip_descr_t *chip,
 		      const bitstream_parsed_t *bitstream) {
-  guint type_ref;
-  guint x, y;
+  /* First get all the things */
+  pip_parsed_dense_t *pipdat = pips_of_bitstream(pipdb, chip, bitstream);
 
-  /* pips */
-  for (type_ref = 0; type_ref < ARRAY_SIZE(types); type_ref++) {
-    site_type_t type = types[type_ref];
-    for(y = 0; y < ysize[type]; y++) {
-      for(x = 0; x < xsize[type]; x++) {
-	csite_descr_t site = {
-	  .type_coord = { .x = x, .y = y },
-	  .type = type,
-	};
-	iterate_over_bitpips(pipdb, bitstream, &site,
-			     print_pip_iter, pipdb);
-      }
-    }
-  }
+  iterate_over_bitpips(pipdat, chip, print_pip_iter, (gpointer)pipdb);
+
+  g_free(pipdat);
 }
 
 static void
 print_all_luts(const bitstream_parsed_t *bitstream) {
   guint x, y;
-
+  /* XXX Replace with iterator over sited luts */
   for(y = 0; y < ysize[CLB]; y++) {
     for(x = 0; x < xsize[CLB]; x++) {
       guint16 luts[4];
@@ -211,15 +201,15 @@ print_all_bram(const bitstream_parsed_t *bitstream) {
  *
  */
 
-static void dump_all_pips(pip_db_t *pipdb,
+static void dump_all_pips(pip_db_t *pipdb, chip_descr_t *chipdb,
 			  const bitstream_parsed_t *bitstream) {
   print_all_bram(bitstream);
   print_all_luts(bitstream);
-  print_all_pips_direct(pipdb, bitstream);
+  print_all_pips_direct(pipdb, chipdb, bitstream);
 }
 
 void dump_pips(bitstream_analyzed_t *bitstream) {
-  dump_all_pips(bitstream->pipdb, bitstream->bitstream);
+  dump_all_pips(bitstream->pipdb, bitstream->chip, bitstream->bitstream);
 }
 
 /*
@@ -249,6 +239,7 @@ fill_analysis(bitstream_analyzed_t *anal,
 	      const gchar *datadir) {
   pip_db_t *pipdb;
   chip_descr_t *chip;
+  pip_parsed_dense_t *pipdat;
 
   anal->bitstream = bitstream;
   /* then fetch the databases */
@@ -263,6 +254,11 @@ fill_analysis(bitstream_analyzed_t *anal,
   if (!chip)
     goto err_out;
   anal->chip = chip;
+
+  pipdat = pips_of_bitstream(pipdb, chip, bitstream);
+  if (!pipdat)
+    goto err_out;
+  anal->pipdat = pipdat;
 
   return 0;
 
@@ -284,7 +280,7 @@ analyze_bitstream(bitstream_parsed_t *bitstream,
   }
 
   /* Then do some work */
-  (void) build_nets(anal->pipdb, anal->chip, anal->bitstream);
+  //  (void) build_nets(anal->pipdb, anal->chip, anal->bitstream);
 
   return anal;
 }

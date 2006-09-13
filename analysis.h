@@ -18,6 +18,9 @@ typedef struct _bitstream_analyzed {
   chip_descr_t *chip;
   pip_db_t *pipdb;
 
+  /* simplified bitstream data */
+  pip_parsed_dense_t *pipdat;
+
   /* nets from the bitstream */
 
 } bitstream_analyzed_t;

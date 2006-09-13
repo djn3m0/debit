@@ -40,7 +40,7 @@ typedef struct _site_descr {
    used for pointer arithmetic to get back to the site's global
    coordinates. Actually I should model this on the wiredb model and
    just have a uint16t here. Or choose something. */
-typedef csite_descr_t *site_ref_t;
+typedef const csite_descr_t *site_ref_t;
 
 typedef struct _chip_descr {
   unsigned width;
@@ -48,14 +48,21 @@ typedef struct _chip_descr {
   csite_descr_t *data;
 } chip_descr_t;
 
+/* get a site index, in-order WRT iterate_over_sites */
+static inline unsigned
+site_index(const chip_descr_t *chip,
+	   const site_ref_t site) {
+  return (site - chip->data);
+}
+
 /* get a site by its global coordinates */
-static inline site_ref_t
+static inline csite_descr_t *
 get_global_site(const chip_descr_t *chip,
 		unsigned x, unsigned y) {
   unsigned width = chip->width;
   g_assert(x < width);
   g_assert(y < chip->height);
-  return &chip->data[y * width + x];
+  return &chip->data[y*width + x];
 }
 
 static inline site_ref_t
@@ -73,7 +80,7 @@ translate_global_site(const chip_descr_t *chip,
 void sprint_csite(gchar *data, const csite_descr_t *site);
 
 typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
-				site_ref_t site, gpointer dat);
+				csite_descr_t *site, gpointer dat);
 
 void iterate_over_sites(const chip_descr_t *chip,
 			site_iterator_t fun, gpointer data);
