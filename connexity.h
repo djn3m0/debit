@@ -23,7 +23,7 @@ typedef struct _nets_t {
 
 nets_t *build_nets(const pip_db_t *pipdb,
 		   const chip_descr_t *cdb,
-		   const bitstream_parsed_t *bitstream);
+		   const pip_parsed_dense_t *pipdat);
 
 void free_nets(nets_t *);
 

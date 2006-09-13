@@ -117,12 +117,28 @@ typedef struct _pip {
   wire_atom_t target;
 } __attribute__((packed)) pip_t;
 
+typedef struct _sited_pip {
+  site_ref_t site;
+  pip_t pip;
+} sited_pip_t;
+
+void sprint_spip(gchar *buf, const wire_db_t *wdb, const sited_pip_t *spip);
+
+/* /\* \brief Fill a sited_wire_t from the origin component of a sited_pip_t */
+/*  *\/ */
+/* static inline void */
+/* get_source(sited_wire_t *orig, */
+/* 	   const sited_pip_t *pip) { */
+/*   orig->site = pip->site; */
+/*   orig->wire = pip->pip.source; */
+/* } */
+
 gint parse_wire_simple(const wire_db_t *, wire_atom_t*, const gchar *);
 
-gboolean get_wire_startpoint(const wire_db_t *wiredb,
-			     const chip_descr_t *chipdb,
-			     sited_wire_t *wire,
-			     const sited_wire_t *orig);
+gboolean
+get_wire_startpoint(const wire_db_t *wiredb, const chip_descr_t *chipdb,
+		    site_ref_t *starget, wire_atom_t *wtarget,
+		    const site_ref_t sorig, const wire_atom_t worig);
 
 wire_db_t *get_wiredb(const gchar *datadir);
 void free_wiredb(wire_db_t *wires);

@@ -7,6 +7,7 @@
  * New, simple wiring db implementation
  */
 
+#include <stdio.h>
 #include <glib.h>
 #include <string.h>
 #include "debitlog.h"
@@ -228,22 +229,48 @@ gint parse_wire_simple(const wire_db_t *db, wire_atom_t* res,
  * @return error return
  */
 
-int get_wire_startpoint(const wire_db_t *wiredb,
-			const chip_descr_t *chipdb,
-			sited_wire_t *wire,
-			const sited_wire_t *orig) {
-  wire_simple_t *wo = &wiredb->wires[orig->wire];
+gboolean
+get_wire_startpoint(const wire_db_t *wiredb,
+		    const chip_descr_t *chipdb,
+		    site_ref_t *starget,
+		    wire_atom_t *wtarget,
+		    const site_ref_t sorig,
+		    const wire_atom_t worig) {
+  const wire_simple_t *wo = &wiredb->wires[worig];
   wire_atom_t ep = wo->ep;
-  site_ref_t site = orig->site, ep_site;
+  site_ref_t ep_site;
 
   debit_log(L_WIRES, "getting startpoint of wire %s\n",
-	    wire_name(wiredb, orig->wire));
+	    wire_name(wiredb, worig));
 
-  ep_site = translate_global_site(chipdb, site, wo->dx, wo->dy);
-  if ((ep == 0) || (ep_site == NULL))
-    return -1;
+  /* This is how we detect unknown wires in the db */
+  if (ep == worig)
+    return FALSE;
 
-  wire->wire = ep;
-  wire->site = ep_site;
-  return 0;
+  ep_site = translate_global_site(chipdb, sorig, -wo->dx, -wo->dy);
+  if (ep_site == NULL)
+    return FALSE;
+
+  *wtarget = ep;
+  *starget = ep_site;
+  return TRUE;
 }
+
+/* \brief Print a sited_pip_t
+ *
+ * @param buf the string buffer where to do the print
+ * @param wdb the wire database
+ * @param spip the sited pip to print
+ */
+
+void
+sprint_spip(gchar *buf,
+	    const wire_db_t *wdb,
+	    const sited_pip_t *spip) {
+  const gchar *start = wire_name(wdb, spip->pip.source);
+  const gchar *end = wire_name(wdb, spip->pip.target);
+  gchar site_buf[30];
+  sprint_csite(site_buf, spip->site);
+  sprintf(buf, "pip %s %s -> %s", site_buf, start, end);
+}
+

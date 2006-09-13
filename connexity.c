@@ -27,18 +27,19 @@ alloc_wire_table(const pip_db_t *pipdb, const chip_descr_t *chip) {
 static inline unsigned
 net_offset_of(const chip_descr_t *chip,
 	      const wire_db_t *wiredb,
-	      const sited_wire_t *wire) {
-  unsigned site_offset = wire->site - chip->data;
-  g_print("net_offset_of is %i\n", site_offset);
-  return wire->wire + site_offset * wiredb->dblen;
+	      const sited_pip_t *spip) {
+  unsigned site_offset = site_index(chip, spip->site);
+  unsigned net_offset = spip->pip.source + site_offset * wiredb->dblen;
+  debit_log(L_CONNEXITY, "returning net_offset value %i, site_offset %i", net_offset, site_offset);
+  return net_offset;
 }
 
 static inline GNode *
 net_of(GNode **db,
        const wire_db_t *wiredb,
        const chip_descr_t *chip,
-       const sited_wire_t *wire) {
-  unsigned index = net_offset_of(chip, wiredb, wire);
+       const sited_pip_t *pip) {
+  unsigned index = net_offset_of(chip, wiredb, pip);
   return db[index];
 }
 
@@ -46,11 +47,12 @@ static inline GNode *
 net_register(GNode **db,
 	     const wire_db_t *wiredb,
 	     const chip_descr_t *chip,
-	     const sited_wire_t *wire) {
-  sited_wire_t *newwire = g_new(sited_wire_t, 1);
-  GNode *added = g_node_new(newwire);
-  unsigned index = net_offset_of(chip, wiredb, wire);
-  *newwire = *wire;
+	     const sited_pip_t *pip) {
+  //  sited_wire_t *newwire = g_new(sited_wire_t, 1);
+  sited_pip_t *newpip = g_slice_new(sited_pip_t);
+  GNode *added = g_node_new(newpip);
+  unsigned index = net_offset_of(chip, wiredb, pip);
+  *newpip = *pip;
   db[index] = added;
   return added;
 }
@@ -58,33 +60,6 @@ net_register(GNode **db,
 /*
  * This part is also in charge of doing default pip interpretation
  */
-
-
-/** \brief Structure describing all nets in an FPGA
- *
- * This structure is an N-ary tree. The first-level nodes are the
- * different nets; then from then on
- *
- * The data in the nodes are sited wires.
- */
-
-static inline  GNode *
-net_add(GNode *net, GNode **nodetable,
-	const wire_db_t *wiredb,
-	const chip_descr_t *chip,
-	const sited_wire_t *wire) {
-  GNode *added = net_register(nodetable, wiredb, chip, wire);
-  g_node_append(net, added);
-  return added;
-}
-
-static inline GNode *
-add_new_net(nets_t *nets, GNode **nodetable,
-	    const wire_db_t *wiredb,
-	    const chip_descr_t *chip,
-	    const sited_wire_t *wire) {
-  return net_add(nets->head, nodetable, wiredb, chip, wire);
-}
 
 /*
  * Try to reach all pips from an endpoint and site,
@@ -103,65 +78,78 @@ add_new_net(nets_t *nets, GNode **nodetable,
  * The sited wire is always a wire *startpoint*
  */
 
-static inline
-gboolean get_endpoint(sited_wire_t *start,
-		      const pip_db_t *pipdb,
-		      const chip_descr_t *cdb,
-		      const pip_parsed_dense_t *pipdat,
-		      const sited_wire_t *wire) {
-  g_print("getting startpoint of wire %s\n",
-	  wire_name(pipdb->wiredb, wire->wire));
-
-  return (get_interconnect_startpoint(pipdb, cdb, pipdat, start, wire) ||
-	  get_wire_startpoint(pipdb->wiredb, cdb, start, wire));
-}
-
 static GNode *
 build_net_from(nets_t *nets,
 	       GNode **nodetable,
 	       const pip_db_t *pipdb,
 	       const chip_descr_t *cdb,
 	       const pip_parsed_dense_t *pipdat,
-	       const sited_wire_t *wire) {
+	       const sited_pip_t *spip_arg) {
   GNode *father, *child = NULL;
   wire_db_t *wiredb = pipdb->wiredb;
+  sited_pip_t spip = *spip_arg;
   gboolean found;
-  sited_wire_t orig = *wire, start;
+
+  debit_log(L_CONNEXITY, "entering build_net_from");
 
   do {
-    gchar sitename[30];
-    sprint_csite(sitename, orig.site);
-    /* make a node out of this and register this. If the node is already
-       in there, return it */
-    debit_log(L_CONNEXITY, "iterating on startpoint of wire %s\n",
-	      wire_name(wiredb, orig.wire));
+    wire_atom_t pip_source = spip.pip.source;
 
-    father = net_of(nodetable, wiredb, cdb, &orig);
+#if 0 //DEBIT_DEBUG > 0
+    gchar pipname[64];
+    sprint_spip(pipname, pipdb->wiredb, &spip);
+    debit_log(L_CONNEXITY, "iterating on spip %s", pipname);
+#endif
+
+    /* make a node out of the sited pip and register it, if needed */
+    father = net_of(nodetable, wiredb, cdb, &spip);
     if (father) {
-      if (child)
-	g_node_append(father, child);
+      debit_log(L_CONNEXITY, "GNode was already present");
+      if (child) {
+	debit_log(L_CONNEXITY, "linking to previous pipnode");
+	g_node_prepend(father, child);
+      }
       return father;
     }
 
-    /* else create the node and add a child */
-    father = net_register(nodetable, wiredb, cdb, &orig);
-    if (child)
-	g_node_append(father, child);
+    /* the pip is not yet present in the table, so we add it */
+    father = net_register(nodetable, wiredb, cdb, &spip);
+    if (child) {
+      debit_log(L_CONNEXITY, "linking to previous pip");
+      g_node_prepend(father, child);
+    }
 
-    /* Then the connexity analysis proper. We're relying on the
-       bitstream data directly to do this. We could also have some
-       function fill in directly the GNode ** structure then have
-       this loop connect everything. It would probably be much better. */
-    debit_log(L_CONNEXITY, "getting endpoint of wire %s @ %s\n",
-	      wire_name(wiredb, orig.wire), sitename);
-    found = get_endpoint(&start, pipdb, cdb, pipdat, &orig);
+    /* We need the copper endpoint of the pip, which can be local with a
+       pip locally driving the wire, or remote, when the wire startpoint
+       is driven by a pip at the site startpoint of the wire */
+    /* First, check that the wire is not locally-driven */
+    /* Warning ! we're heavily relying on the fact that spip won't be
+       touched if !found */
+    found = get_interconnect_startpoint(pipdb, cdb, pipdat,
+					&spip.pip.source, pip_source, spip.site);
+    if (found) {
+      debit_log(L_CONNEXITY, "pip is locally driven");
+      spip.pip.target = pip_source;
+      goto end_loop;
+    }
 
-    if (!found)
-      return add_new_net(nets, nodetable, wiredb, cdb, &orig);
+    /* Second, check for a driver remotely */
+    found = get_wire_startpoint(wiredb, cdb, &spip.site, &spip.pip.target, spip.site, spip.pip.source);
+    if (!found) {
+      debit_log(L_CONNEXITY, "leaving build_net_from, for lack of copper startpoint");
+      return g_node_prepend(nets->head, father);
+    }
+
+    /* ask for the startpoint */
+    found = get_interconnect_startpoint(pipdb, cdb, pipdat, &spip.pip.source, spip.pip.target, spip.site);
+    if (!found) {
+      debit_log(L_CONNEXITY, "leaving build_net_from, for lack of drivet at copper startpoint");
+      return g_node_prepend(nets->head, father);
+    }
 
     /* prepare to loop */
-    orig = start;
-
+  end_loop:
+    child = father;
   } while (father != NULL);
 
   g_assert_not_reached();
@@ -178,7 +166,6 @@ typedef struct _net_iterator {
   const pip_db_t *pipdb;
   const chip_descr_t *cdb;
   const pip_parsed_dense_t *pipdat;
-  const bitstream_parsed_t *bitstream;
 } net_iterator_t;
 
 static void
@@ -187,20 +174,19 @@ build_net_iter(gpointer data,
 	       wire_atom_t end,
 	       site_ref_t site) {
   net_iterator_t *arg = data;
-  sited_wire_t wire = {
-    .wire = end,
+  sited_pip_t spip = {
     .site = site,
+    .pip = { .source = start,
+	     .target = end, }
   };
   build_net_from(arg->nets, arg->nodetable,
-		 arg->pipdb, arg->cdb, arg->pipdat,
-		 &wire);
+		 arg->pipdb, arg->cdb, arg->pipdat, &spip);
 }
 
 static int
 _build_nets(nets_t *nets,
 	    const pip_db_t *pipdb,
 	    const chip_descr_t *cdb,
-	    const bitstream_parsed_t *bitstream,
 	    const pip_parsed_dense_t *pipdat) {
   GNode **nodetable = alloc_wire_table(pipdb, cdb);
   net_iterator_t net_iter = {
@@ -209,7 +195,6 @@ _build_nets(nets_t *nets,
     .pipdb = pipdb,
     .cdb = cdb,
     .pipdat = pipdat,
-    .bitstream = bitstream,
   };
 
   iterate_over_bitpips(pipdat, cdb, build_net_iter, &net_iter);
@@ -220,59 +205,53 @@ _build_nets(nets_t *nets,
 
 nets_t *build_nets(const pip_db_t *pipdb,
 		   const chip_descr_t *cdb,
-		   const bitstream_parsed_t *bitstream) {
+		   const pip_parsed_dense_t *pipdat) {
   nets_t *ret = g_new(nets_t, 1);
-  pip_parsed_dense_t *pipdat;
   int err;
 
   ret->head = g_node_new(NULL);
 
-  pipdat = pips_of_bitstream(pipdb, cdb, bitstream);
-  err = _build_nets(ret, pipdb, cdb, bitstream, pipdat);
+  err = _build_nets(ret, pipdb, cdb, pipdat);
   if (err) {
     g_free(ret);
     return NULL;
   }
 
-  g_free(pipdat);
   return ret;
 }
 
 void free_nets(nets_t *nets) {
-  g_free(nets->head);
+  g_node_destroy(nets->head);
   g_free(nets);
 }
 
 /* Printing function */
 struct _print_net {
-  const pip_db_t *pipdb;
-  const chip_descr_t *cdb;
+  const wire_db_t *wiredb;
 };
 
 static gboolean
 print_wire(GNode *net,
 	   gpointer data) {
   struct _print_net *arg = data;
-  sited_wire_t *wire = net->data;
-  gchar buf[30];
-  /* do something ! */
-  (void) arg;
-  sprint_csite(buf, wire->site);
-  g_print("\nwire %i @%s\n", wire->wire, buf);
+  const wire_db_t *wiredb = arg->wiredb;
+  gchar buf[64];
+  sprint_spip(buf, wiredb, net->data);
+  g_print("%s ,\n", buf);
   return FALSE;
 }
 
 static void
 print_net(GNode *net, gpointer data) {
   g_print("net %p {\n", net);
-  g_node_traverse (net, G_IN_ORDER, G_TRAVERSE_ALL, -1, print_wire, data);
+  g_node_traverse (net, G_PRE_ORDER, G_TRAVERSE_ALL, -1, print_wire, data);
   g_print("}\n");
 }
 
 void print_nets(nets_t *net,
 		const pip_db_t *pipdb,
 		const chip_descr_t *cdb) {
-  struct _print_net arg = { .pipdb = pipdb, .cdb = cdb };
+  struct _print_net arg = { .wiredb = pipdb->wiredb, };
   /* Iterate through nets */
   g_node_children_foreach (net->head, G_TRAVERSE_ALL, print_net, &arg);
 }

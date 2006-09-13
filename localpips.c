@@ -642,30 +642,32 @@ void free_pipdat(pip_parsed_dense_t *pipdat) {
 
 /** \brief Query the pip database to get the origin of a pip
  *
+ * This function guarantees that the spip won't be touched if
+ * it returns FALSE. Other parts of the code rely on this !
+ *
  * @param pipdb the pip database
  * @param wire the wire to fill in
  * @param orig the source wire
  *
- * @return error return
+ * @return if there's a pip driving the origin at the given site
  */
 
 gboolean
 get_interconnect_startpoint(const pip_db_t *pipdb,
 			    const chip_descr_t *chip,
 			    const pip_parsed_dense_t *pipdat,
-			    sited_wire_t *wire,
-			    const sited_wire_t *orig) {
-  unsigned stidx = site_index(chip, orig->site);
+			    wire_atom_t *wire,
+			    const wire_atom_t orig,
+			    const site_ref_t site) {
+  unsigned stidx = site_index(chip, site);
   unsigned *indexes = pipdat->site_index;
   unsigned start = indexes[stidx], end = indexes[stidx+1];
 
-  /* Do a run over the set points for a site */
+  /* Do a run over the set of points for a site */
   while (start < end) {
     pip_t *pip = &pipdat->bitpips[start++];
-    if (pip->target == orig->wire) {
-      wire->wire = pip->source;
-      /* XXX should not be needed */
-      wire->site = orig->site;
+    if (pip->target == orig) {
+      *wire = pip->source;
       return TRUE;
     }
   }
@@ -685,7 +687,7 @@ pips_of_site_dense(const pip_parsed_dense_t *pipdat,
   return &pipdat->bitpips[start];
 }
 
-/** \brief Iterator over pips in the bitstream
+/** \brief Iterator over pips which are set in the bitstream
  */
 
 void
@@ -700,7 +702,8 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
   for (i = 0; i < nsites; i++) {
     unsigned end = indexes[i+1];
     for ( ; start < end; start++) {
-      pip_t *pip=&pipdat->bitpips[start];
+      pip_t *pip = &pipdat->bitpips[start];
+      debit_log(L_PIPS, "calling iterator for site %p", site);
       fun(data, pip->source, pip->target, site);
     }
     start = end;

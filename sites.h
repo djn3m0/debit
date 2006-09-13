@@ -53,7 +53,8 @@ typedef struct _chip_descr {
 static inline unsigned
 site_index(const chip_descr_t *chip,
 	   const site_ref_t site) {
-  return (site - chip->data);
+  unsigned offset = ((csite_descr_t *)site) - chip->data;
+  return offset;
 }
 
 /* get a site by its global coordinates */
@@ -73,8 +74,11 @@ translate_global_site(const chip_descr_t *chip,
   unsigned offset = site - chip->data;
   unsigned x = offset % width;
   unsigned y = offset / width;
+  unsigned newx = x+dx, newy = y+dy;
   /* check that we stay within bound */
-  return get_global_site(chip, x+dx, y+dy);
+  if (newx < chip->width && newy < chip->height)
+    return get_global_site(chip, newx, newy);
+  return NULL;
 }
 
 /* The returned string is allocated and should be freed */

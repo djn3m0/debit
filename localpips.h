@@ -89,8 +89,9 @@ gboolean
 get_interconnect_startpoint(const pip_db_t *pipdb,
 			    const chip_descr_t *chip,
 			    const pip_parsed_dense_t *pipdat,
-			    sited_wire_t *wire,
-			    const sited_wire_t *orig);
+			    wire_atom_t *wire,
+			    const wire_atom_t orig,
+			    const site_ref_t site);
 
 typedef void (*bitpip_iterator_t)(gpointer, wire_atom_t, wire_atom_t, site_ref_t);
 
