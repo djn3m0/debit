@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=XilEdit
+Comment=Xilinx bitstream browser
+Exec=xiledit -i %f
+Icon=ulogic_icon_32.png
+Terminal=false
+MimeType=application/x-xilinx-bitstream
+Categories=Application;Development;Viewer;

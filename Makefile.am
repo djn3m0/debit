@@ -1,4 +1,4 @@
-SUBDIRS = data debian rpm windows altera utils xiledit
+SUBDIRS = data debian rpm windows altera utils xiledit desktop
 
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\"
 AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
@@ -92,12 +92,11 @@ DOXYDIR=doc
 doc: $(DOCSOURCES) $(DOXYCONFIG)
 	doxygen $(DOXYCONFIG) #&& make -C $(DOXYDIR)/latex/
 
-deb: dist
+deb: dist-gzip
 	mv $(PACKAGE)-$(VERSION).tar.gz ../$(PACKAGE)_$(VERSION).orig.tar.gz && \
-	rm -f $(DIST_ARCHIVES) && \
 	dpkg-buildpackage -rfakeroot -i'(trash|.git)' -Itrash -I.git
 
-rpms: dist
+rpms: dist-gzip
 	mkdir -p rpm/SOURCES rpm/BUILD && mv $(PACKAGE)-$(VERSION).tar.gz rpm/SOURCES && cd rpm && \
 	rpmbuild --sign -bb --target noarch debit-data-0.1-1.spec && \
 	rpmbuild --sign -bb debit-0.1-1.spec && \

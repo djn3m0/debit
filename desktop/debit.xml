@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-xilinx-bitstream">
+    <comment>Xilinx bitstream file</comment>
+    <comment xml:lang="fr">Bitstream Xilinx</comment>
+    <magic priority="50">
+      <match value="\x00\x09\x0f\xf0\x0f\xf0\x0f\xf0\x0f\xf0\x00\x00\x01" type="string" offset="0"/>
+    </magic>
+    <glob pattern="*.bit"/>
+  </mime-type>
+  <mime-type type="application/x-altera-bitstream">
+    <comment>Altera bitstream file</comment>
+    <comment xml:lang="fr">Bitstream Altera</comment>
+    <glob pattern="*.sof"/>
+  </mime-type>
+</mime-info>
