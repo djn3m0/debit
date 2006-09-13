@@ -3,6 +3,7 @@ x=2;4;6;26;28;32;34;54;56;58
 y=2;58
 type=0
 
+#CLB-associated terms
 [TTERM]
 x=2;4;6;26;28;32;34;54;56;58
 y=0;1
@@ -28,3 +29,57 @@ x=1;2
 y=0;1
 type=5
 
+#CLB-associated IOs
+[TIOI]
+x=2;4;6;26;28;32;34;54;56;58
+y=1;2
+type=15
+
+[LIOI]
+x=1;2
+y=2;58
+type=16
+
+[BIOI]
+x=2;4;6;26;28;32;34;54;56;58
+y=58;59
+type=17
+
+[RIOI]
+x=58;59
+y=2;58
+type=18
+
+[BRAM]
+x=4;5;26;27;32;33;54;55
+y=2;58
+type=21
+
+[BM]
+x=5;6;27;28;33;34;55;56
+y=2;58
+type=22
+
+#Bram-associated TERMs
+[TTERMBRAM]
+x=4;5;26;27;32;33;54;55
+y=0;1
+type=13
+
+[BTERMBRAM]
+x=4;5;26;27;32;33;54;55
+y=59;60
+type=14
+
+#Bram-associated IOIs
+[TIOIBRAM]
+x=4;5;26;27;32;33;54;55
+y=1;2
+type=19
+
+[BIOIBRAM]
+x=4;5;26;27;32;33;54;55
+y=58;59
+type=20
+
+# Yes, we lack quite a good bit of the chip, but demo code, rememeber ?
