@@ -54,6 +54,8 @@ typedef struct _pip_parsed {
    completely and sort along the destination wire. This could be much
    more cache-friendly, as the data can be dense, and the cost is
    be a dichotomy during the lookup. To be benchmarked.
+   However, this structure is only good for read-only operations;
+   modifying it is a real pita.
 */
 
 typedef struct _pip_parsed_dense {
@@ -68,9 +70,13 @@ void free_pipdb(pip_db_t *pipdb);
 /* utility functions */
 
 /* This should be benchmarked and run as fast as humanly possible */
-/* pip_parsed_t *pips_of_bitstream(const pip_db_t *pipdb, */
-/* 				const chip_db_t *chipdb, */
-/* 				const bitstream_parsed_t *bitstream); */
+pip_parsed_t *pips_of_bitstream(const pip_db_t *pipdb,
+				const chip_descr_t *chipdb,
+				const bitstream_parsed_t *bitstream);
+
+/* pip_parsed_dense_t *pips_of_bitstream_ro(const pip_db_t *pipdb, */
+/* 					 const chip_db_t *chipdb, */
+/* 					 const bitstream_parsed_t *bitstream); */
 
 /* This becomes a really simple function with the dense structure */
 pip_t *pips_of_site(const pip_db_t *pipdb,

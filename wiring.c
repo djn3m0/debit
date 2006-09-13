@@ -9,6 +9,8 @@
 
 #include <glib.h>
 #include <string.h>
+#include "debitlog.h"
+
 #include "wiring.h"
 
 #define STRINGCHUNK_DEFAULT_SIZE 16
@@ -234,8 +236,8 @@ int get_wire_startpoint(const wire_db_t *wiredb,
   wire_atom_t ep = wo->ep;
   site_ref_t site = orig->site, ep_site;
 
-  g_print("getting startpoint of wire %s\n",
-	  wire_name(wiredb, orig->wire));
+  debit_log(L_WIRES, "getting startpoint of wire %s\n",
+	    wire_name(wiredb, orig->wire));
 
   ep_site = translate_global_site(chipdb, site, wo->dx, wo->dy);
   if ((ep == 0) || (ep_site == NULL))

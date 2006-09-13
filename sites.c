@@ -322,7 +322,7 @@ print_iterator(unsigned x, unsigned y,
   gchar name[32];
   sprint_csite(name, site);
   (void) dat;
-  g_print("Global site (%i,%i) is %s\n", x, y, name);
+  g_print("global site (%i,%i) is %s\n", x, y, name);
 }
 
 void

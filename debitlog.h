@@ -23,8 +23,10 @@ enum {
 	L_WIRES = (DEBIT_DEBUG > 1) * 0x0010,
 	/* Connexity algorithms */
 	L_CONNEXITY = (DEBIT_DEBUG > 1) * 0x0020,
+	/* Sites debug */
+	L_SITES = (DEBIT_DEBUG > 1) * 0x0040,
 	/* Correlation algorithms */
-	L_CORRELATE = (DEBIT_DEBUG > 1) * 0x0040,
+	L_CORRELATE = (DEBIT_DEBUG > 1) * 0x1000,
 	L_ANY = 0xffff,
 };
 

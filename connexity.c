@@ -4,6 +4,8 @@
  */
 
 #include <glib.h>
+#include "debitlog.h"
+
 #include "wiring.h"
 #include "localpips.h"
 #include "connexity.h"
@@ -129,8 +131,8 @@ build_net_from(nets_t *nets,
   do {
     /* make a node out of this and register this. If the node is already
        in there, return it */
-    g_print("BIP getting startpoint of wire %s\n",
-	    wire_name(pipdb->wiredb, wire->wire));
+    debit_log(L_CONNEXITY, "iterating on startpoint of wire %s\n",
+	      wire_name(wiredb, orig.wire));
 
     father = net_of(nodetable, wiredb, cdb, &orig);
     if (father) {
@@ -148,8 +150,8 @@ build_net_from(nets_t *nets,
        bitstream data directly to do this. We could also have some
        function fill in directly the GNode ** structure then have
        this loop connect everything. It would probably be much better. */
-    g_print("BOP getting startpoint of wire %s\n",
-	    wire_name(pipdb->wiredb, wire->wire));
+    debit_log(L_CONNEXITY, "getting endpoint of wire %s\n",
+	      wire_name(wiredb, start.wire));
     found = get_endpoint(&start, pipdb, cdb, bitstream, &orig);
 
     if (!found)
