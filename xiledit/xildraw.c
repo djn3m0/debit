@@ -12,6 +12,10 @@
 #include "sites.h"
 #include "bitdraw.h"
 
+/* XXX define me as a variable in the gobject, or define the gobject
+ * from a parsed bitfile */
+static gchar *datadir = DATADIR;
+
 G_DEFINE_TYPE (EggXildrawFace, egg_xildraw_face, GTK_TYPE_DRAWING_AREA);
 
 static gboolean egg_xildraw_face_expose (GtkWidget *xildraw, GdkEventExpose *event);
@@ -129,7 +133,7 @@ egg_xildraw_face_new (void)
 {
   EggXildrawFace *ret = g_object_new (EGG_TYPE_XILDRAW_FACE, NULL);
   /* do a bunch of things */
-  ret->chip = get_chip("/home/jb/chip/","xc2v2000");
+  ret->chip = get_chip(datadir, "xc2v2000");
   ret->ctx = drawing_context_create();
   return GTK_WIDGET(ret);
 }

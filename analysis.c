@@ -158,14 +158,12 @@ fill_analysis(bitstream_analyzed_t *anal,
 
   anal->bitstream = bitstream;
   /* then fetch the databases */
-  /* XXX */
   pipdb = get_pipdb(datadir);
   if (!pipdb)
     goto err_out;
   anal->pipdb = pipdb;
 
-  /* XXX */
-  chip = get_chip("/home/jb/chip/", "xc2v2000");
+  chip = get_chip(datadir, "xc2v2000");
   if (!chip)
     goto err_out;
   anal->chip = chip;

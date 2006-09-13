@@ -5,10 +5,15 @@
 
 #include <cairo.h>
 #include <cairo-pdf.h>
+#include "debitlog.h"
 #include "sites.h"
 #include "bitdraw.h"
 
-unsigned debit_debug = 0;
+#if DEBIT_DEBUG > 0
+unsigned int debit_debug = 0;
+#endif
+
+static gchar *datadir = DATADIR;
 
 static void
 draw_pdf_chip(chip_descr_t *chip) {
@@ -29,7 +34,7 @@ draw_pdf_chip(chip_descr_t *chip) {
 
 /* small testing utility */
 int main() {
-  chip_descr_t *chip = get_chip("/home/jb/chip/","xc2v2000");
+  chip_descr_t *chip = get_chip(datadir,"xc2v2000");
   if (!chip)
     return -1;
 
