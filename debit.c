@@ -36,7 +36,7 @@ static gchar *odir = NULL;
 static gchar *datadir = DATADIR;
 
 #if DEBIT_DEBUG > 0
-unsigned int debit_debug = 0xffff;
+unsigned int debit_debug = 0;
 #endif
 
 static int

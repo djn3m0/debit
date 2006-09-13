@@ -634,6 +634,12 @@ pips_of_bitstream(const pip_db_t *pipdb, const chip_descr_t *chipdb,
   return dense;
 }
 
+void free_pipdat(pip_parsed_dense_t *pipdat) {
+  g_free(pipdat->site_index);
+  g_free(pipdat->bitpips);
+  g_free(pipdat);
+}
+
 /** \brief Query the pip database to get the origin of a pip
  *
  * @param pipdb the pip database

@@ -138,6 +138,21 @@ iterate_over_sites(const chip_descr_t *chip,
       fun(x,y,site++,data);
 }
 
+void
+iterate_over_typed_sites(const chip_descr_t *chip, site_type_t type,
+			 site_iterator_t fun, gpointer data) {
+  unsigned x, y;
+  unsigned xmax = chip->width, ymax = chip->height;
+  csite_descr_t *site = chip->data;
+
+  for (y = 0; y < ymax; y++)
+    for (x = 0; x < xmax; x++) {
+      if (site->type == type)
+	fun(x,y,site,data);
+      site++;
+    }
+}
+
 static void
 init_site_default(unsigned site_x, unsigned site_y,
 		  csite_descr_t *site, gpointer dat) {

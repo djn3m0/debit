@@ -84,7 +84,7 @@ typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
 
 void iterate_over_sites(const chip_descr_t *chip,
 			site_iterator_t fun, gpointer data);
-void iterate_over_typed_sites(const chip_descr_t *chip,
+void iterate_over_typed_sites(const chip_descr_t *chip, site_type_t type,
 			      site_iterator_t fun, gpointer data);
 
 void release_chip(chip_descr_t *chip);

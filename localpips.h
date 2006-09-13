@@ -73,6 +73,7 @@ void free_pipdb(pip_db_t *pipdb);
 pip_parsed_dense_t *
 pips_of_bitstream(const pip_db_t *pipdb, const chip_descr_t *chipdb,
 		  const bitstream_parsed_t *bitstream);
+void free_pipdat(pip_parsed_dense_t *pipdat);
 
 pip_t *pips_of_site(const pip_db_t *pipdb,
 		    const bitstream_parsed_t *bitstream,
