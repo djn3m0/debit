@@ -27,6 +27,8 @@ enum {
 	L_SITES = (DEBIT_DEBUG > 1) * 0x0040,
 	/* Correlation algorithms */
 	L_CORRELATE = (DEBIT_DEBUG > 1) * 0x1000,
+	/* Drawing */
+	L_DRAW = (DEBIT_DEBUG > 1) * 0x2000,
 	L_ANY = 0xffff,
 };
 

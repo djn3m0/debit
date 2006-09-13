@@ -75,9 +75,9 @@ static void
 draw (EggXildrawFace *draw, cairo_t *cr)
 {
   drawing_context_t *ctx = draw->ctx;
-  chip_descr_t *chip = draw->nlz->chip;
+  bitstream_analyzed_t *nlz = draw->nlz;
   g_print("draw\n");
-  draw_chip_monitored(ctx, chip);
+  draw_chip_monitored(ctx, nlz->chip);
 }
 
 static gboolean

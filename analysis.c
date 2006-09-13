@@ -184,7 +184,7 @@ bitstream_analyzed_t *
 analyze_bitstream(bitstream_parsed_t *bitstream,
 		  const gchar *datadir) {
   bitstream_analyzed_t *anal = g_new0(bitstream_analyzed_t, 1);
-  nets_t * nets;
+/*   nets_t * nets; */
   int err;
 
   err = fill_analysis(anal, bitstream, datadir);
@@ -194,10 +194,9 @@ analyze_bitstream(bitstream_parsed_t *bitstream,
   }
 
   /* Then do some work */
-  nets = build_nets(anal->pipdb, anal->chip, anal->pipdat);
-  print_chip(anal->chip);
-  print_nets(nets, anal->pipdb, anal->chip);
-  free_nets(nets);
+/*   nets = build_nets(anal->pipdb, anal->chip, anal->pipdat); */
+/*   print_nets(nets, anal->pipdb, anal->chip); */
+/*   free_nets(nets); */
 
   return anal;
 }

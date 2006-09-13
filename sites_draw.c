@@ -6,6 +6,7 @@
 /* Pure-drawing of the sites */
 #include <math.h> /* for M_PI */
 #include <cairo.h>
+#include "debitlog.h"
 #include "sites.h"
 #include "bitdraw.h"
 
@@ -105,7 +106,7 @@ draw_clb_pattern(drawing_context_t *ctx) {
 }
 
 void
-_draw_clb_new(drawing_context_t *ctx, csite_descr_t *site) {
+_draw_clb_compose(drawing_context_t *ctx, csite_descr_t *site) {
   cairo_t *cr = ctx->cr;
   cairo_pattern_t *site_pattern = ctx->site_sing_patterns[CLB];
 
@@ -127,15 +128,10 @@ _draw_clb_new(drawing_context_t *ctx, csite_descr_t *site) {
     _draw_name(cr, site);
 }
 
-/* draw the CLB with absolute positioning */
-typedef void (*site_draw_t)(drawing_context_t *ctx,
-			    unsigned x, unsigned y,
-			    csite_descr_t *);
-
-void
-draw_clb(drawing_context_t *ctx,
-	 unsigned x, unsigned y,
-	 csite_descr_t *site) {
+static void
+draw_clb_vector(drawing_context_t *ctx,
+		unsigned x, unsigned y,
+		csite_descr_t *site) {
   cairo_t *cr = ctx->cr;
   /* can be computed incrementally with only one addition */
   double dx = x * SITE_WIDTH, dy = y * SITE_HEIGHT;
@@ -146,9 +142,9 @@ draw_clb(drawing_context_t *ctx,
 }
 
 void
-draw_clb_new(drawing_context_t *ctx,
-	 unsigned x, unsigned y,
-	 csite_descr_t *site) {
+draw_clb_compose(drawing_context_t *ctx,
+		 unsigned x, unsigned y,
+		 csite_descr_t *site) {
   cairo_t *cr = ctx->cr;
   /* can be computed incrementally with only one addition */
   double dx = x * SITE_WIDTH, dy = y * SITE_HEIGHT;
@@ -156,31 +152,42 @@ draw_clb_new(drawing_context_t *ctx,
   /* don't draw, do a compositing operation */
   cairo_save (cr);
   cairo_translate(cr, dx, dy);
-  _draw_clb_new(ctx, site);
+  _draw_clb_compose(ctx, site);
   cairo_restore (cr);
   //cairo_translate(cr, -dx, -dy);
 }
 
 /* Drawing of regular LUT */
-site_draw_t draw_table[NR_SITE_TYPE] = {
-  [CLB] = draw_clb_new,
+typedef void (*site_draw_t)(drawing_context_t *ctx,
+			    unsigned x, unsigned y,
+			    csite_descr_t *);
+
+static site_draw_t
+draw_table_compositing[NR_SITE_TYPE] = {
+  [CLB] = draw_clb_compose,
 };
 
-void
-draw_site(unsigned x, unsigned y,
-	  csite_descr_t *site, gpointer data) {
+static void
+draw_site_compose(unsigned x, unsigned y,
+		  csite_descr_t *site, gpointer data) {
   drawing_context_t *ctx = data;
-  site_draw_t fun = draw_table[site->type];
+  site_draw_t fun = draw_table_compositing[site->type];
   if (fun)
     fun(ctx, x, y, site);
 }
 
+static site_draw_t
+draw_table_vectorized[NR_SITE_TYPE] = {
+  [CLB] = draw_clb_vector,
+};
+
 static void
-draw_site_simple(unsigned x, unsigned y,
+draw_site_vector(unsigned x, unsigned y,
 		 csite_descr_t *site, gpointer data) {
   drawing_context_t *ctx = data;
-  if (site->type == CLB)
-    draw_clb(ctx, x, y, site);
+  site_draw_t fun = draw_table_vectorized[site->type];
+  if (fun)
+    fun(ctx, x, y, site);
 }
 
 cairo_pattern_t *
@@ -190,12 +197,12 @@ draw_full_clb_pattern(drawing_context_t *ctx,
 
   cairo_push_group (cr);
   /* draw the thing only using vector operations */
-  iterate_over_sites(chip, draw_site_simple, ctx);
+  iterate_over_sites(chip, draw_site_vector, ctx);
   return cairo_pop_group (cr);
 }
 
-void
-draw_chip_for_window(drawing_context_t *ctx, chip_descr_t *chip) {
+static void
+draw_chip_for_window(drawing_context_t *ctx, const chip_descr_t *chip) {
   cairo_t *cr = ctx->cr;
   double zoom = ctx->zoom;
 
@@ -207,16 +214,49 @@ draw_chip_for_window(drawing_context_t *ctx, chip_descr_t *chip) {
   ctx->site_sing_patterns[CLB] = draw_clb_pattern(ctx);
 
   cairo_translate (cr, -ctx->x_offset, -ctx->y_offset);
-  iterate_over_sites(chip, draw_site, ctx);
+  iterate_over_sites(chip, draw_site_compose, ctx);
 
   cairo_pattern_destroy (ctx->site_sing_patterns[CLB]);
 
   cairo_restore (cr);
 }
 
+/* \brief Draw a fully vectorized chip layout
+ *
+ * This version is needed for PDF dump
+ *
+ */
+
+static void
+_draw_chip_vectorized(drawing_context_t *ctx,
+		      const chip_descr_t *chip) {
+  cairo_t *cr = ctx->cr;
+
+  debit_log(L_DRAW, "vectorized chip draw");
+  cairo_rectangle(cr, 0., 0.,
+		  chip->width * SITE_WIDTH,
+		  chip->height * SITE_HEIGHT);
+  cairo_clip (cr);
+
+  /* paint the clip region */
+  cairo_set_source_rgb (cr, 0., 0., 0.);
+  cairo_paint (cr);
+
+  /* draw everything in white. This could be per-site or per-site-type */
+  cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+  cairo_set_line_width (cr, 1);
+
+  cairo_select_font_face(cr, NAME_FONT_TYPE,
+			 CAIRO_FONT_SLANT_NORMAL,
+			 CAIRO_FONT_WEIGHT_NORMAL);
+  cairo_set_font_size(cr, NAME_FONT_SIZE);
+
+  iterate_over_sites(chip, draw_site_vector, ctx);
+}
+
 /* Drawing of the whole bunch */
 void
-draw_chip(drawing_context_t *ctx, chip_descr_t *chip) {
+draw_chip(drawing_context_t *ctx, const chip_descr_t *chip) {
   cairo_t *cr = ctx->cr;
   g_print("Start of draw chip\n");
   cairo_rectangle(cr, 0., 0.,
@@ -270,7 +310,7 @@ diff_time(struct timeval *start, struct timeval *end) {
 }
 
 void
-draw_chip_monitored(drawing_context_t *ctx, chip_descr_t *chip) {
+draw_chip_monitored(drawing_context_t *ctx, const chip_descr_t *chip) {
   struct timeval start, end;
 
   gettimeofday(&start,NULL);
@@ -332,18 +372,10 @@ drawing_context_destroy(drawing_context_t *ctx) {
    environment. For now pdf-only, so that's it
 */
 void
-draw_surface_chip(chip_descr_t *chip, cairo_surface_t *sr) {
-  cairo_t *cr;
+draw_cairo_chip(cairo_t *cr, const chip_descr_t *chip) {
   drawing_context_t ctx;
-  cr = cairo_create(sr);
   init_drawing_context(&ctx);
   set_cairo_context(&ctx, cr);
-
-  draw_chip(&ctx, chip);
-
-  cairo_surface_flush(sr);
-  cairo_show_page(cr);
-
-  cairo_destroy(cr);
+  _draw_chip_vectorized(&ctx, chip);
 }
 

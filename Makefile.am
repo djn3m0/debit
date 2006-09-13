@@ -7,7 +7,8 @@ SHARED_SRC	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
 		localpips.c bitstream.c keyfile.c \
 		analysis.c sites.c connexity.c wiring.c
 
-bin_PROGRAMS	= debit sites_test
+bin_PROGRAMS	= debit bit2pdf
+
 debit_SOURCES	= $(SHARED_SRC) debit.c \
 		bitarray.h bitstream.h config.h design.h localpips.h \
 		virtex2_config.h bitheader.h bitstream_parser.h \
@@ -15,10 +16,10 @@ debit_SOURCES	= $(SHARED_SRC) debit.c \
 debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDADD	= @GLIB_LIBS@
 
-sites_test_SOURCES = bit2pdf.c sites_draw.c wiring_draw.c \
+bit2pdf_SOURCES = bit2pdf.c sites_draw.c wiring_draw.c \
 		     $(SHARED_SRC) sites.h bitdraw.h
-sites_test_CFLAGS = @GLIB_CFLAGS@ @CAIRO_CFLAGS@
-sites_test_LDFLAGS = @GLIB_LIBS@ @CAIRO_LIBS@
+bit2pdf_CFLAGS = @GLIB_CFLAGS@ @CAIRO_CFLAGS@
+bit2pdf_LDFLAGS = @GLIB_LIBS@ @CAIRO_LIBS@
 
 #Distribution hook so that the tarballs are tagged with the git tree
 #SHA1 hash

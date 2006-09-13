@@ -103,8 +103,8 @@ const gchar *wire_name(const wire_db_t *db, const wire_atom_t wire) {
 }
 
 static inline
-wire_simple_t wire_val(const wire_db_t *db, const wire_atom_t wire) {
-  return (db->wires[wire]);
+wire_simple_t *wire_val(const wire_db_t *db, const wire_atom_t wire) {
+  return (&db->wires[wire]);
 }
 
 static inline

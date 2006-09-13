@@ -12,10 +12,11 @@
 #include "wiring.h"
 #include "localpips.h"
 #include "bitstream_parser.h"
+#include "analysis.h"
 
 #define SWITCH_CENTER_X 50.0
 #define SWITCH_CENTER_Y 50.0
-#define SWITCH_RADIUS   20.0
+#define SWITCH_RADIUS   15.0
 
 typedef struct _drawing_context {
   cairo_t *cr;
@@ -34,8 +35,6 @@ typedef struct _drawing_context {
   double zoom;
 
   /* structural information */
-  chip_descr_t *chip;
-  wire_db_t *wiredb;
 } drawing_context_t;
 
 /* All sites have the same width and height. Simpler. */
@@ -49,15 +48,14 @@ cairo_t *
 destroy_drawing_context(drawing_context_t *ctx);
 
 //void draw_chip(drawing_context_t *ctx, chip_descr_t *chip);
-void draw_chip_monitored(drawing_context_t *ctx, chip_descr_t *chip);
+void draw_chip_monitored(drawing_context_t *ctx, const chip_descr_t *chip);
+/* draw the chip layout */
+//void draw_surface_chip(cairo_surface_t *sr, const chip_descr_t *chip);
+void draw_cairo_chip(cairo_t *cr, const chip_descr_t *chip);
 
-/* draw onto surface the chip */
-void draw_surface_chip(chip_descr_t *chip, cairo_surface_t *sr);
-
-/* wire drawing primitives */
-void draw_wire(const drawing_context_t *ctx, wire_atom_t wire);
-void draw_interconnect(const drawing_context_t *ctx, pip_t pip);
-void draw_pip(const drawing_context_t *ctx, pip_t pip);
+/* wire drawing primitives -- this is where the real work happens */
+void draw_all_wires(drawing_context_t *ctx, const bitstream_analyzed_t *nlz);
+void draw_cairo_wires(cairo_t *sr, const bitstream_analyzed_t *nlz);
 
 /* bad, this. The drawing context should be separated from the cairo_t */
 drawing_context_t *drawing_context_create();
