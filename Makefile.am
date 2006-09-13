@@ -3,21 +3,27 @@ SUBDIRS = data debian rpm windows altera utils xiledit
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\"
 AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
 
-SHARED_SRC	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
-		localpips.c bitstream.c keyfile.c \
-		analysis.c sites.c connexity.c wiring.c
+SHARED_SRC	= bitarray.c bitarray.h \
+		bitheader.c bitheader.h \
+		bitstream_parser.c bitstream_parser.h \
+		filedump.c filedump.h \
+		localpips.c localpips.h \
+		bitstream.c bitstream.h \
+		keyfile.c keyfile.h \
+		analysis.c analysis.h \
+		sites.c sites.h \
+		connexity.c connexity.h \
+		wiring.c wiring.h
 
 bin_PROGRAMS	= debit bit2pdf
 
 debit_SOURCES	= $(SHARED_SRC) debit.c \
-		bitarray.h bitstream.h config.h design.h localpips.h \
-		virtex2_config.h bitheader.h bitstream_parser.h \
-		debitlog.h filedump.h sites.h wiring.h keyfile.h
+		config.h design.h virtex2_config.h debitlog.h
 debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDADD	= @GLIB_LIBS@
 
-bit2pdf_SOURCES = bit2pdf.c sites_draw.c wiring_draw.c \
-		     $(SHARED_SRC) sites.h bitdraw.h
+bit2pdf_SOURCES = bit2pdf.c sites_draw.c wiring_draw.c bitdraw.h \
+		$(SHARED_SRC)
 bit2pdf_CFLAGS = @GLIB_CFLAGS@ @CAIRO_CFLAGS@
 bit2pdf_LDFLAGS = @GLIB_LIBS@ @CAIRO_LIBS@
 
