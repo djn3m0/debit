@@ -9,12 +9,8 @@
 #include <cairo.h>
 #include "xildraw.h"
 
-#include "sites.h"
+#include "analysis.h"
 #include "bitdraw.h"
-
-/* XXX define me as a variable in the gobject, or define the gobject
- * from a parsed bitfile */
-static gchar *datadir = DATADIR;
 
 G_DEFINE_TYPE (EggXildrawFace, egg_xildraw_face, GTK_TYPE_DRAWING_AREA);
 
@@ -129,11 +125,11 @@ egg_xildraw_redraw (EggXildrawFace *xildraw)
 }
 
 GtkWidget *
-egg_xildraw_face_new (void)
+egg_xildraw_face_new (bitstream_analyzed_t *nlz)
 {
   EggXildrawFace *ret = g_object_new (EGG_TYPE_XILDRAW_FACE, NULL);
   /* do a bunch of things */
-  ret->chip = get_chip(datadir, "xc2v2000");
+  ret->chip = nlz->chip;
   ret->ctx = drawing_context_create();
   return GTK_WIDGET(ret);
 }

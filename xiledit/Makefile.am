@@ -1,7 +1,8 @@
 AM_CPPFLAGS	= -Wall -Werror -Wunused -O3 -g -DDATADIR=\"$(pkgdatadir)\"
 
 SHARED_SRC	= ../bitarray.c ../bitheader.c ../bitstream_parser.c ../filedump.c \
-		../localpips.c ../bitstream.c ../wiring.c ../keyfile.c
+		../localpips.c ../bitstream.c ../wiring.c ../keyfile.c \
+		../analysis.c ../connexity.c
 #SHARED_COUCOU	= $(addprefix ../,$(SHARED_SRC))
 
 bin_PROGRAMS	= xiledit

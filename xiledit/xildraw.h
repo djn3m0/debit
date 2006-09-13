@@ -15,7 +15,7 @@
 
 #include <gtk/gtk.h>
 
-#include "sites.h"
+#include "analysis.h"
 #include "bitdraw.h"
 
 G_BEGIN_DECLS
@@ -43,7 +43,7 @@ struct _EggXildrawFaceClass
   GtkDrawingAreaClass parent_class;
 };
 
-GtkWidget *egg_xildraw_face_new (void);
+GtkWidget *egg_xildraw_face_new (bitstream_analyzed_t *);
 
 G_END_DECLS
 
