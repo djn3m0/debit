@@ -30,12 +30,15 @@ static GOptionEntry entries[] =
 
 static void glade_do_init() {
   GladeXML *xml;
+  gchar *glade_path;
 
-  xml = glade_xml_new("xiledit.glade", NULL, NULL);
+  glade_path = g_build_filename(datadir, "xiledit.glade", NULL);
+  xml = glade_xml_new(glade_path, NULL, NULL);
   glade_xml_signal_autoconnect(xml);
 
   /* Glade does not (yet) handle our custom widget */
 
+  g_free(glade_path);
   return;
 }
 
