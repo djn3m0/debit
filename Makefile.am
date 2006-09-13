@@ -4,7 +4,8 @@ AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\"
 AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
 
 SHARED_SRC	= bitarray.c bitheader.c bitstream_parser.c filedump.c \
-		localpips.c bitstream.c wiring.c keyfile.c analysis.c sites.c
+		localpips.c bitstream.c keyfile.c \
+		analysis.c sites.c connexity.c wiring.c
 
 bin_PROGRAMS	= debit sites_test
 debit_SOURCES	= $(SHARED_SRC) debit.c \

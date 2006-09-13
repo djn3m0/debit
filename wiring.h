@@ -9,6 +9,8 @@
 #include <glib.h>
 #include "inttypes.h"
 
+#include "sites.h"
+
 typedef enum _wire_direction {
   N = 0, WN, NW,
   W, WS, SW,
@@ -79,6 +81,11 @@ typedef struct _wire_simple {
   gint8 dy;
   wire_atom_t ep;
 } wire_simple_t;
+
+typedef struct _sited_wire {
+  site_ref_t site;
+  wire_atom_t wire;
+} sited_wire_t;
 
 typedef struct _wire_db {
   gsize dblen;

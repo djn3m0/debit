@@ -3,8 +3,8 @@
  * All rights reserved.
  */
 
-#ifndef _HAS_CONNEXITY_H
-#define _HAS_CONNEXITY_H
+#ifndef _HAS_ANALYSIS_H
+#define _HAS_ANALYSIS_H
 
 #include <glib.h>
 #include "wiring.h"
@@ -31,4 +31,4 @@ analyze_bitstream(bitstream_parsed_t *bitstream,
 void
 dump_pips(bitstream_analyzed_t *bitstream);
 
-#endif /* _HAS_CONNEXITY_H */
+#endif /* _HAS_ANALYSIS_H */

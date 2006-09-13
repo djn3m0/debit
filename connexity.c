@@ -12,22 +12,46 @@
  * Connexity analysis
  */
 
-/*
- * This file centralizes the work on bitstream analysis. It gets the
- * sites descriptions for the chip, then the pips for all chip sites,
- * then does the connexity analysis required to get all nets in the
- * FPGA. From here specialized modules can do more in-depth work, such
- * as VHDL/Verilog dumps.
- */
+/* For now be dumb */
+static inline GNode **
+alloc_wire_table(const pip_db_t *pipdb, const chip_descr_t *chip) {
+  gsize size = pipdb->wiredb->dblen * chip->width * chip->height;
+  /* we could divide the size by two by only storing startpoint
+     in this table */
+  return g_new0(GNode *, size);
+}
+
+/* Be dumb again */
+static inline unsigned
+net_offset_of(const chip_descr_t *chip,
+	      const sited_wire_t *wire) {
+  unsigned site_offset = wire->site - chip->data;
+  return wire->wire + site_offset * chip->width * chip->height;
+}
+
+static inline GNode *
+net_of(GNode **db, const chip_descr_t *chip,
+       const sited_wire_t *wire) {
+  unsigned index = net_offset_of(chip, wire);
+  return db[index];
+}
+
+static inline GNode *
+net_register(GNode **db,
+	     const chip_descr_t *chip,
+	     const sited_wire_t *wire) {
+  sited_wire_t *newwire = g_new(sited_wire_t, 1);
+  GNode *added = g_node_new(newwire);
+  unsigned index = net_offset_of(chip, wire);
+  *newwire = *wire;
+  db[index] = added;
+  return added;
+}
 
 /*
  * This part is also in charge of doing default pip interpretation
  */
 
-/* typedef struct _sited_wire { */
-/*   struct wire_details_t *wire; */
-/*   struct csite_descr_t  *site; */
-/* } sited_wire_t; */
 
 /** \brief Structure describing all nets in an FPGA
  *
@@ -37,15 +61,21 @@
  * The data in the nodes are sited wires.
  */
 
-typedef struct _nets_t {
-  GNode *head;
-} nets_t;
+static inline  GNode *
+net_add(GNode *net, GNode **nodetable,
+	const chip_descr_t *chip,
+	const sited_wire_t *wire) {
+  GNode *added = net_register(nodetable, chip, wire);
+  g_node_append(net, added);
+  return added;
+}
 
-/**
- *
- *
- *
- */
+static inline GNode *
+add_new_net(nets_t *nets, GNode **nodetable,
+	    const chip_descr_t *chip,
+	    const sited_wire_t *wire) {
+  return net_add(nets->head, nodetable, chip, wire);
+}
 
 /*
  * Try to reach all pips from an endpoint and site,
@@ -59,293 +89,144 @@ typedef struct _nets_t {
  *
  * @returns the start of the inserted net
  */
-/* GNode *build_net_from(const site_details_t *details_matrix, */
-/* 		      const chip_db_t *cdb, net_t *nets, */
-/* 		      const sited_wire_t *wire) { */
-
-/*   do { */
-/*     /\* First query the localpip database *\/ */
-/*     const gchar *start; */
-/*     start = get_wire_startpoint(pipdb, bitstream, site, wire->wire->name); */
-
-/*     if (!start) { */
-/*       sited_wire_t *startwire; */
-/*       int err; */
-
-/*       err = get_interconnect_startpoint(startwire->site, startwire->wire, */
-/* 					wire->site, wire->wire); */
-
-/*       if (err) */
-/* 	return add_new_net(wire); */
-/*     } */
-
-/*     /\* match: is the other endpoint already in a net ? *\/ */
-/*     if (is_in_net(start)) */
-/*       return add_dependency(start, wire); */
-
-/*     /\* we need to go on *\/ */
-/*     wire = start; */
-
-/*   } while (wire != NULL) */
-
-/* } */
 
 /*
- * Very simple analysis function which only dumps the pips to stdout
+ * The sited wire is always a wire *startpoint*
  */
 
-/*
- *
- *
- *
- */
+static inline
+gboolean get_endpoint(sited_wire_t *start,
+		      const pip_db_t *pipdb,
+		      const chip_descr_t *cdb,
+		      const bitstream_parsed_t *bitstream,
+		      const sited_wire_t *wire) {
+  g_print("getting startpoint of wire %s\n",
+	  wire_name(pipdb->wiredb, wire->wire));
 
-static inline void
-print_site(gchar *data, const site_details_t *site) {
-  const guint x = site->type_coord.x;
-  const guint y = site->type_coord.y;
-
-  switch (site->type) {
-  case CLB:
-    sprintf(data, "R%iC%i", y+1, x+1);
-    break;
-  case RTERM:
-    sprintf(data, "RTERMR%i", y+1);
-    break;
-  case LTERM:
-    sprintf(data, "LTERMR%i", y+1);
-    break;
-  case TTERM:
-    sprintf(data, "TTERMC%i", x+1);
-    break;
-  case BTERM:
-    sprintf(data, "BTERMC%i", x+1);
-    break;
-  case TIOI:
-    sprintf(data, "TIOIC%i", x+1);
-    break;
-  case BIOI:
-    sprintf(data, "BIOIC%i", x+1);
-    break;
-  case LIOI:
-    sprintf(data, "LIOIR%i", y+1);
-    break;
-  case RIOI:
-    sprintf(data, "RIOIR%i", y+1);
-    break;
-  case TTERMBRAM:
-    sprintf(data, "TTERMBRAMC%i", x+1);
-    break;
-  case BTERMBRAM:
-    sprintf(data, "BTERMBRAMC%i", x+1);
-    break;
-  case TIOIBRAM:
-    sprintf(data, "TIOIBRAMC%i", x+1);
-    break;
-  case BIOIBRAM:
-    sprintf(data, "BIOIBRAMC%i", x+1);
-    break;
-  case BRAM:
-    sprintf(data, "BRAMR%iC%i", y+1, x+1);
-    break;
-  default:
-    break;
-  }
+  return (get_interconnect_startpoint(pipdb, bitstream, start, wire) ||
+	  get_wire_startpoint(pipdb, cdb, start, wire));
 }
 
-static inline void
-print_pip(const site_details_t *site, const gchar *start, const gchar *end) {
-  gchar site_buf[20];
-  print_site(site_buf,site);
-  g_printf("pip %s %s -> %s\n", site_buf, start, end);
-}
+static GNode *
+build_net_from(nets_t *nets,
+	       GNode **nodetable,
+	       const pip_db_t *pipdb,
+	       const chip_descr_t *cdb,
+	       const bitstream_parsed_t *bitstream,
+	       const sited_wire_t *wire) {
+  GNode *father, *child = NULL;
+  gboolean found;
+  sited_wire_t orig = *wire, start;
 
-void
-print_bram_data(const site_details_t *site, const guint16 *data) {
-  guint i,j;
-  g_printf("BRAM_%02x_%02x\n",
-	   site->type_coord.x,
-	   site->type_coord.y);
-  for (i = 0; i < 64; i++) {
-    g_printf("INIT_%02x:",i);
-    for (j = 0; j < 16; j++)
-      g_printf("%04x", data[16*i + 15 - j]);
-    g_printf("\n");
-  }
-}
+  do {
+    /* make a node out of this and register this. If the node is already
+       in there, return it */
+    g_print("BIP getting startpoint of wire %s\n",
+	    wire_name(pipdb->wiredb, wire->wire));
 
-void
-print_lut_data(const site_details_t *site, const guint16 data[]) {
-  guint i;
-  g_printf("CLB_%02x_%02x\n",
-	   site->type_coord.x,
-	   site->type_coord.y);
-  for (i = 0; i < 4; i++)
-    g_printf("LUT%01x:%04x\n",i,data[i]);
-}
-
-#define X_SITES 48
-#define Y_SITES 56
-
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
-static const site_type_t types[] = {
-  CLB, TTERM, BTERM, TIOI, BIOI, LIOI, RIOI, LTERM, RTERM,
-  BTERMBRAM, TIOIBRAM, BIOIBRAM, BRAM,
-};
-
-static const guint xsize[SITE_TYPE_NEUTRAL] = {
-  [CLB] = X_SITES,
-  [TTERM] = X_SITES,
-  [BTERM] = X_SITES,
-  [TIOI] = X_SITES,
-  [BIOI] = X_SITES,
-  [LIOI] = 1,
-  [RIOI] = 1,
-  [RTERM] = 1,
-  [LTERM] = 1,
-  [TTERMBRAM] = 4,
-  [BTERMBRAM] = 4,
-  [TIOIBRAM] = 4,
-  [BIOIBRAM] = 4,
-  [BRAM] = 4,
-};
-
-static const guint ysize[SITE_TYPE_NEUTRAL] = {
-  [CLB] = Y_SITES,
-  [TTERM] = 1,
-  [BTERM] = 1,
-  [TIOI] = 1,
-  [BIOI] = 1,
-  [LIOI] = Y_SITES,
-  [RIOI] = Y_SITES,
-  [RTERM] = Y_SITES,
-  [LTERM] = Y_SITES,
-  [TTERMBRAM] = 1,
-  [BTERMBRAM] = 1,
-  [TIOIBRAM] = 1,
-  [BIOIBRAM] = 1,
-  [BRAM] = Y_SITES,
-};
-
-/** \brief Test function which dumps the pips of a bitstream on stdout
- *
- * @param pipdb the pip database
- * @param bitstream the bitstream data
- *
- */
-
-void dump_all_pips(const pip_db_t *pipdb,
-		   const bitstream_parsed_t *bitstream) {
-  guint type_ref;
-  guint x, y;
-
-  /* BRAM data */
-  for (x = 0; x < 4; x++)
-    for (y = 0; y < 14; y++) {
-      guint16 *bram;
-      site_details_t site = {
-	.type_coord = { .x = x, .y = y },
-      };
-      bram = query_bitstream_bram_data(bitstream, &site);
-      print_bram_data(&site,bram);
-      g_warning("Did BRAM %i x %i", x, y);
-      g_free(bram);
+    father = net_of(nodetable, cdb, &orig);
+    if (father) {
+      if (child)
+	g_node_append(father, child);
+      return father;
     }
 
-  /* LUT data */
-  for(y = 0; y < ysize[CLB]; y++) {
-    for(x = 0; x < xsize[CLB]; x++) {
-      guint16 luts[4];
-      site_details_t site = {
-	.type_coord = { .x = x, .y = y },
-	.type = CLB,
-      };
-      query_bitstream_luts(bitstream, &site, luts);
-      print_lut_data(&site,luts);
-    }
-  }
+    /* else create the node and add a child */
+    father = net_register(nodetable, cdb, &orig);
+    if (child)
+	g_node_append(father, child);
 
-  /* pips */
-  for (type_ref = 0; type_ref < ARRAY_SIZE(types); type_ref++) {
-    site_type_t type = types[type_ref];
-    for(y = 0; y < ysize[type]; y++) {
-      for(x = 0; x < xsize[type]; x++) {
-	pip_t *pips;
-	gsize size;
-	site_details_t site = {
-	  .type_coord = { .x = x, .y = y },
-	  .type = type,
-	};
-	pips = pips_of_site(pipdb, bitstream, &site, &size);
-	print_site_db(pipdb->wiredb, &site, pips, size);
-	g_free(pips);
-      }
-    }
-  }
-}
+    /* Then the connexity analysis proper. We're relying on the
+       bitstream data directly to do this. We could also have some
+       function fill in directly the GNode ** structure then have
+       this loop connect everything. It would probably be much better. */
+    g_print("BOP getting startpoint of wire %s\n",
+	    wire_name(pipdb->wiredb, wire->wire));
+    found = get_endpoint(&start, pipdb, cdb, bitstream, &orig);
 
+    if (!found)
+      return add_new_net(nets, nodetable, cdb, &orig);
 
+    /* prepare to loop */
+    orig = start;
 
-/*
- * Allocation / unallocation functions
- * Maybe split this into analysis.c
- */
-static void
-unfill_analysis(bitstream_analyzed_t *anal) {
-  pip_db_t *pipdb = anal->pipdb;
-  chip_descr_t *chip = anal->chip;
+  } while (father != NULL);
 
-  if (pipdb)
-    free_pipdb(pipdb);
-  if (chip)
-    release_chip(chip);
-}
-
-void
-free_analysis(bitstream_analyzed_t *anal) {
-  unfill_analysis(anal);
-  g_free(anal);
+  g_assert_not_reached();
+  return NULL;
 }
 
 static int
-fill_analysis(bitstream_analyzed_t *anal,
-	      bitstream_parsed_t *bitstream,
-	      const gchar *datadir) {
-  pip_db_t *pipdb;
-  chip_descr_t *chip;
+_build_nets(nets_t *nets,
+	    const pip_db_t *pipdb,
+	    const chip_descr_t *cdb,
+	    const bitstream_parsed_t *bitstream) {
+  GNode **nodetable = alloc_wire_table(pipdb, cdb);
+  /* Then do a particular net */
+  site_ref_t site = get_global_site(cdb, 3, 3);
 
-  anal->bitstream = bitstream;
-  /* then fetch the databases */
-  /* XXX */
-  pipdb = get_pipdb(datadir);
-  if (!pipdb)
-    goto err_out;
-  anal->pipdb = pipdb;
+  sited_wire_t wire = {
+    .site = site,
+    .wire = 30,
+  };
 
-  /* XXX */
-  chip = get_chip("/home/jb/chip/", "xc2v2000");
-  if (!chip)
-    goto err_out;
-  anal->chip = chip;
-
+  build_net_from(nets, nodetable, pipdb, cdb, bitstream, &wire);
+  g_free(nodetable);
   return 0;
-
- err_out:
-  unfill_analysis(anal);
-  return -1;
 }
 
-bitstream_analyzed_t *
-analyze_bitstream(bitstream_parsed_t *bitstream,
-		  const gchar *datadir) {
-  bitstream_analyzed_t *anal = g_new0(bitstream_analyzed_t, 1);
+nets_t *build_nets(const pip_db_t *pipdb,
+		   const chip_descr_t *cdb,
+		   const bitstream_parsed_t *bitstream) {
+  nets_t *ret = g_new(nets_t, 1);
   int err;
 
-  err = fill_analysis(anal, bitstream, datadir);
+  ret->head = g_node_new(NULL);
+
+  err = _build_nets(ret, pipdb, cdb, bitstream);
   if (err) {
-    g_free(anal);
+    g_free(ret);
     return NULL;
   }
 
-  return anal;
+  return ret;
+}
+
+void free_nets(nets_t *nets) {
+  g_free(nets->head);
+  g_free(nets);
+}
+
+/* Printing function */
+struct _print_net {
+  const pip_db_t *pipdb;
+  const chip_descr_t *cdb;
+};
+
+static gboolean
+print_wire(GNode *net,
+	   gpointer data) {
+  struct _print_net *arg = data;
+  sited_wire_t *wire = net->data;
+  gchar buf[30];
+  /* do something ! */
+  (void) arg;
+  sprint_csite(buf, wire->site);
+  g_print("\nwire %i @%s\n", wire->wire, buf);
+  return FALSE;
+}
+
+static void
+print_net(GNode *net, gpointer data) {
+  g_print("net %p {\n", net);
+  g_node_traverse (net, G_IN_ORDER, G_TRAVERSE_ALL, -1, print_wire, data);
+  g_print("}\n");
+}
+
+void print_nets(nets_t *net,
+		const pip_db_t *pipdb,
+		const chip_descr_t *cdb) {
+  struct _print_net arg = { .pipdb = pipdb, .cdb = cdb };
+  /* Iterate through nets */
+  g_node_children_foreach (net->head, G_TRAVERSE_ALL, print_net, &arg);
 }

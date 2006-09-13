@@ -7,7 +7,6 @@
 #define _SITES_H
 
 #include <glib.h>
-#include "wiring.h"
 
 /* This is the coordinates of the site in its
    local typed grid */
@@ -31,25 +30,17 @@ typedef enum _site_type {
   NR_SITE_TYPE,
 } __attribute__((packed)) site_type_t;
 
-/* typedef struct _site_details { */
-/*   /\* coordinates of the site on the global grid *\/ */
-/*   site_t global_coord; */
-/*   /\* type-local coordinates *\/ */
-/*   site_type_t type; */
-/*   site_t type_coord; */
-/*   /\* associated pips, if any *\/ */
-/*   gsize npips; */
-/*   pip_t *pips; */
-/* } __attribute__((packed)) site_details_t; */
-
 /* more compact vision of the data */
 typedef struct _site_descr {
   site_type_t type;
   site_t type_coord;
-  /* global coord is implicit */
-
-  /* pips ? */
 } csite_descr_t;
+
+/* This type refers to a site pointer inside the database, which may be
+   used for pointer arithmetic to get back to the site's global
+   coordinates. Actually I should model this on the wiredb model and
+   just have a uint16t here. Or choose something. */
+typedef csite_descr_t *site_ref_t;
 
 typedef struct _chip_descr {
   unsigned width;
@@ -58,13 +49,24 @@ typedef struct _chip_descr {
 } chip_descr_t;
 
 /* get a site by its global coordinates */
-static inline csite_descr_t *
+static inline site_ref_t
 get_global_site(const chip_descr_t *chip,
 		unsigned x, unsigned y) {
   unsigned width = chip->width;
   g_assert(x < width);
   g_assert(y < chip->height);
   return &chip->data[y * width + x];
+}
+
+static inline site_ref_t
+translate_global_site(const chip_descr_t *chip,
+		      site_ref_t site, int dx, int dy) {
+  unsigned width = chip->width;
+  unsigned offset = site - chip->data;
+  unsigned x = offset % width;
+  unsigned y = offset / width;
+  /* check that we stay within bound */
+  return get_global_site(chip, x+dx, y+dy);
 }
 
 /* The returned string is allocated and should be freed */
