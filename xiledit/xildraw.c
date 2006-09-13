@@ -37,7 +37,7 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
 static void egg_xildraw_face_finalize (EggXildrawFace *self)
 {
   drawing_context_t *ctx = self->ctx;
-  chip_descr_t *chip = self->chip;
+  bitstream_analyzed_t *nlz = self->nlz;
 
   /* dealloc all needed */
   if (ctx) {
@@ -45,9 +45,9 @@ static void egg_xildraw_face_finalize (EggXildrawFace *self)
     drawing_context_create (ctx);
   }
 
-  if (chip) {
-    self->chip = NULL;
-    release_chip (chip);
+  if (nlz) {
+    self->nlz = NULL;
+    free_analysis(nlz);
   }
 
   g_print("finalized\n");
@@ -60,7 +60,7 @@ egg_xildraw_face_init (EggXildrawFace *xildraw)
      This would be cool, as we would only need code xilinx code here,
      not in the editor itself */
   xildraw->ctx = NULL;
-  xildraw->chip = NULL;
+  xildraw->nlz = NULL;
 
   /* gtk initialization */
   GTK_WIDGET_SET_FLAGS(GTK_WIDGET (xildraw), GTK_CAN_FOCUS);
@@ -75,7 +75,7 @@ static void
 draw (EggXildrawFace *draw, cairo_t *cr)
 {
   drawing_context_t *ctx = draw->ctx;
-  chip_descr_t *chip = draw->chip;
+  chip_descr_t *chip = draw->nlz->chip;
   g_print("draw\n");
   draw_chip_monitored(ctx, chip);
 }
@@ -129,7 +129,7 @@ egg_xildraw_face_new (bitstream_analyzed_t *nlz)
 {
   EggXildrawFace *ret = g_object_new (EGG_TYPE_XILDRAW_FACE, NULL);
   /* do a bunch of things */
-  ret->chip = nlz->chip;
+  ret->nlz = nlz;
   ret->ctx = drawing_context_create();
   return GTK_WIDGET(ret);
 }

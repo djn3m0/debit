@@ -35,7 +35,7 @@ struct _EggXildrawFace
   GtkDrawingArea parent;
   /* < public > */
   drawing_context_t *ctx;
-  chip_descr_t *chip;
+  bitstream_analyzed_t *nlz;
 };
 
 struct _EggXildrawFaceClass
