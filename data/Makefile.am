@@ -9,6 +9,7 @@ CHIPDB=xc2v2000/chip_control xc2v2000/chip_data
 
 WIRES_DB=wires.db
 
-ALLDATA=$(DATCONTROL) $(DATDATA) $(WIRES_DB) $(CHIP_DB)
+ALLDATA=$(DATCONTROL) $(DATDATA) $(WIRES_DB) $(CHIPDB)
 
 nobase_dist_pkgdata_DATA=$(ALLDATA)
+
