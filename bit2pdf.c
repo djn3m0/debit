@@ -88,7 +88,16 @@ int main (int argc, char **argv) {
   }
 
   bit = parse_bitstream(ifile);
+  if (!bit) {
+    g_warning("Could not parse the bitfile");
+    return -1;
+  }
+
   nlz = analyze_bitstream(bit, datadir);
+  if (!nlz) {
+    g_warning("Could not analyze the bitfile");
+    return -1;
+  }
 
   /* cairo thingy */
   draw_pdf_bitstream(nlz, ofile);

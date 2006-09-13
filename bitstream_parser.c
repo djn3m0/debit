@@ -718,7 +718,7 @@ read_next_token(bitstream_parsed_t *parsed,
 	offset = handle_fdri_write(parsed, parser, length);
 
       if (offset > avail) {
-	debit_log(L_BITSTREAM,"Register length of %i words while only %zd words remain",
+	debit_log(L_BITSTREAM,"Register length of %zd words while only %zd words remain",
 		  length, avail);
 	return -1;
       }

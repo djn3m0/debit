@@ -10,7 +10,7 @@
 #include "bitisolation_db.h"
 
 static int
-get_file_bindata(bitarray_t **data, unsigned *len, const gchar *file) {
+get_file_bindata(bitarray_t **data, gsize *len, const gchar *file) {
   gchar *filename = g_strconcat(file,".bin",NULL);
   gboolean done;
   GError *error = NULL;
@@ -68,7 +68,7 @@ static int
 fill_state(state_t *s, const gchar *inp,
 	   const pip_db_t *db) {
   bitarray_t *known, *unknown;
-  unsigned udl;
+  gsize udl;
   int err;
 
   err = get_file_txtdata(db, &known, inp);
@@ -124,7 +124,8 @@ alldata_t *
 fill_all_data(const pip_db_t *db, const gchar *reffile, const gchar **knw) {
   alldata_t *dat = g_new(alldata_t, 1);
   bitarray_t *ref = NULL;
-  unsigned udl_ref, idx = 0;
+  gsize udl_ref;
+  unsigned idx = 0;
   GArray *data_array;
 
   data_array = g_array_new(FALSE, FALSE, sizeof(state_t));

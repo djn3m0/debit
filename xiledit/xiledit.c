@@ -72,26 +72,36 @@ debit_init(int *argcp, char ***argvp) {
 
 int
 main (int argc, char **argv) {
-   bitstream_parsed_t *bit;
-   bitstream_analyzed_t *nlz;
+  bitstream_parsed_t *bit;
+  bitstream_analyzed_t *nlz;
 
-   gtk_init (&argc, &argv);
-   debit_init (&argc, &argv);
+  gtk_init (&argc, &argv);
+  debit_init (&argc, &argv);
 
-   if (!ifile) {
-     g_warning("You must specify a bitfile, %s --help for help", argv[0]);
-     return -1;
-   }
+  if (!ifile) {
+    g_warning("You must specify a bitfile, %s --help for help", argv[0]);
+    return -1;
+  }
 
-   /* glade-generated widgets */
-   glade_do_init ();
+  /* glade-generated widgets */
+  glade_do_init ();
 
-   /* custom widget, pending for glade integration */
-   bit = parse_bitstream(ifile);
-   nlz = analyze_bitstream(bit, datadir);
-   display_window (nlz);
+  /* custom widget, pending for glade integration */
+  bit = parse_bitstream(ifile);
+  if (!bit) {
+    g_warning("Could not parse the bitfile");
+    return -1;
+  }
 
-   gtk_main ();
+  nlz = analyze_bitstream(bit, datadir);
+  if (!nlz) {
+    g_warning("Could not analyze the bitfile");
+    return -1;
+  }
 
-   return 0;
+  display_window (nlz);
+
+  gtk_main ();
+
+  return 0;
 }
