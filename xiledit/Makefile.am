@@ -18,7 +18,7 @@ xiledit_LDADD	= @GLIB_LIBS@ @CAIRO_LIBS@ @GTK_LIBS@
 
 EXTRA_DIST = $(glade_sources)
 
-$(glade_sources): $(glade_sources)
+$(glade_generated): $(glade_sources)
 	glade-2 -w $<
 
 MAINTAINERCLEANFILES = $(glade_generated)
