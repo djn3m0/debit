@@ -6,4 +6,5 @@
   <program_name>xiledit</program_name>
   <source_directory>.</source_directory>
   <gnome_support>FALSE</gnome_support>
+  <output_build_files>FALSE</output_build_files>
 </glade-project>

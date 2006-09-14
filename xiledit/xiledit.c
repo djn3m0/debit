@@ -4,12 +4,14 @@
  */
 
 #include <gtk/gtk.h>
-#include <glade/glade-xml.h>
-#include <glade/glade-init.h>
 
 #include "debitlog.h"
 #include "xildraw.h"
 #include "analysis.h"
+
+/* Glade-generated files */
+#include "interface.h"
+#include "support.h"
 
 static gchar *ifile = NULL;
 static gchar *datadir = DATADIR;
@@ -29,16 +31,19 @@ static GOptionEntry entries[] =
 };
 
 static void glade_do_init() {
-  GladeXML *xml;
-  gchar *glade_path;
+  GtkWidget *menu;
+  GtkWidget *birdseye;
 
-  glade_path = g_build_filename(datadir, "xiledit.glade", NULL);
-  xml = glade_xml_new(glade_path, NULL, NULL);
-  glade_xml_signal_autoconnect(xml);
-
-  /* Glade does not (yet) handle our custom widget */
-
-  g_free(glade_path);
+ /*
+  *    * The following code was added by Glade to create one of each component
+  *    * (except popup menus), just so that you see something after building
+  *    * the project. Delete any components that you don't want shown initially.
+  *
+  */
+  menu = create_menu ();
+  gtk_widget_show (menu);
+  birdseye = create_birdseye ();
+  gtk_widget_show (birdseye);
   return;
 }
 

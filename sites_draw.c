@@ -10,8 +10,8 @@
 #include "sites.h"
 #include "bitdraw.h"
 
-#include <sys/time.h>
-#include <time.h>
+/* for timing analysis */
+#include <glib.h>
 
 #define NAME_OFFSET_X 20.0
 #define NAME_OFFSET_Y 20.0
@@ -295,8 +295,8 @@ draw_chip(drawing_context_t *ctx, const chip_descr_t *chip) {
 }
 
 static void
-diff_time(struct timeval *start, struct timeval *end) {
-  long usec, sec;
+diff_time(GTimeVal *start, GTimeVal *end) {
+  glong usec, sec;
   /* returns the time difference in microseconds */
   /*   diff = (unsigned long)(difftime(end->tv_sec,start->tv_sec) *
        1,000,000,000); */
@@ -311,11 +311,11 @@ diff_time(struct timeval *start, struct timeval *end) {
 
 void
 draw_chip_monitored(drawing_context_t *ctx, const chip_descr_t *chip) {
-  struct timeval start, end;
+  GTimeVal start, end;
 
-  gettimeofday(&start,NULL);
+  g_get_current_time(&start);
   draw_chip(ctx, chip);
-  gettimeofday(&end, NULL);
+  g_get_current_time(&end);
   diff_time(&start, &end);
 }
 /* exported functions do a bunch of initialization */

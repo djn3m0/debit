@@ -25,7 +25,7 @@ debit_LDADD	= @GLIB_LIBS@
 bit2pdf_SOURCES = bit2pdf.c sites_draw.c wiring_draw.c bitdraw.h \
 		$(SHARED_SRC)
 bit2pdf_CFLAGS = @GLIB_CFLAGS@ @CAIRO_CFLAGS@
-bit2pdf_LDFLAGS = @GLIB_LIBS@ @CAIRO_LIBS@
+bit2pdf_LDADD  = @GLIB_LIBS@ @CAIRO_LIBS@
 
 #Distribution hook so that the tarballs are tagged with the git tree
 #SHA1 hash

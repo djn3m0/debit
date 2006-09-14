@@ -24,4 +24,4 @@ popd
 #get back the resulting installer, this is what we want after all
 cp $BUILD_DIR/windows/debit-installer.exe .
 
-#rm -Rf $BUILD_DIR
+rm -Rf $BUILD_DIR

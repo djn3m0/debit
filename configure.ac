@@ -32,12 +32,6 @@ PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= $GTK_REQUIRED])
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
 
-dnl completely random requirement
-LIBGLADE_REQUIRED=2.4.0
-PKG_CHECK_MODULES(LIBGLADE, [libglade-2.0 >= $LIBGLADE_REQUIRED])
-AC_SUBST(LIBGLADE_CFLAGS)
-AC_SUBST(LIBGLADE_LIBS)
-
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdlib.h string.h sys/ioctl.h unistd.h])
