@@ -76,8 +76,10 @@ draw (EggXildrawFace *draw, cairo_t *cr)
 {
   drawing_context_t *ctx = draw->ctx;
   bitstream_analyzed_t *nlz = draw->nlz;
-  g_print("draw\n");
+
   draw_chip_monitored(ctx, nlz->chip);
+  draw_all_wires(ctx, nlz);
+
 }
 
 static gboolean
@@ -85,21 +87,27 @@ egg_xildraw_face_expose (GtkWidget *widget, GdkEventExpose *event)
 {
   cairo_t *cr;
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
+  drawing_context_t *ctx = xildraw->ctx;
+  bitstream_analyzed_t *nlz = xildraw->nlz;
   (void) event;
 
   g_print("expose event");
 
   /* get a cairo_t */
   cr = gdk_cairo_create (widget->window);
+  set_cairo_context(ctx, cr);
+
+  /* generate the patterns before clipping */
+  generate_patterns(ctx, nlz->chip);
 
   cairo_rectangle (cr,
 		   event->area.x, event->area.y,
 		   event->area.width, event->area.height);
   cairo_clip (cr);
 
-  set_cairo_context(xildraw->ctx, cr);
   draw (xildraw, cr);
 
+  destroy_patterns(ctx);
   cairo_destroy (cr);
 
   return FALSE;
@@ -159,7 +167,7 @@ egg_xildraw_key_press_event(GtkWidget *widget,
 			    GdkEventKey *event)
 {
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
-  gint k, step = 100;
+  gint k, step = 150;
   gint x_move = 0, y_move = 0;
   //  step = 100 / net->zooms[net->level];
 
@@ -180,20 +188,13 @@ egg_xildraw_key_press_event(GtkWidget *widget,
   case GDK_Down:
     y_move = 1;
     break;
-/*   case GDK_Page_Up: */
-/*     netdraw_move(gui, 0,-4*step); */
-/*     break; */
-/*   case GDK_Page_Down: */
-/*     netdraw_move(gui, 0,+4*step); */
-/*     break; */
-/*   case GDK_plus: */
-  case GDK_KP_Add:
   case GDK_plus:
+  case GDK_KP_Add:
     xildraw_zoom(xildraw, 0.75);
     break;
   case GDK_minus:
   case GDK_KP_Subtract:
-    xildraw_zoom(xildraw, 1/0.75);
+    xildraw_zoom(xildraw, 1.0/0.75);
     break;
   }
 

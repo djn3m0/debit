@@ -37,6 +37,27 @@ typedef struct _drawing_context {
   /* structural information */
 } drawing_context_t;
 
+/* Initialize the structure to default value. cairo_t is passed
+   from above as we are surface-agnostic in this file (rendering to pdf
+   or to screen)
+*/
+
+static inline void
+init_drawing_context(drawing_context_t *ctx) {
+  unsigned i;
+  ctx->cr = NULL;
+  ctx->text = FALSE;
+  ctx->x_offset = 0;
+  ctx->y_offset = 0;
+  ctx->zoom = 1.0;
+
+  for (i = 0; i < NR_SITE_TYPE; i++) {
+    ctx->site_sing_patterns[i] = NULL;
+    ctx->site_line_patterns[i] = NULL;
+    ctx->site_full_patterns[i] = NULL;
+  }
+}
+
 /* All sites have the same width and height. Simpler. */
 #define SITE_WIDTH 100.0
 #define SITE_HEIGHT 100.0
@@ -47,8 +68,10 @@ create_drawing_context(const cairo_t *cr);
 cairo_t *
 destroy_drawing_context(drawing_context_t *ctx);
 
-//void draw_chip(drawing_context_t *ctx, chip_descr_t *chip);
+void generate_patterns(drawing_context_t *ctx, const chip_descr_t *chip);
 void draw_chip_monitored(drawing_context_t *ctx, const chip_descr_t *chip);
+void destroy_patterns(drawing_context_t *ctx);
+
 /* draw the chip layout */
 //void draw_surface_chip(cairo_surface_t *sr, const chip_descr_t *chip);
 void draw_cairo_chip(cairo_t *cr, const chip_descr_t *chip);

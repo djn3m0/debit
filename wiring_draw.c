@@ -192,19 +192,31 @@ draw_wire_iter(gpointer data,
 void
 draw_all_wires(drawing_context_t *ctx,
 	       const bitstream_analyzed_t *nlz) {
+  cairo_t *cr = ctx->cr;
+  const double zoom = ctx->zoom;
   const chip_descr_t *chip = nlz->chip;
   const pip_parsed_dense_t *pipdat = nlz->pipdat;
   wire_iter_t iter = { .ctx = ctx,
 		       .chip = nlz->chip,
 		       .wdb = nlz->pipdb->wiredb, };
 
-  cairo_set_line_width (ctx->cr, 0.2);
+  cairo_set_line_width (ctx->cr, 1.0);
+
+  cairo_save (cr);
+
+  cairo_scale (cr, zoom, zoom);
+
+  cairo_translate (cr, -ctx->x_offset, -ctx->y_offset);
   iterate_over_bitpips(pipdat, chip, draw_wire_iter, &iter);
+
+  cairo_restore (cr);
 }
 
 void
 draw_cairo_wires(cairo_t *cr, const bitstream_analyzed_t *nlz) {
   drawing_context_t ctx;
+
+  init_drawing_context(&ctx);
   set_cairo_context(&ctx, cr);
   draw_all_wires(&ctx, nlz);
 }

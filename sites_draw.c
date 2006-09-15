@@ -87,16 +87,26 @@ _draw_clb(drawing_context_t *ctx, csite_descr_t *site) {
 cairo_pattern_t *
 draw_clb_pattern(drawing_context_t *ctx) {
   cairo_t *cr = ctx->cr;
+  const double zoom = ctx->zoom;
   cairo_pattern_t *pat;
-
-  /* */
-  g_print("cr is %p", cr);
+  unsigned width = SITE_WIDTH*zoom, height = SITE_HEIGHT*zoom;
 
   cairo_save (cr);
 
-  cairo_rectangle (cr, 0, 0, SITE_WIDTH, SITE_HEIGHT);
+  cairo_set_source_rgb (cr, 0., 0., 0.);
+  cairo_rectangle (cr, 0, 0, width, height);
   cairo_clip (cr);
+  cairo_scale (cr, zoom, zoom);
+
   cairo_push_group (cr);
+
+/*   cairo_rectangle (cr, 0, 0, SITE_WIDTH, SITE_HEIGHT); */
+/*   cairo_set_source_rgb (cr, 0., 0., 0.); */
+/*   cairo_paint (cr); */
+
+  cairo_set_line_width (cr, 1.0);
+  cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+
   _draw_clb_pattern (cr);
   pat = cairo_pop_group (cr);
 
@@ -201,6 +211,18 @@ draw_full_clb_pattern(drawing_context_t *ctx,
   return cairo_pop_group (cr);
 }
 
+void
+generate_patterns(drawing_context_t *ctx, const chip_descr_t *chip) {
+  /* redraw the thing at the right zoom level */
+  ctx->site_sing_patterns[CLB] = draw_clb_pattern(ctx);
+}
+
+void
+destroy_patterns(drawing_context_t *ctx) {
+  cairo_pattern_destroy (ctx->site_sing_patterns[CLB]);
+  ctx->site_sing_patterns[CLB] = NULL;
+}
+
 static void
 draw_chip_for_window(drawing_context_t *ctx, const chip_descr_t *chip) {
   cairo_t *cr = ctx->cr;
@@ -210,13 +232,8 @@ draw_chip_for_window(drawing_context_t *ctx, const chip_descr_t *chip) {
 
   cairo_scale (cr, zoom, zoom);
 
-  /* redraw the thing at the right zoom level */
-  ctx->site_sing_patterns[CLB] = draw_clb_pattern(ctx);
-
   cairo_translate (cr, -ctx->x_offset, -ctx->y_offset);
   iterate_over_sites(chip, draw_site_compose, ctx);
-
-  cairo_pattern_destroy (ctx->site_sing_patterns[CLB]);
 
   cairo_restore (cr);
 }
@@ -259,10 +276,8 @@ void
 draw_chip(drawing_context_t *ctx, const chip_descr_t *chip) {
   cairo_t *cr = ctx->cr;
   g_print("Start of draw chip\n");
-  cairo_rectangle(cr, 0., 0.,
-		  chip->width * SITE_WIDTH,
-		  chip->height * SITE_HEIGHT);
-  cairo_clip (cr);
+
+  /* This should be after zoom, in user coordinates */
 
   /* paint the clip region */
   cairo_set_source_rgb (cr, 0., 0., 0.);
@@ -317,28 +332,6 @@ draw_chip_monitored(drawing_context_t *ctx, const chip_descr_t *chip) {
   draw_chip(ctx, chip);
   g_get_current_time(&end);
   diff_time(&start, &end);
-}
-/* exported functions do a bunch of initialization */
-
-/* First, initialize the structure to default value. cairo_t is passed
-   from above as we are surface-agnostic in this file (rendering to pdf
-   or to screen)
-*/
-
-static inline void
-init_drawing_context(drawing_context_t *ctx) {
-  unsigned i;
-  ctx->cr = NULL;
-  ctx->text = FALSE;
-  ctx->x_offset = 0;
-  ctx->y_offset = 0;
-  ctx->zoom = 1.0;
-
-  for (i = 0; i < NR_SITE_TYPE; i++) {
-    ctx->site_sing_patterns[i] = NULL;
-    ctx->site_line_patterns[i] = NULL;
-    ctx->site_full_patterns[i] = NULL;
-  }
 }
 
 /* create a context from all of a parsed bitstream */
