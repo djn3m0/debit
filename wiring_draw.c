@@ -77,16 +77,17 @@ draw_wire_pattern(const drawing_context_t *ctx,
   cairo_t *cr = ctx->cr;
 #define MAX_LEN 6
 #define MAX_WIDTH (2*MAX_LEN + 1)
+  const double zoom = ctx->zoom;
+  const unsigned width = MAX_WIDTH * SITE_WIDTH * zoom, height = MAX_WIDTH * SITE_HEIGHT * zoom;
   const double dx = MAX_LEN * SITE_WIDTH, dy = MAX_LEN * SITE_HEIGHT;
   cairo_pattern_t *pat;
 
   cairo_save (cr);
 
-  /* Clip before push_group */
-  cairo_rectangle (cr, 0, 0,
-		   MAX_WIDTH * SITE_WIDTH,
-		   MAX_WIDTH * SITE_HEIGHT);
+  cairo_set_source_rgb (cr, 0., 0., 0.);
+  cairo_rectangle (cr, 0, 0, width, height);
   cairo_clip (cr);
+  cairo_scale (cr, zoom, zoom);
 
   cairo_push_group (cr);
 
@@ -103,18 +104,12 @@ draw_wire_pattern(const drawing_context_t *ctx,
 }
 
 void
-draw_wire(const drawing_context_t *ctx, const wire_db_t *wdb, wire_atom_t wire) {
-  cairo_t *cr = ctx->cr;
-  cairo_save (cr);
-  _draw_wire(ctx, wdb, wire);
-  cairo_restore (cr);
-}
-
-void
-draw_wire_buffered(const drawing_context_t *ctx, wire_atom_t wire) {
+draw_wire_buffered(const drawing_context_t *ctx, const wire_db_t *wdb, wire_atom_t wire) {
+  cairo_pattern_t *pat;
   /* compose the pattern if need be */
-
+  pat = draw_wire_pattern(ctx, wdb, wire);
   /* compose the pattern on the surface */
+  /* compose_wire_pattern(ctx, pat); */
 }
 
 static inline void
@@ -133,24 +128,11 @@ _draw_interconnect(const drawing_context_t *ctx,
   cairo_stroke (cr);
 }
 
-void
-draw_interconnect(const drawing_context_t *ctx,
-		  const wire_db_t *wdb,
-		  pip_t pip) {
-  cairo_t *cr = ctx->cr;
-  cairo_save(cr);
-  _draw_interconnect(ctx, wdb, pip);
-  cairo_restore(cr);
-}
-
-void
-draw_pip(const drawing_context_t *ctx, const wire_db_t *wdb, pip_t pip) {
-  cairo_t *cr = ctx->cr;
-  cairo_save (cr);
+static void
+_draw_pip(const drawing_context_t *ctx, const wire_db_t *wdb, pip_t pip) {
   _draw_interconnect(ctx, wdb, pip);
   _draw_wire(ctx, wdb, pip.source);
   _draw_wire(ctx, wdb, pip.target);
-  cairo_restore (cr);
 }
 
 /* so now let's talk good */
@@ -173,10 +155,12 @@ draw_wire_iter(gpointer data,
   unsigned index = site_index(chip, site);
   double dx = (index % width) * SITE_WIDTH, dy = (index / width) * SITE_HEIGHT;
 
+  /* These save / restore could be balanced so that we don't do them too
+     many times, which is currently the case */
   cairo_save (cr);
 
   cairo_translate (cr, dx, dy);
-  draw_pip (iter->ctx, iter->wdb, pip);
+  _draw_pip (iter->ctx, iter->wdb, pip);
 
   cairo_restore (cr);
 
