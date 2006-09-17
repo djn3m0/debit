@@ -40,20 +40,20 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
 static void egg_xildraw_face_finalize (EggXildrawFace *self)
 {
   drawing_context_t *ctx = self->ctx;
-  bitstream_analyzed_t *nlz = self->nlz;
+/*   bitstream_analyzed_t *nlz = self->nlz; */
 
   /* dealloc all needed */
   if (ctx) {
     self->ctx = NULL;
-    drawing_context_create (ctx);
+    drawing_context_destroy (ctx);
   }
 
-  if (nlz) {
-    self->nlz = NULL;
-    free_analysis(nlz);
-  }
+/*   if (nlz) { */
+/*     self->nlz = NULL; */
+/*     free_analysis(nlz); */
+/*   } */
 
-  g_print("finalized\n");
+/*   g_print("finalized\n"); */
 }
 
 static void

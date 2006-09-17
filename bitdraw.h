@@ -62,12 +62,6 @@ init_drawing_context(drawing_context_t *ctx) {
 #define SITE_WIDTH 100.0
 #define SITE_HEIGHT 100.0
 
-drawing_context_t *
-create_drawing_context(const cairo_t *cr);
-
-cairo_t *
-destroy_drawing_context(drawing_context_t *ctx);
-
 void generate_patterns(drawing_context_t *ctx, const chip_descr_t *chip);
 void draw_chip(drawing_context_t *ctx, const chip_descr_t *chip);
 void destroy_patterns(drawing_context_t *ctx);
