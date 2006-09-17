@@ -4,11 +4,12 @@
 
 #include <glib.h>
 #include "bitheader.h"
+#include "debitlog.h"
 
 static void
 parse_synchro (synchro_option_t *opt) {
   guint len = GUINT32_FROM_BE(opt->bitstream_length);
-  g_message("Synchro option, bitstream length %i", len);
+  debit_log(L_HEADER, "Synchro option, bitstream length %i", len);
   return;
 }
 

@@ -11,6 +11,7 @@
 
 #include "analysis.h"
 #include "bitdraw.h"
+#include "debitlog.h"
 
 /* for timing analysis */
 #include <glib.h>
@@ -40,7 +41,6 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
 static void egg_xildraw_face_finalize (EggXildrawFace *self)
 {
   drawing_context_t *ctx = self->ctx;
-/*   bitstream_analyzed_t *nlz = self->nlz; */
 
   /* dealloc all needed */
   if (ctx) {
@@ -48,12 +48,6 @@ static void egg_xildraw_face_finalize (EggXildrawFace *self)
     drawing_context_destroy (ctx);
   }
 
-/*   if (nlz) { */
-/*     self->nlz = NULL; */
-/*     free_analysis(nlz); */
-/*   } */
-
-/*   g_print("finalized\n"); */
 }
 
 static void
@@ -71,7 +65,7 @@ egg_xildraw_face_init (EggXildrawFace *xildraw)
   /*   drawing_area.grab_focus() */
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_KEY_PRESS_MASK);
 
-  g_print("init\n");
+  debit_log(L_GUI, "xildraw init");
 }
 
 static void
@@ -112,7 +106,7 @@ egg_xildraw_face_expose (GtkWidget *widget, GdkEventExpose *event)
   bitstream_analyzed_t *nlz = xildraw->nlz;
   (void) event;
 
-  g_print("expose event");
+  debit_log(L_GUI, "expose event");
 
   /* get a cairo_t */
   cr = gdk_cairo_create (widget->window);
@@ -192,7 +186,7 @@ egg_xildraw_key_press_event(GtkWidget *widget,
   gint x_move = 0, y_move = 0;
   //  step = 100 / net->zooms[net->level];
 
-  g_print("key press event !");
+  debit_log(L_GUI, "key press event");
 
   k = event->keyval;
 

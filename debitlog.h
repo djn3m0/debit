@@ -31,6 +31,8 @@ enum {
 	L_DRAW = (DEBIT_DEBUG > 1) * 0x2000,
 	/* GUI */
 	L_GUI = (DEBIT_DEBUG > 1) * 0x4000,
+	/* Header */
+	L_HEADER = (DEBIT_DEBUG > 1) * 0x8000,
 	L_ANY = 0xffff,
 };
 

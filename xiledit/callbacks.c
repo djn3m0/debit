@@ -33,7 +33,6 @@ on_open1_activate                      (GtkMenuItem     *menuitem,
 
     filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 
-    g_print("Opening %s", filename);
     if (filename)
       display_bitstream(filename);
 

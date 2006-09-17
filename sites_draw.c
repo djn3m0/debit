@@ -275,7 +275,8 @@ _draw_chip_vectorized(drawing_context_t *ctx,
 void
 draw_chip(drawing_context_t *ctx, const chip_descr_t *chip) {
   cairo_t *cr = ctx->cr;
-  g_print("Start of draw chip\n");
+
+  debit_log(L_DRAW, "Start of draw chip");
 
   /* This should be after zoom, in user coordinates */
 
@@ -306,7 +307,7 @@ draw_chip(drawing_context_t *ctx, const chip_descr_t *chip) {
   /* move from the context */
   draw_chip_for_window(ctx, chip);
 
-  g_print("End of draw chip\n");
+  debit_log(L_DRAW, "End of draw chip");
 }
 
 /* create a context from all of a parsed bitstream */

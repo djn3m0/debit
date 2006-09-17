@@ -16,18 +16,12 @@
 
 #define STRINGCHUNK_DEFAULT_SIZE 16
 
-typedef enum
-  {
-    /* log flags */
-    WIRE_LOG_DATA             = 1 << G_LOG_LEVEL_USER_SHIFT,
-  } WireLevelFlags;
-
 static gint
 read_wiredb(GKeyFile **fill, const gchar *filename) {
   GKeyFile *db;
   GError *error = NULL;
 
-  g_log(G_LOG_DOMAIN, WIRE_LOG_DATA, "Loading data from %s", filename);
+  debit_log(L_WIRES, "Loading data from %s", filename);
 
   db = g_key_file_new();
   if (!db)

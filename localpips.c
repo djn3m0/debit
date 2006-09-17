@@ -18,7 +18,6 @@
 
 /* implements the functions needed to get pips in the db */
 
-#define G_LOG_DOMAIN  "LOCALPIPS"
 #include <glib.h>
 #include "debitlog.h"
 
@@ -373,7 +372,7 @@ destroy_datatree(GNode *head) {
 static void
 print_pip_hook(gpointer data, const gchar *start, const gchar *end) {
   (void) data;
-  g_log(G_LOG_DOMAIN, PIP_LOG_DATA, "pip %s -> %s", start, end);
+  g_print("pip %s -> %s", start, end);
 }
 
 /** \brief Print pip database.
@@ -447,20 +446,22 @@ static void examine_node_memory (GNode *node,
   /* Please keep these warnings on, they indicate debitting
      idiosyncrasies that we don't fully get yet */
   if ( bitdata == cfgdata ) {
-    if (exam_arg->found)
-      g_warning("Perfect match replacing %s -> %s, with %s -> %s",
+    if (exam_arg->found) {
+      debit_log(L_PIPS, "Perfect match replacing %s -> %s, with %s -> %s",
 		wire_name(wiredb,exam_arg->startwire),end,start,end);
+    }
     exam_arg->found = TRUE;
     exam_arg->startwire = cfgarg->startwire;
     return;
   }
 
   if ( (cfgdata & bitdata) == cfgdata ) {
-    g_warning("Spurious bits for %s -> %s, config %i != bitdata %i",
+    debit_log(L_PIPS, "Spurious bits for %s -> %s, config %i != bitdata %i",
 	      start,end,cfgdata,bitdata);
-    if (exam_arg->found)
-      g_warning("Not replacing %s -> %s",
+    if (exam_arg->found) {
+      debit_log(L_PIPS, "Not replacing %s -> %s",
 		wire_name(wiredb,exam_arg->startwire),end);
+    }
     else {
       exam_arg->found = TRUE;
       exam_arg->startwire = cfgarg->startwire;
