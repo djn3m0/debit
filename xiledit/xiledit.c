@@ -48,9 +48,11 @@ static void glade_do_init() {
 }
 
 static void
-display_window(bitstream_analyzed_t *nlz) {
+display_window(bitstream_analyzed_t *nlz,
+	       const gchar *filename) {
   GtkWidget *window;
   GtkWidget *fpga;
+  gchar *title = NULL;
 
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
@@ -59,6 +61,10 @@ display_window(bitstream_analyzed_t *nlz) {
 
   g_signal_connect (window, "destroy",
 		    G_CALLBACK (gtk_main_quit), NULL);
+
+  title = g_strdup_printf("[%s]", filename);
+  gtk_window_set_title (GTK_WINDOW(window), title);
+  g_free(title);
 
   gtk_widget_show_all (window);
 }
@@ -107,7 +113,7 @@ main (int argc, char **argv) {
     return -1;
   }
 
-  display_window (nlz);
+  display_window (nlz, ifile);
 
   gtk_main ();
 
