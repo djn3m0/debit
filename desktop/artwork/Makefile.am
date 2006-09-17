@@ -26,8 +26,11 @@ win_artwork = ulogic_icon.ico ulogic_banner.bmp ulogic_splash.bmp
 %_splash.png: %_splash.svg
 	inkscape -z -f $< -e $@ -D -w300
 
-%.bmp: %.png
+%.ppm: %.png
 	convert $< $@
+
+%.bmp: %.ppm
+	ppmtobmp -windows $< > $@
 
 # for windows
 %.ico: %_48.png %_32.png

@@ -10,6 +10,8 @@ SOURCE_DIR=../..
 #get the absolute path
 SOURCE_DIR=$(cd $(dirname ${SOURCE_DIR}) && pwd)
 
+make -C $SOURCE_DIR distclean
+
 echo "Compiling for target ${TARGET} in ${BUILD_DIR} from ${SOURCE_DIR}"
 echo "PKGCONFIG path is ${PKG_CONFIG_PATH}"
 

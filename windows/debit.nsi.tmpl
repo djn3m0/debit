@@ -28,9 +28,10 @@
 ;--------------------------------
 ;Interface Settings
 
-  ;!define MUI_HEADERIMAGE
-  ;!define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\orange.bmp" ; optional
-  ;!define MUI_ABORTWARNING
+  !define MUI_HEADERIMAGE
+  !define MUI_HEADERIMAGE_RIGHT
+  !define MUI_HEADERIMAGE_BITMAP "${SRCDIR}\desktop\artwork\ulogic_banner.bmp"
+  !define MUI_ABORTWARNING
 
 ;--------------------------------
 ;Variables
@@ -39,16 +40,17 @@
 ;--------------------------------
 ;Functions
 
-;Function .onInit
-;	InitPluginsDir
-;	File /oname=$PLUGINSDIR\splash.bmp "${SRCDIR}\windows\art\orange.bmp"
-;	splash::show 3000 $PLUGINSDIR\splash
-;	Pop $0
-;FunctionEnd
+Function .onInit
+	InitPluginsDir
+	File /oname=$PLUGINSDIR\splash.bmp "${SRCDIR}\desktop\artwork\ulogic_splash.bmp"
+	splash::show 3000 $PLUGINSDIR\splash
+	Pop $0
+FunctionEnd
 
 ;--------------------------------
 ;Pages
 
+  !insertmacro MUI_PAGE_WELCOME
   !insertmacro MUI_PAGE_LICENSE "${SRCDIR}/COPYING"
   !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_DIRECTORY
@@ -76,6 +78,9 @@
 Section "Debitting graphical tools" SecDisplay
   DetailPrint "Installing debitting shell tools..."
   SetOutPath "$INSTDIR\bin"
+
+  File ..\xiledit\xiledit.exe
+
 SectionEnd
 
 Section "Debitting database" SecDatabase
@@ -105,8 +110,36 @@ SectionEnd
 Section "Start Menu"
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Xiledit.lnk" "$INSTDIR\bin\xiledit.exe"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   !insertmacro MUI_STARTMENU_WRITE_END
+SectionEnd
+
+Section "File type and context menus" SecCtx
+
+  ; create file associations, test before if needed
+  DetailPrint "creating file associations"
+  ClearErrors
+  ReadRegStr $0 HKCR ".bit" ""
+  StrCmp $0 "" 0 +3
+  WriteRegStr HKCR ".bit" "" "bitfile"
+  WriteRegStr HKCR "bitfile" "" "Xilinx Bitstream file"
+  ReadRegStr $0 HKCR ".sof" "soffile"
+  StrCmp $0 "" 0 +3
+  WriteRegStr HKCR ".sof" "" "soffile"
+  WriteRegStr HKCR "soffile" "" "Altera Bitstream file"
+  IfErrors 0 +2
+     DetailPrint "Problem creating file associations for bitstream files"
+
+  DetailPrint "creating default browser for bitstream"
+  ClearErrors
+  ReadRegStr $0 HKCR ".bit" ""
+  WriteRegStr HKCR "$0\shell\edit\command" "" '"$INSTDIR\bin\xiledit.exe" "-d" "$INSTDIR\data" "-i" "%1"'
+;  ReadRegStr $0 HKCR ".sof" ""
+;  WriteRegStr HKCR "$0\shell\edit\command" "" '"$INSTDIR\bin\altedit.exe" "%1"'
+  IfErrors 0 +2
+     DetailPrint "Problems creating default browser"
+
 SectionEnd
 
 ;--------------------------------
@@ -115,13 +148,15 @@ SectionEnd
   ;Language strings
   LangString DESC_SecXilinx ${LANG_ENGLISH} "Command-line utilities for debitting"
   LangString DESC_SecDisplay ${LANG_ENGLISH} "Graphical utilities for debitting"
-  LangString DESC_SecDatabase ${LANG_ENGLISH} "database for the Xilinx xc2v2000 chip"
+  LangString DESC_SecDatabase ${LANG_ENGLISH} "Database for the Xilinx xc2v2000 chip"
+;  LangString DESC_SecCtx ${LANG_ENGLISH} "File type and context menus"
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecXilinx} $(DESC_SecXilinx)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecDisplay} $(DESC_SecDisplay)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecDatabase} $(DESC_SecDatabase)
+;    !insertmacro MUI_DESCRIPTION_TEXT ${SecCtx} $(DESC_SecCtx)
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;--------------------------------
@@ -129,7 +164,14 @@ SectionEnd
 
 Section "Uninstall"
 
-  ;ADD YOUR OWN FILES HERE...
+  Delete "$INSTDIR\bin\xiledit.exe"
+  Delete "$INSTDIR\bin\altera.exe"
+  Delete "$INSTDIR\bin\bitisolation.exe"
+  Delete "$INSTDIR\bin\diff_bin_pos.exe"
+  Delete "$INSTDIR\bin\debit.exe"
+  RMDir "$INSTDIR\bin"
+
+  RMDir /r "$INSTDIR\data"
 
   Delete "$INSTDIR\Uninstall.exe"
 
