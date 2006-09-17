@@ -12,6 +12,9 @@
 #include "analysis.h"
 #include "bitdraw.h"
 
+/* for timing analysis */
+#include <glib.h>
+
 G_DEFINE_TYPE (EggXildrawFace, egg_xildraw_face, GTK_TYPE_DRAWING_AREA);
 
 static gboolean egg_xildraw_face_expose (GtkWidget *xildraw, GdkEventExpose *event);
@@ -72,13 +75,31 @@ egg_xildraw_face_init (EggXildrawFace *xildraw)
 }
 
 static void
+diff_time(GTimeVal *start, GTimeVal *end) {
+  glong usec, sec;
+  usec = end->tv_usec - start->tv_usec;
+  sec = end->tv_sec - start->tv_sec;
+  if (usec < 0) {
+    sec -= 1;
+    usec += G_USEC_PER_SEC;
+  }
+  g_print("%li seconds and %li microseconds\n",sec, usec);
+}
+
+static void
 draw (EggXildrawFace *draw, cairo_t *cr)
 {
   drawing_context_t *ctx = draw->ctx;
   bitstream_analyzed_t *nlz = draw->nlz;
 
-  draw_chip_monitored(ctx, nlz->chip);
+  GTimeVal start, end;
+  g_get_current_time(&start);
+
+  draw_chip(ctx, nlz->chip);
   draw_all_wires(ctx, nlz);
+
+  g_get_current_time(&end);
+  diff_time(&start, &end);
 
 }
 

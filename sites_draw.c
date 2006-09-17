@@ -309,31 +309,6 @@ draw_chip(drawing_context_t *ctx, const chip_descr_t *chip) {
   g_print("End of draw chip\n");
 }
 
-static void
-diff_time(GTimeVal *start, GTimeVal *end) {
-  glong usec, sec;
-  /* returns the time difference in microseconds */
-  /*   diff = (unsigned long)(difftime(end->tv_sec,start->tv_sec) *
-       1,000,000,000); */
-  usec = end->tv_usec - start->tv_usec;
-  sec = end->tv_sec - start->tv_sec;
-  if (usec < 0) {
-    sec--;
-    usec+=1000000;
-  }
-  g_print("%li seconds and %li microseconds\n",sec, usec);
-}
-
-void
-draw_chip_monitored(drawing_context_t *ctx, const chip_descr_t *chip) {
-  GTimeVal start, end;
-
-  g_get_current_time(&start);
-  draw_chip(ctx, chip);
-  g_get_current_time(&end);
-  diff_time(&start, &end);
-}
-
 /* create a context from all of a parsed bitstream */
 drawing_context_t *
 drawing_context_create() {
