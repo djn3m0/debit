@@ -35,7 +35,9 @@
 
 ;--------------------------------
 ;Variables
+
   Var STARTMENU_FOLDER
+  Var MUI_TEMP
 
 ;--------------------------------
 ;Functions
@@ -57,10 +59,10 @@ FunctionEnd
 
   ;Start Menu Folder Page Configuration
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
-  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\Modern UI Test"
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\debit"
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
-  !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
 
+  !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
 
   !insertmacro MUI_PAGE_INSTFILES
 
@@ -76,10 +78,13 @@ FunctionEnd
 ;Installer Sections
 
 Section "Debitting graphical tools" SecDisplay
-  DetailPrint "Installing debitting shell tools..."
-  SetOutPath "$INSTDIR\bin"
+  DetailPrint "Installing debitting graphical tools..."
 
+  SetOutPath "$INSTDIR\bin"
   File ..\xiledit\xiledit.exe
+
+  SetOutPath "$INSTDIR\gfx"
+  File "${SRCDIR}\desktop\artwork\ulogic_icon.ico"
 
 SectionEnd
 
@@ -107,10 +112,10 @@ Section "Debitting shell tools" SecXilinx
 
 SectionEnd
 
-Section "Start Menu"
+Section "StartMenu entries" SecStartMenu
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Xiledit.lnk" "$INSTDIR\bin\xiledit.exe"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Xiledit.lnk" "$INSTDIR\bin\xiledit.exe" "" "$INSTDIR\gfx\ulogic_icon.ico"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
@@ -124,7 +129,7 @@ Section "File type and context menus" SecCtx
   StrCmp $0 "" 0 +3
   WriteRegStr HKCR ".bit" "" "bitfile"
   WriteRegStr HKCR "bitfile" "" "Xilinx Bitstream file"
-  ReadRegStr $0 HKCR ".sof" "soffile"
+  ReadRegStr $0 HKCR ".sof" ""
   StrCmp $0 "" 0 +3
   WriteRegStr HKCR ".sof" "" "soffile"
   WriteRegStr HKCR "soffile" "" "Altera Bitstream file"
@@ -149,14 +154,16 @@ SectionEnd
   LangString DESC_SecXilinx ${LANG_ENGLISH} "Command-line utilities for debitting"
   LangString DESC_SecDisplay ${LANG_ENGLISH} "Graphical utilities for debitting"
   LangString DESC_SecDatabase ${LANG_ENGLISH} "Database for the Xilinx xc2v2000 chip"
-;  LangString DESC_SecCtx ${LANG_ENGLISH} "File type and context menus"
+  LangString DESC_SecCtx ${LANG_ENGLISH} "File type and context menus"
+  LangString DESC_SecStartMenu ${LANG_ENGLISH} "StartMenu entries"
 
   ;Assign language strings to sections
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecXilinx} $(DESC_SecXilinx)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecDisplay} $(DESC_SecDisplay)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecDatabase} $(DESC_SecDatabase)
-;    !insertmacro MUI_DESCRIPTION_TEXT ${SecCtx} $(DESC_SecCtx)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecCtx} $(DESC_SecCtx)
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecStartMenu} $(DESC_SecStartMenu)
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ;--------------------------------
@@ -164,7 +171,12 @@ SectionEnd
 
 Section "Uninstall"
 
+  ;; Data files deletion
+
   Delete "$INSTDIR\bin\xiledit.exe"
+  Delete "$INSTDIR\gfx\ulogic_icon.ico"
+
+
   Delete "$INSTDIR\bin\altera.exe"
   Delete "$INSTDIR\bin\bitisolation.exe"
   Delete "$INSTDIR\bin\diff_bin_pos.exe"
@@ -176,6 +188,29 @@ Section "Uninstall"
   Delete "$INSTDIR\Uninstall.exe"
 
   RMDir "$INSTDIR"
+
+
+  ;; Start Menu deletion
+
+  !insertmacro MUI_STARTMENU_GETFOLDER Application $MUI_TEMP
+
+  Delete "$SMPROGRAMS\$MUI_TEMP\Xiledit.lnk"
+  Delete "$SMPROGRAMS\$MUI_TEMP\Uninstall.lnk"
+
+  ;Delete empty start menu parent diretories
+
+  DetailPrint "Removing startmenu entries..."
+  StrCpy $MUI_TEMP "$SMPROGRAMS\$MUI_TEMP"
+
+  startMenuDeleteLoop:
+	ClearErrors
+    RMDir $MUI_TEMP
+    GetFullPathName $MUI_TEMP "$MUI_TEMP\.."
+
+    IfErrors startMenuDeleteLoopDone
+
+    StrCmp $MUI_TEMP $SMPROGRAMS startMenuDeleteLoopDone startMenuDeleteLoop
+  startMenuDeleteLoopDone:
 
   DeleteRegKey /ifempty HKCU "Software\debit"
 
