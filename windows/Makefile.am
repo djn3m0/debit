@@ -3,7 +3,7 @@ products=debit-installer.exe debit.nsi xildb.nsh
 EXTRA_DIST=debit.nsi.tmpl cross.env $(scriptutils)
 CLEANFILES=$(products)
 
-xildb.nsh:
+xildb.nsh: $(srcdir)/gendb.sh
 	$(srcdir)/gendb.sh $(top_srcdir) $@
 
 debit.nsi: debit.nsi.tmpl xildb.nsh
