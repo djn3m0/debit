@@ -25,6 +25,11 @@
   ;Get installation folder from registry if available
   InstallDirRegKey HKCU "Software\debit" ""
 
+;-------------------------------
+; MUI icons
+  !define MUI_ICON "${SRCDIR}\desktop\artwork\ulogic_installer.ico"
+  !define MUI_UNICON "${SRCDIR}\desktop\artwork\ulogic_uninstaller.ico"
+
 ;--------------------------------
 ;Interface Settings
 
@@ -115,7 +120,7 @@ SectionEnd
 Section "StartMenu entries" SecStartMenu
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Xiledit.lnk" "$INSTDIR\bin\xiledit.exe" "-d $INSTDIR\data" "$INSTDIR\gfx\ulogic_icon.ico"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Xiledit.lnk" "$INSTDIR\bin\xiledit.exe" '"-d" "$INSTDIR\data"' "$INSTDIR\gfx\ulogic_icon.ico"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd

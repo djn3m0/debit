@@ -17,7 +17,7 @@ dist_icons32_DATA = ulogic_icon_32.png
 	inkscape -z -f $< -e $@ -D -w32 -h32
 
 # Build Windows & NSIS - specific artwork
-win_artwork = ulogic_icon.ico ulogic_banner.bmp ulogic_splash.bmp
+win_artwork = ulogic_icon.ico ulogic_banner.bmp ulogic_splash.bmp ulogic_installer.ico ulogic_uninstaller.ico
 
 # These are the dimentions that are expected by NSIS
 %_banner.png: %_banner.svg
