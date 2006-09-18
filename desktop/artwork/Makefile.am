@@ -9,6 +9,9 @@ dist_icons48_DATA = ulogic_icon_48.png
 icons32dir   = $(datadir)/icons/hicolor/32x32/apps
 dist_icons32_DATA = ulogic_icon_32.png
 
+mimicons48dir = $(datadir)/icons/hicolor/48x48/mimetypes
+dist_mimicons48_DATA = application-x-xilinx-bitstream.png application-x-altera-bitstream.png
+
 # How to rebuild them
 %_48.png: %.svg
 	inkscape -z -f $< -e $@ -D -w48 -h48
@@ -16,8 +19,15 @@ dist_icons32_DATA = ulogic_icon_32.png
 %_32.png: %.svg
 	inkscape -z -f $< -e $@ -D -w32 -h32
 
+# Default icon size
+%.png: %.svg
+	inkscape -z -f $< -e $@ -D -w48 -h48
+
 # Build Windows & NSIS - specific artwork
-win_artwork = ulogic_icon.ico ulogic_banner.bmp ulogic_splash.bmp ulogic_installer.ico ulogic_uninstaller.ico
+win_artwork = ulogic_icon.ico \
+              application-x-xilinx-bitstream.ico application-x-altera-bitstream.ico \
+	      ulogic_banner.bmp ulogic_splash.bmp \
+              ulogic_installer.ico ulogic_uninstaller.ico
 
 # These are the dimentions that are expected by NSIS
 %_banner.png: %_banner.svg
@@ -39,4 +49,4 @@ win_artwork = ulogic_icon.ico ulogic_banner.bmp ulogic_splash.bmp ulogic_install
 dist_noinst_DATA=$(svg_artwork) $(win_artwork)
 
 #And allow me to cleanup the mess
-MAINTAINERCLEANFILES = $(win_artwork) $(icons48_DATA) $(icons32_DATA)
+MAINTAINERCLEANFILES = $(win_artwork) $(dist_icons48_DATA) $(dist_icons32_DATA) $(dist_mimicons48_DATA)

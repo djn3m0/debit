@@ -17,6 +17,8 @@ dist_MIME_DATA = debit.xml
 
 # Icons are in artwork
 
+# How to run this without the package integrating this ?
+# This should pertain to the package, not here, it clobbers make distcheck & packaging
 install-data-hook:
-	-update-mime-database $(datadir)/mime
+	-echo "You should run update-mime-database $(datadir)/mime for file association to take effect"
 
