@@ -19,10 +19,6 @@ dist_mimicons48_DATA = application-x-xilinx-bitstream.png application-x-altera-b
 %_32.png: %.svg
 	inkscape -z -f $< -e $@ -D -w32 -h32
 
-# Default icon size
-%.png: %.svg
-	inkscape -z -f $< -e $@ -D -w48 -h48
-
 # Build Windows & NSIS - specific artwork
 win_artwork = ulogic_icon.ico \
               application-x-xilinx-bitstream.ico application-x-altera-bitstream.ico \
@@ -45,6 +41,10 @@ win_artwork = ulogic_icon.ico \
 # for windows
 %.ico: %_48.png %_32.png
 	icotool -c $^ -o $@
+
+# Default icon size
+%.png: %.svg
+	inkscape -z -f $< -e $@ -D -w48 -h48
 
 dist_noinst_DATA=$(svg_artwork) $(win_artwork)
 

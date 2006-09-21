@@ -11,6 +11,9 @@ SUBDIRS=artwork
 desktopdir = $(datadir)/applications
 dist_desktop_DATA = debit.desktop
 
+# Check target ?
+# desktop-file-validate $(dist_desktop_DATA)
+
 # MIME registry
 MIMEdir = $(datadir)/mime/packages
 dist_MIME_DATA = debit.xml

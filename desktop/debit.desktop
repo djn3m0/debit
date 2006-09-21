@@ -6,5 +6,10 @@ Comment=Xilinx bitstream browser
 Exec=xiledit -i %f
 Icon=ulogic_icon_32.png
 Terminal=false
-MimeType=application/x-xilinx-bitstream
-Categories=Application;Development;Viewer;
+MimeType=application/x-xilinx-bitstream;
+Categories=Development;Viewer;
+Actions=ToPDF;
+
+[Desktop Action ToPDF]
+Exec=bit2pdf -i %f -o %f.pdf
+Name=XilEdit (produce PDF)
