@@ -18,11 +18,17 @@
 
 G_DEFINE_TYPE (EggXildrawFace, egg_xildraw_face, GTK_TYPE_DRAWING_AREA);
 
+//static gboolean egg_xildraw_face_realize (GtkWidget *widget, GdkEventConfigure *event);
+static gboolean egg_xildraw_face_configure (GtkWidget *widget, GdkEventConfigure *event);
 static gboolean egg_xildraw_face_expose (GtkWidget *xildraw, GdkEventExpose *event);
 
 static void egg_xildraw_face_finalize (EggXildrawFace *self);
 static gboolean egg_xildraw_key_press_event(GtkWidget *widget,
 					    GdkEventKey *event);
+static void
+egg_xildraw_size_request (GtkWidget      *widget,
+			  GtkRequisition *requisition);
+
 static void
 egg_xildraw_face_class_init (EggXildrawFaceClass *class)
 {
@@ -30,7 +36,9 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
 
   widget_class = GTK_WIDGET_CLASS (class);
 
+  widget_class->configure_event = egg_xildraw_face_configure;
   widget_class->expose_event = egg_xildraw_face_expose;
+  widget_class->size_request = egg_xildraw_size_request;
   widget_class->key_press_event = egg_xildraw_key_press_event;
 
   /* bind finalizing function */
@@ -41,8 +49,13 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
 static void egg_xildraw_face_finalize (EggXildrawFace *self)
 {
   drawing_context_t *ctx = self->ctx;
+  GdkPixmap *pixmap = self->pixmap;
 
-  /* dealloc all needed */
+  if (pixmap) {
+    self->pixmap = NULL;
+    g_object_unref(pixmap);
+  }
+
   if (ctx) {
     self->ctx = NULL;
     drawing_context_destroy (ctx);
@@ -58,6 +71,7 @@ egg_xildraw_face_init (EggXildrawFace *xildraw)
      not in the editor itself */
   xildraw->ctx = NULL;
   xildraw->nlz = NULL;
+  xildraw->pixmap = NULL;
 
   /* gtk initialization */
   GTK_WIDGET_SET_FLAGS(GTK_WIDGET (xildraw), GTK_CAN_FOCUS);
@@ -97,33 +111,93 @@ draw (EggXildrawFace *draw, cairo_t *cr)
 
 }
 
-static gboolean
-egg_xildraw_face_expose (GtkWidget *widget, GdkEventExpose *event)
-{
-  cairo_t *cr;
-  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
+/* This function redraws the back buffer */
+static void
+egg_xildraw_pixmap_recompute (EggXildrawFace *xildraw) {
+  GdkPixmap *pixmap = xildraw->pixmap;
   drawing_context_t *ctx = xildraw->ctx;
   bitstream_analyzed_t *nlz = xildraw->nlz;
-  (void) event;
+  cairo_t *cr;
 
-  debit_log(L_GUI, "expose event");
+  const double zoom = ctx->zoom;
+  const chip_descr_t *chip = xildraw->nlz->chip;
+  const unsigned dimx = chip_drawing_width(chip) * zoom;
+  const unsigned dimy = chip_drawing_height(chip) * zoom;
 
-  /* get a cairo_t */
-  cr = gdk_cairo_create (widget->window);
+  /* Get a cairo_t */
+  cr = gdk_cairo_create (pixmap);
   set_cairo_context(ctx, cr);
 
   /* generate the patterns before clipping */
   generate_patterns(ctx, nlz->chip);
 
-  cairo_rectangle (cr,
-		   event->area.x, event->area.y,
-		   event->area.width, event->area.height);
+  cairo_rectangle (cr, 0, 0, dimx, dimy);
   cairo_clip (cr);
 
   draw (xildraw, cr);
 
   destroy_patterns(ctx);
   cairo_destroy (cr);
+}
+
+static void
+egg_xildraw_pixmap_realloc (EggXildrawFace *xildraw) {
+  GtkWidget *widget = GTK_WIDGET (xildraw);
+  GdkPixmap *pixmap = xildraw->pixmap;
+  const drawing_context_t *ctx = xildraw->ctx;
+  const double zoom = ctx->zoom;
+  const chip_descr_t *chip = xildraw->nlz->chip;
+  const unsigned dimx = chip_drawing_width(chip) * zoom;
+  const unsigned dimy = chip_drawing_height(chip) * zoom;
+
+  if (pixmap)
+    g_object_unref(pixmap);
+
+  debit_log(L_GUI, "pixmap %i x %i", dimx, dimy);
+  pixmap = gdk_pixmap_new(widget->window, dimx, dimy, -1);
+
+  if (!pixmap)
+    g_warning("HEEEEEEEEEEEEE");
+
+  xildraw->pixmap = pixmap;
+
+  egg_xildraw_pixmap_recompute(xildraw);
+}
+
+static gboolean
+egg_xildraw_face_configure (GtkWidget *widget, GdkEventConfigure *event)
+{
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
+  GdkPixmap *pixmap = xildraw->pixmap;
+
+  debit_log(L_GUI, "configure event");
+
+  if (!pixmap)
+    egg_xildraw_pixmap_realloc(xildraw);
+
+  /* fall through to expose */
+  return TRUE;
+}
+
+static gboolean
+egg_xildraw_face_expose (GtkWidget *widget, GdkEventExpose *event)
+{
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
+  GdkPixmap *pixmap = xildraw->pixmap;
+  double zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
+  unsigned
+    x_offset = gtk_adjustment_get_value(xildraw->hadjust) * zoom,
+    y_offset = gtk_adjustment_get_value(xildraw->vadjust) * zoom;
+
+  debit_log(L_GUI, "expose event");
+
+  /* Just redisplay the bitmap correctly */
+  gdk_draw_drawable(widget->window,
+		    widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
+		    pixmap,
+		    event->area.x + x_offset, event->area.y + y_offset,
+		    event->area.x, event->area.y,
+		    event->area.width, event->area.height);
 
   return FALSE;
 }
@@ -150,28 +224,89 @@ egg_xildraw_redraw (EggXildrawFace *xildraw)
 GtkWidget *
 egg_xildraw_face_new (bitstream_analyzed_t *nlz)
 {
-  EggXildrawFace *ret = g_object_new (EGG_TYPE_XILDRAW_FACE, NULL);
-  /* do a bunch of things */
-  ret->nlz = nlz;
-  ret->ctx = drawing_context_create();
-  return GTK_WIDGET(ret);
+  EggXildrawFace *xildraw = g_object_new (EGG_TYPE_XILDRAW_FACE, NULL);
+  drawing_context_t *ctx;
+
+  debit_log(L_GUI, "new called");
+
+  xildraw->nlz = nlz;
+  ctx = drawing_context_create();
+  xildraw->ctx = ctx;
+
+  /* These for now are an absolute position in the view -- in cairo
+     coordinates */
+  {
+    GtkAdjustment *zoomadjust = GTK_ADJUSTMENT(gtk_adjustment_new (0.1, 0.01, 10.0,
+								   0.1, 0.3, 0.0));
+    xildraw->zoomadjust = zoomadjust;
+    ctx->zoom = gtk_adjustment_get_value(zoomadjust);
+  }
+
+  {
+      const chip_descr_t *chip = nlz->chip;
+      const unsigned dimx = chip_drawing_width(chip);
+      const unsigned dimy = chip_drawing_height(chip);
+
+      xildraw->vadjust = GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, dimy,
+							    50, 200, 0.0));
+
+      xildraw->hadjust = GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, dimx,
+							    50, 200, 0.0));
+  }
+
+  return GTK_WIDGET(xildraw);
 }
 
 static void
-xildraw_move(EggXildrawFace *xildraw,
-	     unsigned dx, unsigned dy) {
-  drawing_context_t *ctx = xildraw->ctx;
-  ctx->x_offset += dx;
-  ctx->y_offset += dy;
+xildraw_move(EggXildrawFace *xildraw, int dx, int dy) {
+  GtkAdjustment *xadjust = xildraw->hadjust;
+  GtkAdjustment *yadjust = xildraw->vadjust;
+  double x, y;
+
+  x = gtk_adjustment_get_value(xadjust);
+  x += dx;
+  gtk_adjustment_set_value(xadjust, x);
+
+  y = gtk_adjustment_get_value(yadjust);
+  y += dy;
+  gtk_adjustment_set_value(yadjust, y);
+
+  /* Should be in callback for set */
   egg_xildraw_redraw (xildraw);
   return;
+}
+
+static void
+egg_xildraw_size_request (GtkWidget      *widget,
+			  GtkRequisition *requisition)
+{
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
+  GtkAdjustment *xadjust = xildraw->hadjust;
+  GtkAdjustment *yadjust = xildraw->vadjust;
+  double width, height;
+  double zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
+
+  g_object_get (G_OBJECT(xadjust), "upper", &width, NULL);
+  g_object_get (G_OBJECT(yadjust), "upper", &height, NULL);
+
+  requisition->width = zoom * width;
+  requisition->height = zoom * height;
 }
 
 static void
 xildraw_zoom(EggXildrawFace *xildraw,
 	     gdouble zoom_level) {
   drawing_context_t *ctx = xildraw->ctx;
-  ctx->zoom *= zoom_level;
+  GtkAdjustment *zoomadjust = xildraw->zoomadjust;
+  double zoom;
+
+  zoom = gtk_adjustment_get_value(zoomadjust);
+  gtk_adjustment_set_value(zoomadjust, zoom * zoom_level);
+
+  /* Should be done in callback from zoom -- thus the adjustment could
+     be set outside of the widget */
+  ctx->zoom = gtk_adjustment_get_value(zoomadjust);
+  egg_xildraw_pixmap_realloc (xildraw);
   egg_xildraw_redraw (xildraw);
 }
 

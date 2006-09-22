@@ -34,8 +34,15 @@ struct _EggXildrawFace
 {
   GtkDrawingArea parent;
   /* < public > */
+  /* offscreen buffer state */
+  GdkPixmap *pixmap;
   drawing_context_t *ctx;
   bitstream_analyzed_t *nlz;
+
+  /* Adjustments for position and zoom */
+  GtkAdjustment *vadjust;
+  GtkAdjustment *hadjust;
+  GtkAdjustment *zoomadjust;
 };
 
 struct _EggXildrawFaceClass
