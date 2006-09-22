@@ -2,7 +2,7 @@ AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\" -I$(top_srcdir)
 AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
 
 glade_sources   = xiledit.glade xiledit.gladep
-glade_generated = interface.c support.c interface.h support.h
+glade_generated = interface.c interface.h support.c support.h
 
 SHARED_SRC	= ../bitarray.c ../bitheader.c ../bitstream_parser.c ../filedump.c \
 		../localpips.c ../bitstream.c ../wiring.c ../keyfile.c \
@@ -19,6 +19,14 @@ xiledit_LDADD	= @GLIB_LIBS@ @CAIRO_LIBS@ @GTK_LIBS@
 EXTRA_DIST = $(glade_sources)
 
 $(glade_generated): $(glade_sources)
-	glade-2 -w $<
+	xvfb-run glade-2 -w $<
 
 MAINTAINERCLEANFILES = $(glade_generated)
+
+# My own unpretty targets
+
+# Cairo profiling
+CALLGRIND_ARGS=--instr-atstart=no --toggle-collect=draw_all_wires --dump-after=draw_all_wires
+profile-exec: $(bin_PROGRAMS)
+	export LD_LIBRARY_PATH=/usr/lib/debug && \
+	callgrind --dump-instr=yes $(top_builddir)/xiledit/$< -i ~/s3c2000.bit
