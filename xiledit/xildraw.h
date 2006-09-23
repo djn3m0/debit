@@ -50,7 +50,9 @@ struct _EggXildrawFaceClass
   GtkDrawingAreaClass parent_class;
 };
 
+GtkType egg_xildraw_face_get_type (void);
 GtkWidget *egg_xildraw_face_new (bitstream_analyzed_t *);
+void egg_xildraw_adapt_window(EggXildrawFace *xildraw, GtkWindow *window);
 
 G_END_DECLS
 

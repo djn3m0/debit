@@ -55,6 +55,8 @@ display_window(bitstream_analyzed_t *nlz,
   gtk_window_set_title (GTK_WINDOW(window), title);
   g_free(title);
 
+  egg_xildraw_adapt_window(EGG_XILDRAW_FACE(fpga), GTK_WINDOW(window));
+
   gtk_widget_show_all (window);
   return 0;
 }

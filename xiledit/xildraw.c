@@ -25,9 +25,6 @@ static gboolean egg_xildraw_face_expose (GtkWidget *xildraw, GdkEventExpose *eve
 static void egg_xildraw_face_finalize (EggXildrawFace *self);
 static gboolean egg_xildraw_key_press_event(GtkWidget *widget,
 					    GdkEventKey *event);
-static void
-egg_xildraw_size_request (GtkWidget      *widget,
-			  GtkRequisition *requisition);
 
 static void
 egg_xildraw_face_class_init (EggXildrawFaceClass *class)
@@ -38,7 +35,6 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
 
   widget_class->configure_event = egg_xildraw_face_configure;
   widget_class->expose_event = egg_xildraw_face_expose;
-  widget_class->size_request = egg_xildraw_size_request;
   widget_class->key_press_event = egg_xildraw_key_press_event;
 
   /* bind finalizing function */
@@ -50,10 +46,29 @@ static void egg_xildraw_face_finalize (EggXildrawFace *self)
 {
   drawing_context_t *ctx = self->ctx;
   GdkPixmap *pixmap = self->pixmap;
+  GtkAdjustment
+    *zoomadjust = self->zoomadjust,
+    *vadjust = self->vadjust,
+    *hadjust = self->hadjust;
 
   if (pixmap) {
     self->pixmap = NULL;
     g_object_unref(pixmap);
+  }
+
+  if (zoomadjust) {
+    self->zoomadjust = NULL;
+    g_object_unref(zoomadjust);
+  }
+
+  if (vadjust) {
+    self->vadjust = NULL;
+    g_object_unref(vadjust);
+  }
+
+  if (hadjust) {
+    self->hadjust = NULL;
+    g_object_unref(hadjust);
   }
 
   if (ctx) {
@@ -175,6 +190,19 @@ egg_xildraw_face_configure (GtkWidget *widget, GdkEventConfigure *event)
   if (!pixmap)
     egg_xildraw_pixmap_realloc(xildraw);
 
+  /* Set the page size of the controls */
+  {
+    double zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
+    GtkAdjustment *xadjust = xildraw->hadjust;
+    GtkAdjustment *yadjust = xildraw->vadjust;
+    double
+      width = widget->allocation.width / zoom,
+      height = widget->allocation.height / zoom;
+
+    g_object_set (G_OBJECT(xadjust), "page-size", width, NULL);
+    g_object_set (G_OBJECT(yadjust), "page-size", height, NULL);
+  }
+
   /* fall through to expose */
   return TRUE;
 }
@@ -221,6 +249,61 @@ egg_xildraw_redraw (EggXildrawFace *xildraw)
   gdk_region_destroy (region);
 }
 
+static void
+egg_xildraw_adjustment_value_changed (GtkAdjustment *adjustment,
+				      gpointer       data)
+{
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(data);
+
+  g_return_if_fail (adjustment != NULL);
+  g_return_if_fail (data != NULL);
+
+  egg_xildraw_redraw (xildraw);
+}
+
+/***
+ * Zoom management
+ ***/
+
+void
+egg_xildraw_adapt_window(EggXildrawFace *xildraw, GtkWindow *window) {
+  GtkAdjustment *xadjust = xildraw->hadjust;
+  GtkAdjustment *yadjust = xildraw->vadjust;
+  double width, height;
+  double zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
+  GdkGeometry geom;
+
+  g_object_get (G_OBJECT(xadjust), "upper", &width, NULL);
+  g_object_get (G_OBJECT(yadjust), "upper", &height, NULL);
+
+  geom.max_width = zoom * width;
+  geom.max_height = zoom * height;
+  gtk_window_set_geometry_hints (window, GTK_WIDGET(xildraw),
+				 &geom, GDK_HINT_MAX_SIZE);
+
+  gtk_window_set_default_size (window, zoom * width, zoom * height);
+
+}
+
+static void
+egg_xildraw_adapt_widget(EggXildrawFace *self) {
+  GtkWidget *window = gtk_widget_get_parent( GTK_WIDGET(self) );
+  egg_xildraw_adapt_window(self, GTK_WINDOW(window));
+}
+
+static void
+egg_xildraw_zoom_value_changed (GtkAdjustment *zoomadjust,
+				gpointer       data)
+{
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(data);
+  drawing_context_t *ctx = xildraw->ctx;
+
+  ctx->zoom = gtk_adjustment_get_value(zoomadjust);
+  egg_xildraw_adapt_widget (xildraw);
+  egg_xildraw_pixmap_realloc (xildraw);
+  egg_xildraw_redraw (xildraw);
+}
+
 GtkWidget *
 egg_xildraw_face_new (bitstream_analyzed_t *nlz)
 {
@@ -233,81 +316,67 @@ egg_xildraw_face_new (bitstream_analyzed_t *nlz)
   ctx = drawing_context_create();
   xildraw->ctx = ctx;
 
-  /* These for now are an absolute position in the view -- in cairo
-     coordinates */
   {
     GtkAdjustment *zoomadjust = GTK_ADJUSTMENT(gtk_adjustment_new (0.1, 0.01, 10.0,
 								   0.1, 0.3, 0.0));
+    gtk_object_ref ( GTK_OBJECT(zoomadjust) );
     xildraw->zoomadjust = zoomadjust;
     ctx->zoom = gtk_adjustment_get_value(zoomadjust);
+
+    gtk_signal_connect (GTK_OBJECT (zoomadjust), "value_changed",
+			(GtkSignalFunc) egg_xildraw_zoom_value_changed,
+			(gpointer) xildraw);
   }
 
+  /* These for now are an absolute position in the view -- in cairo
+     coordinates */
   {
-      const chip_descr_t *chip = nlz->chip;
-      const unsigned dimx = chip_drawing_width(chip);
-      const unsigned dimy = chip_drawing_height(chip);
+    GtkAdjustment *hadjust, *vadjust;
+    const chip_descr_t *chip = nlz->chip;
+    const unsigned dimx = chip_drawing_width(chip);
+    const unsigned dimy = chip_drawing_height(chip);
 
-      xildraw->vadjust = GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, dimy,
-							    50, 200, 0.0));
+    vadjust = GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, dimy, 50, 200, dimy / 0.1));
+    gtk_object_ref ( GTK_OBJECT(vadjust) );
+    xildraw->vadjust = vadjust;
 
-      xildraw->hadjust = GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, dimx,
-							    50, 200, 0.0));
+    gtk_signal_connect (GTK_OBJECT (vadjust), "value_changed",
+			(GtkSignalFunc) egg_xildraw_adjustment_value_changed,
+			(gpointer) xildraw);
+
+    hadjust = GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, dimx, 50, 200, dimx / 0.1));
+    gtk_object_ref ( GTK_OBJECT(hadjust) );
+    xildraw->hadjust = hadjust;
+
+    gtk_signal_connect (GTK_OBJECT (hadjust), "value_changed",
+			(GtkSignalFunc) egg_xildraw_adjustment_value_changed,
+			(gpointer) xildraw);
   }
 
   return GTK_WIDGET(xildraw);
 }
 
 static void
-xildraw_move(EggXildrawFace *xildraw, int dx, int dy) {
-  GtkAdjustment *xadjust = xildraw->hadjust;
-  GtkAdjustment *yadjust = xildraw->vadjust;
-  double x, y;
+xildraw_adjust_delta(GtkAdjustment *adjust, int delta) {
+  double val;
 
-  x = gtk_adjustment_get_value(xadjust);
-  x += dx;
-  gtk_adjustment_set_value(xadjust, x);
+  if (delta == 0)
+    return;
 
-  y = gtk_adjustment_get_value(yadjust);
-  y += dy;
-  gtk_adjustment_set_value(yadjust, y);
-
-  /* Should be in callback for set */
-  egg_xildraw_redraw (xildraw);
-  return;
+  val = gtk_adjustment_get_value(adjust);
+  val += delta;
+  gtk_adjustment_set_value(adjust, val);
 }
 
 static void
-egg_xildraw_size_request (GtkWidget      *widget,
-			  GtkRequisition *requisition)
-{
-  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
-  GtkAdjustment *xadjust = xildraw->hadjust;
-  GtkAdjustment *yadjust = xildraw->vadjust;
-  double width, height;
-  double zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
-
-  g_object_get (G_OBJECT(xadjust), "upper", &width, NULL);
-  g_object_get (G_OBJECT(yadjust), "upper", &height, NULL);
-
-  requisition->width = zoom * width;
-  requisition->height = zoom * height;
-}
-
-static void
-xildraw_zoom(EggXildrawFace *xildraw,
-	     gdouble zoom_level) {
-  drawing_context_t *ctx = xildraw->ctx;
-  GtkAdjustment *zoomadjust = xildraw->zoomadjust;
+xildraw_scale(GtkAdjustment *zoomadjust,
+	      gdouble zoom_level) {
   double zoom;
+  if (zoom_level == 1.0)
+    return;
 
   zoom = gtk_adjustment_get_value(zoomadjust);
   gtk_adjustment_set_value(zoomadjust, zoom * zoom_level);
-
-  /* Should be done in callback from zoom -- thus the adjustment could
-     be set outside of the widget */
-  ctx->zoom = gtk_adjustment_get_value(zoomadjust);
-  egg_xildraw_pixmap_realloc (xildraw);
-  egg_xildraw_redraw (xildraw);
 }
 
 #include <gdk/gdkkeysyms.h>
@@ -340,16 +409,18 @@ egg_xildraw_key_press_event(GtkWidget *widget,
     break;
   case GDK_plus:
   case GDK_KP_Add:
-    xildraw_zoom(xildraw, 0.75);
+    xildraw_scale(xildraw->zoomadjust, 0.75);
     break;
   case GDK_minus:
   case GDK_KP_Subtract:
-    xildraw_zoom(xildraw, 1.0/0.75);
+    xildraw_scale(xildraw->zoomadjust, 1.0/0.75);
     break;
   }
 
-  if (x_move || y_move)
-    xildraw_move(xildraw, x_move * step, y_move * step);
+  if (x_move)
+    xildraw_adjust_delta(xildraw->hadjust, x_move * step);
+  if (y_move)
+    xildraw_adjust_delta(xildraw->vadjust, y_move * step);
 
   return FALSE;
 }
