@@ -28,6 +28,8 @@ static gboolean egg_xildraw_key_press_event(GtkWidget *widget,
 					    GdkEventKey *event);
 static gboolean egg_xildraw_button_press_event(GtkWidget *widget,
 					       GdkEventButton *event);
+static gboolean egg_xildraw_motion_notify_event(GtkWidget *widget,
+						GdkEventMotion *event);
 
 static void
 egg_xildraw_face_class_init (EggXildrawFaceClass *class)
@@ -40,6 +42,7 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
   widget_class->expose_event = egg_xildraw_face_expose;
   widget_class->key_press_event = egg_xildraw_key_press_event;
   widget_class->button_press_event = egg_xildraw_button_press_event;
+  widget_class->motion_notify_event = egg_xildraw_motion_notify_event;
 
   /* bind finalizing function */
   G_OBJECT_CLASS (class)->finalize =
@@ -98,6 +101,11 @@ egg_xildraw_face_init (EggXildrawFace *xildraw)
   /*   drawing_area.grab_focus() */
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_KEY_PRESS_MASK);
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON_PRESS_MASK);
+  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON_RELEASE_MASK);
+  /* add / remove this on drag start -- we usually don't want to handle it */
+  //  gtk_widget_add_events (GTK_WIDGET (xildraw),
+  //  GDK_POINTER_MOTION_MASK);
+  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON2_MOTION_MASK);
 
   debit_log(L_GUI, "xildraw init");
 }
@@ -391,12 +399,12 @@ egg_xildraw_key_press_event(GtkWidget *widget,
   case GDK_Down:
     y_move = 1;
     break;
-  case GDK_plus:
-  case GDK_KP_Add:
-    xildraw_scale(xildraw->zoomadjust, 0.75);
-    break;
   case GDK_minus:
   case GDK_KP_Subtract:
+    xildraw_scale(xildraw->zoomadjust, 0.75);
+    break;
+  case GDK_plus:
+  case GDK_KP_Add:
     xildraw_scale(xildraw->zoomadjust, 1.0/0.75);
     break;
   }
@@ -423,11 +431,26 @@ egg_xildraw_button_press_event(GtkWidget *widget,
   type = event->type;
 
   switch (button) {
-    /* left click */
+    /* left click should do something complicated with select */
   case 1:
+    break;
     /* middle click */
   case 2:
-    break;
+    switch (type) {
+    case GDK_BUTTON_PRESS:
+      xildraw->drag = TRUE;
+      gdk_event_get_coords ((GdkEvent *)event,
+			    &xildraw->refx,
+			    &xildraw->refy);
+      g_warning("DRAGSTART!");
+      break;
+    case GDK_BUTTON_RELEASE:
+      xildraw->drag = FALSE;
+      break;
+    default:
+      return FALSE;
+    }
+    return TRUE;
   /* right click */
   case 3:
     if (type == GDK_BUTTON_PRESS) {
@@ -435,7 +458,48 @@ egg_xildraw_button_press_event(GtkWidget *widget,
 		      event->button, event->time);
       return TRUE;
     }
+    /* mouse wheel ? */
   }
+  return FALSE;
+}
+
+/* Mouse movement */
+static gboolean
+egg_xildraw_motion_notify_event(GtkWidget *widget,
+				GdkEventMotion *event)
+{
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
+  // guint state = event->state;
+  gdouble zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
+
+  //  g_warning("motion notify event !");
+
+  if (xildraw->drag) {
+    gdouble oldx = xildraw->refx, oldy = xildraw->refy;
+    gdouble newx, newy;
+
+    /* we should be dragging */
+    if (xildraw->drag != TRUE) {
+      g_warning("motion event with button pressed and no dragging !");
+      return FALSE;
+    }
+
+    g_warning("DRAG!");
+
+    /* Compute the motion vector */
+    gdk_event_get_coords ((GdkEvent *)event, &newx, &newy);
+
+    /* Redraw at new position. We must switch to device coordinates. */
+    xildraw_adjust_delta(xildraw->vadjust, (oldy - newy) / zoom);
+    xildraw_adjust_delta(xildraw->hadjust, (oldx - newx) / zoom);
+
+    /* Reset the motion vector */
+    xildraw->refx = newx;
+    xildraw->refy = newy;
+
+    return TRUE;
+  }
+
   return FALSE;
 }
 

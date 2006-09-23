@@ -44,6 +44,11 @@ struct _EggXildrawFace
   GtkAdjustment *hadjust;
   GtkAdjustment *zoomadjust;
 
+  /* state variables for dragging */
+  gboolean drag;
+  double refx;
+  double refy;
+
   /* context menu */
   GtkMenu *menu;
 };
