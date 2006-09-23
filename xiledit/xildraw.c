@@ -8,6 +8,7 @@
 #include <gtk/gtk.h>
 #include <cairo.h>
 #include "xildraw.h"
+#include "interface.h"
 
 #include "analysis.h"
 #include "bitdraw.h"
@@ -25,6 +26,8 @@ static gboolean egg_xildraw_face_expose (GtkWidget *xildraw, GdkEventExpose *eve
 static void egg_xildraw_face_finalize (EggXildrawFace *self);
 static gboolean egg_xildraw_key_press_event(GtkWidget *widget,
 					    GdkEventKey *event);
+static gboolean egg_xildraw_button_press_event(GtkWidget *widget,
+					       GdkEventButton *event);
 
 static void
 egg_xildraw_face_class_init (EggXildrawFaceClass *class)
@@ -36,6 +39,7 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
   widget_class->configure_event = egg_xildraw_face_configure;
   widget_class->expose_event = egg_xildraw_face_expose;
   widget_class->key_press_event = egg_xildraw_key_press_event;
+  widget_class->button_press_event = egg_xildraw_button_press_event;
 
   /* bind finalizing function */
   G_OBJECT_CLASS (class)->finalize =
@@ -93,6 +97,7 @@ egg_xildraw_face_init (EggXildrawFace *xildraw)
   /*   gtk_widget_set_flags(GTK_WIDGET (xildraw), GTK_CAN_FOCUS); */
   /*   drawing_area.grab_focus() */
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_KEY_PRESS_MASK);
+  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON_PRESS_MASK);
 
   debit_log(L_GUI, "xildraw init");
 }
@@ -261,30 +266,6 @@ egg_xildraw_adjustment_value_changed (GtkAdjustment *adjustment,
   egg_xildraw_redraw (xildraw);
 }
 
-/***
- * Zoom management
- ***/
-
-void
-egg_xildraw_adapt_window(EggXildrawFace *xildraw, GtkWindow *window) {
-  GtkAdjustment *xadjust = xildraw->hadjust;
-  GtkAdjustment *yadjust = xildraw->vadjust;
-  double width, height;
-  double zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
-  GdkGeometry geom;
-
-  g_object_get (G_OBJECT(xadjust), "upper", &width, NULL);
-  g_object_get (G_OBJECT(yadjust), "upper", &height, NULL);
-
-  geom.max_width = zoom * width;
-  geom.max_height = zoom * height;
-  gtk_window_set_geometry_hints (window, GTK_WIDGET(xildraw),
-				 &geom, GDK_HINT_MAX_SIZE);
-
-  gtk_window_set_default_size (window, zoom * width, zoom * height);
-
-}
-
 static void
 egg_xildraw_adapt_widget(EggXildrawFace *self) {
   GtkWidget *window = gtk_widget_get_parent( GTK_WIDGET(self) );
@@ -351,6 +332,12 @@ egg_xildraw_face_new (bitstream_analyzed_t *nlz)
     gtk_signal_connect (GTK_OBJECT (hadjust), "value_changed",
 			(GtkSignalFunc) egg_xildraw_adjustment_value_changed,
 			(gpointer) xildraw);
+  }
+
+  {
+    GtkMenu *menu = GTK_MENU (create_bitcontext());
+    gtk_menu_attach_to_widget (menu, GTK_WIDGET(xildraw), NULL);
+    xildraw->menu = menu;
   }
 
   return GTK_WIDGET(xildraw);
@@ -423,4 +410,79 @@ egg_xildraw_key_press_event(GtkWidget *widget,
     xildraw_adjust_delta(xildraw->vadjust, y_move * step);
 
   return FALSE;
+}
+
+static gboolean
+egg_xildraw_button_press_event(GtkWidget *widget,
+			       GdkEventButton *event)
+{
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
+
+  guint state, button;
+  GdkEventType type;
+
+  state = event->state;
+  button = event->button;
+  type = event->type;
+
+  switch (button) {
+    /* left click */
+  case 1:
+    /* middle click */
+  case 2:
+    break;
+  /* right click */
+  case 3:
+    if (type == GDK_BUTTON_PRESS) {
+      gtk_menu_popup (GTK_MENU (xildraw->menu), NULL, NULL, NULL, NULL,
+		      event->button, event->time);
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/* Various exported functions to act on the xildraw context. At some
+   point, these would need to be converted to signal handlers,
+   maybe. For now this does the job */
+
+void
+egg_xildraw_adapt_window(EggXildrawFace *xildraw, GtkWindow *window) {
+  GtkAdjustment *xadjust = xildraw->hadjust;
+  GtkAdjustment *yadjust = xildraw->vadjust;
+  double width, height;
+  double zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
+  GdkGeometry geom;
+
+  g_object_get (G_OBJECT(xadjust), "upper", &width, NULL);
+  g_object_get (G_OBJECT(yadjust), "upper", &height, NULL);
+
+  geom.max_width = zoom * width;
+  geom.max_height = zoom * height;
+  gtk_window_set_geometry_hints (window, GTK_WIDGET(xildraw),
+				 &geom, GDK_HINT_MAX_SIZE);
+
+  gtk_window_set_default_size (window, zoom * width, zoom * height);
+
+}
+
+/* Really, these should not be set here. The context menu should
+   certainly be drawn from the toplevel window. */
+void
+egg_xildraw_fullscreen(EggXildrawFace *self) {
+  GtkWidget *window = gtk_widget_get_parent( GTK_WIDGET(self) );
+  gtk_window_fullscreen ( GTK_WINDOW(window) );
+}
+
+void
+egg_xildraw_unfullscreen(EggXildrawFace *self) {
+  GtkWidget *window = gtk_widget_get_parent( GTK_WIDGET(self) );
+  gtk_window_unfullscreen ( GTK_WINDOW(window) );
+}
+
+void
+egg_xildraw_zoom_fit(EggXildrawFace *self) {
+  double new_zoom;
+  /* The zoom is so that the pagesize matches the whole buffer width */
+  new_zoom = 1.0;
 }

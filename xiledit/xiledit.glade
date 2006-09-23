@@ -572,4 +572,156 @@ Public License instead of this License.
   <property name="logo">ulogic_icon_32.png</property>
 </widget>
 
+<widget class="GtkWindow" id="bitdisplay">
+  <property name="visible">True</property>
+  <property name="title" translatable="yes">window1</property>
+  <property name="type">GTK_WINDOW_TOPLEVEL</property>
+  <property name="window_position">GTK_WIN_POS_NONE</property>
+  <property name="modal">False</property>
+  <property name="resizable">True</property>
+  <property name="destroy_with_parent">False</property>
+  <property name="decorated">True</property>
+  <property name="skip_taskbar_hint">False</property>
+  <property name="skip_pager_hint">False</property>
+  <property name="type_hint">GDK_WINDOW_TYPE_HINT_NORMAL</property>
+  <property name="gravity">GDK_GRAVITY_NORTH_WEST</property>
+  <property name="focus_on_map">True</property>
+  <property name="urgency_hint">False</property>
+
+  <child>
+    <widget class="GtkVBox" id="vbox3">
+      <property name="visible">True</property>
+      <property name="homogeneous">False</property>
+      <property name="spacing">0</property>
+
+      <child>
+	<widget class="GtkHandleBox" id="handlebox2">
+	  <property name="visible">True</property>
+	  <property name="shadow_type">GTK_SHADOW_OUT</property>
+	  <property name="handle_position">GTK_POS_LEFT</property>
+	  <property name="snap_edge">GTK_POS_TOP</property>
+
+	  <child>
+	    <widget class="GtkToolbar" id="toolbar2">
+	      <property name="visible">True</property>
+	      <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+	      <property name="toolbar_style">GTK_TOOLBAR_BOTH_HORIZ</property>
+	      <property name="tooltips">True</property>
+	      <property name="show_arrow">True</property>
+
+	      <child>
+		<placeholder/>
+	      </child>
+
+	      <child>
+		<placeholder/>
+	      </child>
+
+	      <child>
+		<placeholder/>
+	      </child>
+
+	      <child>
+		<placeholder/>
+	      </child>
+	    </widget>
+	  </child>
+	</widget>
+	<packing>
+	  <property name="padding">0</property>
+	  <property name="expand">False</property>
+	  <property name="fill">False</property>
+	</packing>
+      </child>
+
+      <child>
+	<placeholder/>
+      </child>
+
+      <child>
+	<widget class="GtkStatusbar" id="statusbar1">
+	  <property name="visible">True</property>
+	  <property name="has_resize_grip">True</property>
+	</widget>
+	<packing>
+	  <property name="padding">0</property>
+	  <property name="expand">False</property>
+	  <property name="fill">False</property>
+	</packing>
+      </child>
+    </widget>
+  </child>
+</widget>
+
+<widget class="GtkMenu" id="bitcontext">
+
+  <child>
+    <widget class="GtkImageMenuItem" id="information1">
+      <property name="visible">True</property>
+      <property name="label">gtk-dialog-info</property>
+      <property name="use_stock">True</property>
+      <signal name="activate" handler="on_information1_activate" last_modification_time="Sat, 23 Sep 2006 08:13:06 GMT"/>
+    </widget>
+  </child>
+
+  <child>
+    <widget class="GtkMenuItem" id="zoom1">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">zoom</property>
+      <property name="use_underline">True</property>
+      <signal name="activate" handler="on_zoom1_activate" last_modification_time="Sat, 23 Sep 2006 08:13:06 GMT"/>
+
+      <child>
+	<widget class="GtkMenu" id="zoom1_menu">
+
+	  <child>
+	    <widget class="GtkImageMenuItem" id="zoom_out1">
+	      <property name="visible">True</property>
+	      <property name="label">gtk-zoom-out</property>
+	      <property name="use_stock">True</property>
+	      <signal name="activate" handler="on_zoom_out1_activate" object="bitcontext" last_modification_time="Sat, 23 Sep 2006 11:16:59 GMT"/>
+	    </widget>
+	  </child>
+
+	  <child>
+	    <widget class="GtkImageMenuItem" id="zoom_in1">
+	      <property name="visible">True</property>
+	      <property name="label">gtk-zoom-in</property>
+	      <property name="use_stock">True</property>
+	      <signal name="activate" handler="on_zoom_in1_activate" object="bitcontext" last_modification_time="Sat, 23 Sep 2006 08:13:06 GMT"/>
+	    </widget>
+	  </child>
+
+	  <child>
+	    <widget class="GtkImageMenuItem" id="best_fit1">
+	      <property name="visible">True</property>
+	      <property name="label">gtk-zoom-fit</property>
+	      <property name="use_stock">True</property>
+	      <signal name="activate" handler="on_best_fit1_activate" object="bitcontext" last_modification_time="Sat, 23 Sep 2006 08:13:06 GMT"/>
+	    </widget>
+	  </child>
+
+	  <child>
+	    <widget class="GtkImageMenuItem" id="fullscreen1">
+	      <property name="visible">True</property>
+	      <property name="label">gtk-fullscreen</property>
+	      <property name="use_stock">True</property>
+	      <signal name="activate" handler="on_fullscreen1_activate" object="bitcontext" last_modification_time="Sat, 23 Sep 2006 08:13:06 GMT"/>
+	    </widget>
+	  </child>
+
+	  <child>
+	    <widget class="GtkImageMenuItem" id="unfullscreen1">
+	      <property name="visible">True</property>
+	      <property name="label">gtk-leave-fullscreen</property>
+	      <property name="use_stock">True</property>
+	      <signal name="activate" handler="on_unfullscreen1_activate" object="bitcontext" last_modification_time="Sat, 23 Sep 2006 11:06:50 GMT"/>
+	    </widget>
+	  </child>
+	</widget>
+      </child>
+    </widget>
+  </child>
+</widget>
+
 </glade-interface>

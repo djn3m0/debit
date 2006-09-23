@@ -8,6 +8,8 @@
 #include "interface.h"
 #include "support.h"
 
+#include "xildraw.h"
+
 #include "debitlog.h"
 
 int display_bitstream(const gchar *filename);
@@ -55,3 +57,78 @@ on_about1_activate                     (GtkMenuItem     *menuitem,
 
 }
 
+
+void
+on_information1_activate               (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+
+}
+
+
+void
+on_zoom1_activate                      (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+
+}
+
+
+void
+on_zoom_out1_activate                  (gpointer         user_data,
+					GtkMenuItem     *menuitem)
+{
+  /* get back to the xildraw container */
+  GtkMenu * menu = GTK_MENU (user_data);
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(gtk_menu_get_attach_widget (menu));
+
+  double zoom;
+
+  zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
+  gtk_adjustment_set_value(xildraw->zoomadjust, zoom * 0.75);
+}
+
+
+void
+on_zoom_in1_activate                   (gpointer         user_data,
+					GtkMenuItem     *menuitem)
+{
+  GtkMenu * menu = GTK_MENU (user_data);
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(gtk_menu_get_attach_widget (menu));
+
+  /* NB: should just emit a signal */
+  double zoom;
+
+  zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
+  gtk_adjustment_set_value(xildraw->zoomadjust, zoom * 1 / 0.75);
+}
+
+void
+on_best_fit1_activate                  (gpointer         user_data,
+					GtkMenuItem     *menuitem)
+{
+  GtkMenu * menu = GTK_MENU (user_data);
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(gtk_menu_get_attach_widget (menu));
+
+  (void) xildraw;
+  /* Fit to width */
+}
+
+void
+on_fullscreen1_activate                (gpointer         user_data,
+					GtkMenuItem     *menuitem)
+{
+  GtkMenu * menu = GTK_MENU (user_data);
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(gtk_menu_get_attach_widget (menu));
+  egg_xildraw_fullscreen(xildraw);
+  /* Have the window go fullscreen, then fit to screen */
+}
+
+void
+on_unfullscreen1_activate              (gpointer         user_data,
+					GtkMenuItem     *menuitem)
+{
+  GtkMenu * menu = GTK_MENU (user_data);
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(gtk_menu_get_attach_widget (menu));
+  egg_xildraw_unfullscreen(xildraw);
+}

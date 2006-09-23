@@ -33,7 +33,7 @@ typedef struct _EggXildrawFaceClass EggXildrawFaceClass;
 struct _EggXildrawFace
 {
   GtkDrawingArea parent;
-  /* < public > */
+
   /* offscreen buffer state */
   GdkPixmap *pixmap;
   drawing_context_t *ctx;
@@ -43,6 +43,9 @@ struct _EggXildrawFace
   GtkAdjustment *vadjust;
   GtkAdjustment *hadjust;
   GtkAdjustment *zoomadjust;
+
+  /* context menu */
+  GtkMenu *menu;
 };
 
 struct _EggXildrawFaceClass
@@ -53,6 +56,10 @@ struct _EggXildrawFaceClass
 GtkType egg_xildraw_face_get_type (void);
 GtkWidget *egg_xildraw_face_new (bitstream_analyzed_t *);
 void egg_xildraw_adapt_window(EggXildrawFace *xildraw, GtkWindow *window);
+
+/* Quirk ! */
+void egg_xildraw_fullscreen(EggXildrawFace *self);
+void egg_xildraw_unfullscreen(EggXildrawFace *self);
 
 G_END_DECLS
 
