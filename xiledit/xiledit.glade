@@ -722,6 +722,57 @@ Public License instead of this License.
       </child>
     </widget>
   </child>
+
+  <child>
+    <widget class="GtkMenuItem" id="drawing1">
+      <property name="visible">True</property>
+      <property name="label" translatable="yes">drawing</property>
+      <property name="use_underline">True</property>
+
+      <child>
+	<widget class="GtkMenu" id="drawing1_menu">
+
+	  <child>
+	    <widget class="GtkCheckMenuItem" id="sites1">
+	      <property name="visible">True</property>
+	      <property name="label" translatable="yes">sites</property>
+	      <property name="use_underline">True</property>
+	      <property name="active">True</property>
+	      <signal name="toggled" handler="on_sites1_toggled" object="bitcontext" last_modification_time="Sat, 23 Sep 2006 12:10:12 GMT"/>
+	    </widget>
+	  </child>
+
+	  <child>
+	    <widget class="GtkCheckMenuItem" id="site_names1">
+	      <property name="visible">True</property>
+	      <property name="label" translatable="yes">site names</property>
+	      <property name="use_underline">True</property>
+	      <property name="active">False</property>
+	      <signal name="toggled" handler="on_site_names1_toggle" object="bitcontext" last_modification_time="Sat, 23 Sep 2006 12:10:37 GMT"/>
+	    </widget>
+	  </child>
+
+	  <child>
+	    <widget class="GtkCheckMenuItem" id="wires1">
+	      <property name="visible">True</property>
+	      <property name="label" translatable="yes">wires</property>
+	      <property name="use_underline">True</property>
+	      <property name="active">True</property>
+	    </widget>
+	  </child>
+
+	  <child>
+	    <widget class="GtkCheckMenuItem" id="wire_names1">
+	      <property name="visible">True</property>
+	      <property name="label" translatable="yes">wire names</property>
+	      <property name="use_underline">True</property>
+	      <property name="active">False</property>
+	    </widget>
+	  </child>
+	</widget>
+      </child>
+    </widget>
+  </child>
 </widget>
 
 </glade-interface>

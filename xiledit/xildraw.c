@@ -176,9 +176,6 @@ egg_xildraw_pixmap_realloc (EggXildrawFace *xildraw) {
   debit_log(L_GUI, "pixmap %i x %i", dimx, dimy);
   pixmap = gdk_pixmap_new(widget->window, dimx, dimy, -1);
 
-  if (!pixmap)
-    g_warning("HEEEEEEEEEEEEE");
-
   xildraw->pixmap = pixmap;
 
   egg_xildraw_pixmap_recompute(xildraw);
@@ -485,4 +482,11 @@ egg_xildraw_zoom_fit(EggXildrawFace *self) {
   double new_zoom;
   /* The zoom is so that the pagesize matches the whole buffer width */
   new_zoom = 1.0;
+}
+
+void
+egg_xildraw_site_names(EggXildrawFace *self, gboolean set) {
+  drawing_context_t *ctx = self->ctx;
+  ctx->text = set;
+  egg_xildraw_pixmap_recompute(self);
 }

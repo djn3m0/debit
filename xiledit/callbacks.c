@@ -65,6 +65,7 @@ on_information1_activate               (GtkMenuItem     *menuitem,
 
 }
 
+/* Zoom submenus */
 
 void
 on_zoom1_activate                      (GtkMenuItem     *menuitem,
@@ -132,3 +133,23 @@ on_unfullscreen1_activate              (gpointer         user_data,
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(gtk_menu_get_attach_widget (menu));
   egg_xildraw_unfullscreen(xildraw);
 }
+
+/* Drawing control */
+
+void
+on_sites1_toggled                      (gpointer         user_data,
+					GtkCheckMenuItem *checkmenuitem)
+{
+
+}
+
+
+void
+on_site_names1_toggle                  (gpointer         user_data,
+                                        GtkCheckMenuItem *checkmenuitem)
+{
+  GtkMenu * menu = GTK_MENU (user_data);
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(gtk_menu_get_attach_widget (menu));
+  egg_xildraw_site_names(xildraw, gtk_check_menu_item_get_active (checkmenuitem));
+}
+
