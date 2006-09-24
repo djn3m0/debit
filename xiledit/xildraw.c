@@ -30,6 +30,7 @@ static gboolean egg_xildraw_button_press_event(GtkWidget *widget,
 					       GdkEventButton *event);
 static gboolean egg_xildraw_motion_notify_event(GtkWidget *widget,
 						GdkEventMotion *event);
+static gboolean egg_xildraw_scroll_event(GtkWidget *widget, GdkEventScroll *event);
 
 static void
 egg_xildraw_face_class_init (EggXildrawFaceClass *class)
@@ -43,6 +44,7 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
   widget_class->key_press_event = egg_xildraw_key_press_event;
   widget_class->button_press_event = egg_xildraw_button_press_event;
   widget_class->motion_notify_event = egg_xildraw_motion_notify_event;
+  widget_class->scroll_event = egg_xildraw_scroll_event;
 
   /* bind finalizing function */
   G_OBJECT_CLASS (class)->finalize =
@@ -102,10 +104,12 @@ egg_xildraw_face_init (EggXildrawFace *xildraw)
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_KEY_PRESS_MASK);
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON_PRESS_MASK);
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON_RELEASE_MASK);
+
   /* add / remove this on drag start -- we usually don't want to handle it */
   //  gtk_widget_add_events (GTK_WIDGET (xildraw),
   //  GDK_POINTER_MOTION_MASK);
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON2_MOTION_MASK);
+  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_SCROLL_MASK);
 
   debit_log(L_GUI, "xildraw init");
 }
@@ -236,6 +240,8 @@ egg_xildraw_face_expose (GtkWidget *widget, GdkEventExpose *event)
 		    event->area.x + x_offset, event->area.y + y_offset,
 		    event->area.x, event->area.y,
 		    event->area.width, event->area.height);
+
+  /* If dragging, we can ask for the next motion event */
 
   return FALSE;
 }
@@ -371,6 +377,16 @@ xildraw_scale(GtkAdjustment *zoomadjust,
   gtk_adjustment_set_value(zoomadjust, zoom * zoom_level);
 }
 
+static inline void
+zoom_in(EggXildrawFace *xildraw) {
+  xildraw_scale(xildraw->zoomadjust, 1.0/0.75);
+}
+
+static inline void
+zoom_out(EggXildrawFace *xildraw) {
+  xildraw_scale(xildraw->zoomadjust, 0.75);
+}
+
 #include <gdk/gdkkeysyms.h>
 
 static gboolean
@@ -401,11 +417,11 @@ egg_xildraw_key_press_event(GtkWidget *widget,
     break;
   case GDK_minus:
   case GDK_KP_Subtract:
-    xildraw_scale(xildraw->zoomadjust, 0.75);
+    zoom_out(xildraw);
     break;
   case GDK_plus:
   case GDK_KP_Add:
-    xildraw_scale(xildraw->zoomadjust, 1.0/0.75);
+    zoom_in(xildraw);
     break;
   }
 
@@ -414,6 +430,23 @@ egg_xildraw_key_press_event(GtkWidget *widget,
   if (y_move)
     xildraw_adjust_delta(xildraw->vadjust, y_move * step);
 
+  return FALSE;
+}
+
+static gboolean
+egg_xildraw_scroll_event(GtkWidget *widget,
+			 GdkEventScroll *event) {
+  GdkScrollDirection direction = event->direction;
+  switch (direction) {
+  case GDK_SCROLL_UP:
+    zoom_in( EGG_XILDRAW_FACE(widget) );
+    return TRUE;
+  case GDK_SCROLL_DOWN:
+    zoom_out( EGG_XILDRAW_FACE(widget) );
+    return TRUE;
+  default:
+    g_warning("Unhandled scroll direction");
+  }
   return FALSE;
 }
 
@@ -442,7 +475,6 @@ egg_xildraw_button_press_event(GtkWidget *widget,
       gdk_event_get_coords ((GdkEvent *)event,
 			    &xildraw->refx,
 			    &xildraw->refy);
-      g_warning("DRAGSTART!");
       break;
     case GDK_BUTTON_RELEASE:
       xildraw->drag = FALSE;
@@ -458,7 +490,15 @@ egg_xildraw_button_press_event(GtkWidget *widget,
 		      event->button, event->time);
       return TRUE;
     }
-    /* mouse wheel ? */
+  /* mouse wheel usual config */
+  case 4:
+    zoom_in(xildraw);
+    return TRUE;
+  case 5:
+    zoom_out(xildraw);
+    return TRUE;
+  default:
+    g_warning("Unknown button %i pressed", button);
   }
   return FALSE;
 }
@@ -469,22 +509,11 @@ egg_xildraw_motion_notify_event(GtkWidget *widget,
 				GdkEventMotion *event)
 {
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
-  // guint state = event->state;
   gdouble zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
-
-  //  g_warning("motion notify event !");
 
   if (xildraw->drag) {
     gdouble oldx = xildraw->refx, oldy = xildraw->refy;
     gdouble newx, newy;
-
-    /* we should be dragging */
-    if (xildraw->drag != TRUE) {
-      g_warning("motion event with button pressed and no dragging !");
-      return FALSE;
-    }
-
-    g_warning("DRAG!");
 
     /* Compute the motion vector */
     gdk_event_get_coords ((GdkEvent *)event, &newx, &newy);
