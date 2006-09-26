@@ -15,6 +15,7 @@
 
 typedef struct _chip_descr {
   guint32 idcode;
+  guint32 framelen;
   const int col_count[V2C__NB_CFG];
   const int frame_count[V2C__NB_CFG];
 } chip_descr_t;
@@ -22,15 +23,6 @@ typedef struct _chip_descr {
 /* typedef enum _idcode { */
 /*   XC2V40   = 0x01008093U, */
 /*   XC2V80   = 0x01010093U, */
-/*   XC2V250  = 0x01018093U, */
-/*   XC2V500  = 0x01020093U, */
-/*   XC2V1000 = 0x01028093U, */
-/*   XC2V1500 = 0x01030093U, */
-/*   XC2V2000 = 0x01038093U, */
-/*   XC2V3000 = 0x01040093U, */
-/*   XC2V4000 = 0x01050093U, */
-/*   XC2V6000 = 0x01060093U, */
-/*   XC2V8000 = 0x01070093U, */
 /* } idcode_t; */
 
 typedef enum _id {
@@ -46,27 +38,225 @@ typedef enum _id {
 /* This is nothing but a key-value file */
 
 static const chip_descr_t bitdescr[XC2__NUM] = {
-  [XC2V2000] = {
-    .idcode = 0x01038093U,
-    /* used for MJA */
+  [XC2V40] = {
+    .idcode = 0x01008093U,
+    .framelen = 26,
     .col_count = {
       [V2C_IOB] = 2,
       [V2C_IOI] = 2,
-      [V2C_CLB] = 48,
-      [V2C_BRAM] = 4,
-      [V2C_BRAM_INT] =  4,
+      [V2C_CLB] = 8,
+      [V2C_BRAM] = 2,
+      [V2C_BRAM_INT] = 2,
       [V2C_GCLK] = 1,
     },
-    /* used for MNA */
     .frame_count = {
       [V2C_IOB] = 4,
       [V2C_IOI] = 22,
       [V2C_CLB] = 22,
       [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] =  22,
+      [V2C_BRAM_INT] = 22,
       [V2C_GCLK] = 4,
     },
-    /* FLR value */
+  },
+  [XC2V80] = {
+    .idcode = 0x01010093U,
+    .framelen = 46,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 8,
+      [V2C_BRAM] = 2,
+      [V2C_BRAM_INT] = 2,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = {
+      [V2C_IOB] = 4,
+      [V2C_IOI] = 22,
+      [V2C_CLB] = 22,
+      [V2C_BRAM] = 64,
+      [V2C_BRAM_INT] = 22,
+      [V2C_GCLK] = 4,
+    },
+  },
+  [XC2V250] = {
+    .idcode = 0x01018093U,
+    .framelen = 66,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 16,
+      [V2C_BRAM] = 4,
+      [V2C_BRAM_INT] = 4,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = {
+      [V2C_IOB] = 4,
+      [V2C_IOI] = 22,
+      [V2C_CLB] = 22,
+      [V2C_BRAM] = 64,
+      [V2C_BRAM_INT] = 22,
+      [V2C_GCLK] = 4,
+    },
+  },
+  [XC2V500] = {
+    .idcode = 0x01020093U,
+    .framelen = 86,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 24,
+      [V2C_BRAM] = 4,
+      [V2C_BRAM_INT] = 4,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = {
+      [V2C_IOB] = 4,
+      [V2C_IOI] = 22,
+      [V2C_CLB] = 22,
+      [V2C_BRAM] = 64,
+      [V2C_BRAM_INT] = 22,
+      [V2C_GCLK] = 4,
+    },
+  },
+  [XC2V1000] = {
+    .idcode = 0x01028093U,
+    .framelen = 106,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 32,
+      [V2C_BRAM] = 4,
+      [V2C_BRAM_INT] = 4,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = {
+      [V2C_IOB] = 4,
+      [V2C_IOI] = 22,
+      [V2C_CLB] = 22,
+      [V2C_BRAM] = 64,
+      [V2C_BRAM_INT] = 22,
+      [V2C_GCLK] = 4,
+    },
+  },
+  [XC2V1500] = {
+    .idcode = 0x01030093U,
+    .framelen = 126,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 40,
+      [V2C_BRAM] = 4,
+      [V2C_BRAM_INT] = 4,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = {
+      [V2C_IOB] = 4,
+      [V2C_IOI] = 22,
+      [V2C_CLB] = 22,
+      [V2C_BRAM] = 64,
+      [V2C_BRAM_INT] = 22,
+      [V2C_GCLK] = 4,
+    },
+  },
+  [XC2V2000] = {
+    .idcode = 0x01038093U,
+    .framelen = 146,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 48,
+      [V2C_BRAM] = 4,
+      [V2C_BRAM_INT] = 4,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = {
+      [V2C_IOB] = 4,
+      [V2C_IOI] = 22,
+      [V2C_CLB] = 22,
+      [V2C_BRAM] = 64,
+      [V2C_BRAM_INT] = 22,
+      [V2C_GCLK] = 4,
+    },
+  },
+  [XC2V3000] = {
+    .idcode = 0x01040093U,
+    .framelen = 166,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 56,
+      [V2C_BRAM] = 6,
+      [V2C_BRAM_INT] = 6,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = {
+      [V2C_IOB] = 4,
+      [V2C_IOI] = 22,
+      [V2C_CLB] = 22,
+      [V2C_BRAM] = 64,
+      [V2C_BRAM_INT] = 22,
+      [V2C_GCLK] = 4,
+    },
+  },
+  [XC2V4000] = {
+    .idcode = 0x01050093U,
+    .framelen = 206,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 72,
+      [V2C_BRAM] = 6,
+      [V2C_BRAM_INT] = 6,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = {
+      [V2C_IOB] = 4,
+      [V2C_IOI] = 22,
+      [V2C_CLB] = 22,
+      [V2C_BRAM] = 64,
+      [V2C_BRAM_INT] = 22,
+      [V2C_GCLK] = 4,
+    },
+  },
+  [XC2V6000] = {
+    .idcode = 0x01060093U,
+    .framelen = 246,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 88,
+      [V2C_BRAM] = 6,
+      [V2C_BRAM_INT] = 6,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = {
+      [V2C_IOB] = 4,
+      [V2C_IOI] = 22,
+      [V2C_CLB] = 22,
+      [V2C_BRAM] = 64,
+      [V2C_BRAM_INT] = 22,
+      [V2C_GCLK] = 4,
+    },
+  },
+  [XC2V8000] = {
+    .idcode = 0x01070093U,
+    .framelen = 286,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 104,
+      [V2C_BRAM] = 6,
+      [V2C_BRAM_INT] = 6,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = {
+      [V2C_IOB] = 4,
+      [V2C_IOI] = 22,
+      [V2C_CLB] = 22,
+      [V2C_BRAM] = 64,
+      [V2C_BRAM_INT] = 22,
+      [V2C_GCLK] = 4,
+    },
   },
 };
 
