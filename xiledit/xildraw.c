@@ -126,85 +126,51 @@ diff_time(GTimeVal *start, GTimeVal *end) {
   g_print("%li seconds and %li microseconds\n",sec, usec);
 }
 
-static void
-draw (EggXildrawFace *draw, cairo_t *cr)
-{
-  drawing_context_t *ctx = draw->ctx;
-  bitstream_analyzed_t *nlz = draw->nlz;
+/*
+ * Principles of pixmap cache:
+ *
+ * 1/ The expose event is just a redraw of the backing pixmap to screen
+ * 2/ The other events, such as moving, zooming, resizing, realloc the
+ * pixmap if needed, recompute the pixmap. Possible optimizations
+ * include recomputing only the relevant portion of the pixmap, in case
+ * of a move.
+ */
 
-  GTimeVal start, end;
-  g_get_current_time(&start);
+static void egg_xildraw_pixmap_recompute (EggXildrawFace *xildraw);
 
-  draw_chip(ctx, nlz->chip);
-  draw_all_wires(ctx, nlz);
-
-  g_get_current_time(&end);
-  diff_time(&start, &end);
-
-}
-
-/* This function redraws the back buffer */
-static void
-egg_xildraw_pixmap_recompute (EggXildrawFace *xildraw) {
-  GdkPixmap *pixmap = xildraw->pixmap;
-  drawing_context_t *ctx = xildraw->ctx;
-  bitstream_analyzed_t *nlz = xildraw->nlz;
-  cairo_t *cr;
-
-  const double zoom = ctx->zoom;
-  const chip_descr_t *chip = xildraw->nlz->chip;
-  const unsigned dimx = chip_drawing_width(chip) * zoom;
-  const unsigned dimy = chip_drawing_height(chip) * zoom;
-
-  /* Get a cairo_t */
-  cr = gdk_cairo_create (pixmap);
-  set_cairo_context(ctx, cr);
-
-  /* generate the patterns before clipping */
-  generate_patterns(ctx, nlz->chip);
-
-  cairo_rectangle (cr, 0, 0, dimx, dimy);
-  cairo_clip (cr);
-
-  draw (xildraw, cr);
-
-  destroy_patterns(ctx);
-  cairo_destroy (cr);
-}
+/*
+ * Called on surface reconfig. For now, only alloc a pixmap which fits
+ * the window size.
+ */
 
 static void
 egg_xildraw_pixmap_realloc (EggXildrawFace *xildraw) {
   GtkWidget *widget = GTK_WIDGET (xildraw);
   GdkPixmap *pixmap = xildraw->pixmap;
-  const drawing_context_t *ctx = xildraw->ctx;
-  const double zoom = ctx->zoom;
-  const chip_descr_t *chip = xildraw->nlz->chip;
-  const unsigned dimx = chip_drawing_width(chip) * zoom;
-  const unsigned dimy = chip_drawing_height(chip) * zoom;
 
   if (pixmap)
     g_object_unref(pixmap);
 
-  debit_log(L_GUI, "pixmap %i x %i", dimx, dimy);
-  pixmap = gdk_pixmap_new(widget->window, dimx, dimy, -1);
+  pixmap = gdk_pixmap_new(widget->window,
+                          widget->allocation.width,
+                          widget->allocation.height, -1);
 
   xildraw->pixmap = pixmap;
-
   egg_xildraw_pixmap_recompute(xildraw);
 }
+
+/* When does this happen ? */
 
 static gboolean
 egg_xildraw_face_configure (GtkWidget *widget, GdkEventConfigure *event)
 {
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
-  GdkPixmap *pixmap = xildraw->pixmap;
-
   debit_log(L_GUI, "configure event");
 
-  if (!pixmap)
-    egg_xildraw_pixmap_realloc(xildraw);
+  egg_xildraw_pixmap_realloc(xildraw);
 
-  /* Set the page size of the controls */
+  /* Set the page size of the controls
+     This should only be changed on zoom change */
   {
     double zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
     GtkAdjustment *xadjust = xildraw->hadjust;
@@ -221,30 +187,125 @@ egg_xildraw_face_configure (GtkWidget *widget, GdkEventConfigure *event)
   return TRUE;
 }
 
+/*
+ * Just blit the pixmap to screen
+ */
+
 static gboolean
 egg_xildraw_face_expose (GtkWidget *widget, GdkEventExpose *event)
 {
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
   GdkPixmap *pixmap = xildraw->pixmap;
-  double zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
-  unsigned
-    x_offset = gtk_adjustment_get_value(xildraw->hadjust) * zoom,
-    y_offset = gtk_adjustment_get_value(xildraw->vadjust) * zoom;
-
   debit_log(L_GUI, "expose event");
+  double x = event->area.x, y = event->area.y;
 
   /* Just redisplay the bitmap correctly */
   gdk_draw_drawable(widget->window,
 		    widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
-		    pixmap,
-		    event->area.x + x_offset, event->area.y + y_offset,
-		    event->area.x, event->area.y,
+		    pixmap, x, y, x, y,
 		    event->area.width, event->area.height);
 
   /* If dragging, we can ask for the next motion event */
 
   return FALSE;
 }
+
+/*
+ * Pixmap recomputation
+ */
+
+static void
+print_site_area(site_area_t *area) {
+  g_print("[%i - %i] x [%i - %i]\n",
+	  area->x, area->x+area->width,
+	  area->y, area->y+area->height);
+}
+
+static void
+compute_sites_from_area(site_area_t *range, double zoom,
+			double x, double width,
+			double y, double height) {
+  /* move to the grid, by dividing by zoom */
+  unsigned ux = x / zoom;
+  unsigned uy = y / zoom;
+  unsigned uwidth = width / zoom;
+  unsigned uheight = height / zoom;
+
+  /* FIBWWYW */
+#define GET_NUM(x, vx) (x) / (vx)
+
+  /* Yes, we should go further than this */
+  range->x = GET_NUM(ux, SITE_WIDTH);
+  range->width = GET_NUM(uwidth, SITE_WIDTH);
+  range->y = GET_NUM(uy, SITE_HEIGHT);
+  range->height = GET_NUM(uheight, SITE_HEIGHT);
+}
+
+static void
+draw_limited (EggXildrawFace *draw, cairo_t *cr,
+	      const site_area_t *sites)
+{
+  drawing_context_t *ctx = draw->ctx;
+  bitstream_analyzed_t *nlz = draw->nlz;
+
+  GTimeVal start, end;
+  g_get_current_time(&start);
+
+  /* How to specify the limits */
+  draw_chip_limited(ctx, nlz->chip);
+  draw_all_wires_limited(ctx, nlz, sites);
+
+  g_get_current_time(&end);
+  diff_time(&start, &end);
+
+}
+
+/* This function redraws the back buffer */
+static void
+egg_xildraw_pixmap_recompute (EggXildrawFace *xildraw)
+{
+  GtkWidget *widget = GTK_WIDGET (xildraw);
+
+  /* Redraw everything, only what's needed */
+  double zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
+  double
+    x_offset = gtk_adjustment_get_value(xildraw->hadjust) * zoom,
+    y_offset = gtk_adjustment_get_value(xildraw->vadjust) * zoom;
+  drawing_context_t *ctx = xildraw->ctx;
+  bitstream_analyzed_t *nlz = xildraw->nlz;
+  cairo_t *cr;
+  site_area_t range;
+  double width = widget->allocation.width,
+    height = widget->allocation.height;
+
+  /* get a cairo_t */
+  cr = gdk_cairo_create (xildraw->pixmap);
+  set_cairo_context(ctx, cr);
+
+  /* generate the patterns before clipping */
+  generate_patterns(ctx, nlz->chip);
+
+  /* redraw on the pixmap */
+  cairo_rectangle (cr, 0, 0, width, height);
+  cairo_clip (cr);
+
+  cairo_translate (cr, -x_offset, -y_offset);
+
+  /* Restrict drawing to the pixmap region */
+
+  compute_sites_from_area(&range, zoom,
+			  x_offset, width,
+			  y_offset, height);
+  print_site_area(&range);
+
+  draw_limited (xildraw, cr, &range);
+  destroy_patterns (ctx);
+  cairo_destroy (cr);
+
+}
+
+/* This function is called when a redraw is necessary; it just sends an
+   expose event for the whole screen */
 
 static void
 egg_xildraw_redraw (EggXildrawFace *xildraw)
@@ -258,6 +319,7 @@ egg_xildraw_redraw (EggXildrawFace *xildraw)
     return;
 
   region = gdk_drawable_get_clip_region (widget->window);
+
   /* redraw the cairo canvas completely by exposing it */
   gdk_window_invalidate_region (widget->window, region, TRUE);
   gdk_window_process_updates (widget->window, TRUE);
@@ -274,6 +336,9 @@ egg_xildraw_adjustment_value_changed (GtkAdjustment *adjustment,
   g_return_if_fail (adjustment != NULL);
   g_return_if_fail (data != NULL);
 
+  /* We could be much more intelligent here by only recomputing the part
+     of the pixmap which appeared */
+  egg_xildraw_pixmap_recompute (xildraw);
   egg_xildraw_redraw (xildraw);
 }
 
@@ -283,6 +348,7 @@ egg_xildraw_adapt_widget(EggXildrawFace *self) {
   egg_xildraw_adapt_window(self, GTK_WINDOW(window));
 }
 
+/* Needed for the new implementation */
 static void
 egg_xildraw_zoom_value_changed (GtkAdjustment *zoomadjust,
 				gpointer       data)
@@ -291,9 +357,13 @@ egg_xildraw_zoom_value_changed (GtkAdjustment *zoomadjust,
   drawing_context_t *ctx = xildraw->ctx;
 
   ctx->zoom = gtk_adjustment_get_value(zoomadjust);
-  egg_xildraw_adapt_widget (xildraw);
-  egg_xildraw_pixmap_realloc (xildraw);
+  /* The pixmap has not changed size:
+     recompute the pixmap and expose it */
+  egg_xildraw_pixmap_recompute (xildraw);
   egg_xildraw_redraw (xildraw);
+
+  /* erk */
+  egg_xildraw_adapt_widget(xildraw);
 }
 
 GtkWidget *
@@ -581,5 +651,6 @@ void
 egg_xildraw_site_names(EggXildrawFace *self, gboolean set) {
   drawing_context_t *ctx = self->ctx;
   ctx->text = set;
-  egg_xildraw_pixmap_recompute(self);
+  egg_xildraw_redraw (self);
+/*   egg_xildraw_pixmap_recompute(self); */
 }

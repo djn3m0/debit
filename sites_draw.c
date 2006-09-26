@@ -310,6 +310,12 @@ draw_chip(drawing_context_t *ctx, const chip_descr_t *chip) {
   debit_log(L_DRAW, "End of draw chip");
 }
 
+void
+draw_chip_limited(drawing_context_t *ctx, const chip_descr_t *chip) {
+/*   cairo_t *cr = ctx->cr; */
+  draw_chip(ctx, chip);
+}
+
 /* create a context from all of a parsed bitstream */
 drawing_context_t *
 drawing_context_create() {

@@ -69,10 +69,14 @@ void destroy_patterns(drawing_context_t *ctx);
 /* draw the chip layout */
 //void draw_surface_chip(cairo_surface_t *sr, const chip_descr_t *chip);
 void draw_cairo_chip(cairo_t *cr, const chip_descr_t *chip);
+void draw_chip_limited(drawing_context_t *ctx, const chip_descr_t *chip);
 
 /* wire drawing primitives -- this is where the real work happens */
 void draw_all_wires(drawing_context_t *ctx, const bitstream_analyzed_t *nlz);
-void draw_cairo_wires(cairo_t *sr, const bitstream_analyzed_t *nlz);
+void draw_all_wires_limited(drawing_context_t *ctx,
+			    const bitstream_analyzed_t *nlz,
+			    const site_area_t *area);
+void draw_cairo_wires(cairo_t *cr, const bitstream_analyzed_t *nlz);
 
 /* bad, this. The drawing context should be separated from the cairo_t */
 drawing_context_t *drawing_context_create();

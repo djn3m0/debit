@@ -711,3 +711,30 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
     site++;
   }
 }
+
+/*
+ * Complex iterator needed for optimal display.
+ * A function is called on site change whose result is used to skip the
+ * pip iteration (result is FALSE) or not (when result is TRUE).
+ */
+
+void
+iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
+			     const chip_descr_t *chip,
+			     bitpip_iterator_t fun, gpointer data) {
+  unsigned nsites = chip->width * chip->height;
+  site_ref_t site = chip->data;
+  unsigned *indexes = pipdat->site_index;
+  unsigned start = 0, i;
+
+  for (i = 0; i < nsites; i++) {
+    unsigned end = indexes[i+1];
+    for ( ; start < end; start++) {
+      pip_t *pip = &pipdat->bitpips[start];
+      debit_log(L_PIPS, "calling iterator for site %p", site);
+      fun(data, pip->source, pip->target, site);
+    }
+    start = end;
+    site++;
+  }
+}

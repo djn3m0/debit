@@ -196,6 +196,73 @@ draw_all_wires(drawing_context_t *ctx,
   cairo_restore (cr);
 }
 
+/*
+ * More complex, duplicated implementation with range limitation
+ */
+
+typedef struct _wire_iter_limited {
+  const drawing_context_t *ctx;
+  const wire_db_t *wdb;
+  const chip_descr_t *chip;
+  const site_area_t *area;
+} wire_iter_limited_t;
+
+static void
+draw_wire_iter_limited(gpointer data,
+		       wire_atom_t start, wire_atom_t end,
+		       site_ref_t site) {
+  wire_iter_limited_t *iter = data;
+  pip_t pip = { .source = start,
+		.target = end, };
+  cairo_t *cr = iter->ctx->cr;
+  const chip_descr_t *chip = iter->chip;
+  const site_area_t *area = iter->area;
+  unsigned width = chip->width;
+  unsigned index = site_index(chip, site);
+  double dx = (index % width) * SITE_WIDTH, dy = (index / width) * SITE_HEIGHT;
+
+  /* if we're not in range, skip it */
+  if (index % width - area->x > area->width ||
+      index / width - area->y > area->height)
+    return;
+
+  /* These save / restore could be balanced so that we don't do them too
+     many times, which is currently the case */
+  cairo_save (cr);
+
+  cairo_translate (cr, dx, dy);
+  _draw_pip (iter->ctx, iter->wdb, pip);
+
+  cairo_restore (cr);
+
+}
+
+void
+draw_all_wires_limited(drawing_context_t *ctx,
+		       const bitstream_analyzed_t *nlz,
+		       const site_area_t *area) {
+  cairo_t *cr = ctx->cr;
+  const double zoom = ctx->zoom;
+  const chip_descr_t *chip = nlz->chip;
+  const pip_parsed_dense_t *pipdat = nlz->pipdat;
+  wire_iter_limited_t iter = { .ctx = ctx,
+			       .chip = nlz->chip,
+			       .wdb = nlz->pipdb->wiredb,
+			       .area = area,
+  };
+
+  cairo_set_line_width (ctx->cr, 1.0);
+
+  cairo_save (cr);
+
+  cairo_scale (cr, zoom, zoom);
+
+  cairo_translate (cr, -ctx->x_offset, -ctx->y_offset);
+  iterate_over_bitpips(pipdat, chip, draw_wire_iter_limited, &iter);
+
+  cairo_restore (cr);
+}
+
 void
 draw_cairo_wires(cairo_t *cr, const bitstream_analyzed_t *nlz) {
   drawing_context_t ctx;

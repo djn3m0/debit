@@ -49,6 +49,14 @@ typedef struct _chip_descr {
   csite_descr_t *data;
 } chip_descr_t;
 
+/* Describes a rectangular site range */
+typedef struct site_area {
+  unsigned x;
+  unsigned width;
+  unsigned y;
+  unsigned height;
+} site_area_t;
+
 /* get a site index, in-order WRT iterate_over_sites */
 static inline unsigned
 site_index(const chip_descr_t *chip,
