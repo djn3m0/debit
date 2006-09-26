@@ -136,6 +136,12 @@ diff_time(GTimeVal *start, GTimeVal *end) {
  * of a move.
  */
 
+/*
+ * To be thought: should the adjustment value represent the center of
+ * the drawing area ? This would ease various things, but probably
+ * wouldn't fit with scrollbars paradigm.
+ */
+
 static void egg_xildraw_pixmap_recompute (EggXildrawFace *xildraw);
 
 /*
@@ -328,21 +334,6 @@ egg_xildraw_redraw (EggXildrawFace *xildraw)
 }
 
 static void
-egg_xildraw_adjustment_value_changed (GtkAdjustment *adjustment,
-				      gpointer       data)
-{
-  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(data);
-
-  g_return_if_fail (adjustment != NULL);
-  g_return_if_fail (data != NULL);
-
-  /* We could be much more intelligent here by only recomputing the part
-     of the pixmap which appeared */
-  egg_xildraw_pixmap_recompute (xildraw);
-  egg_xildraw_redraw (xildraw);
-}
-
-static void
 egg_xildraw_adapt_widget(EggXildrawFace *self) {
   GtkWidget *window = gtk_widget_get_parent( GTK_WIDGET(self) );
   egg_xildraw_adapt_window(self, GTK_WINDOW(window));
@@ -357,12 +348,6 @@ egg_xildraw_zoom_value_changed (GtkAdjustment *zoomadjust,
   drawing_context_t *ctx = xildraw->ctx;
 
   ctx->zoom = gtk_adjustment_get_value(zoomadjust);
-  /* The pixmap has not changed size:
-     recompute the pixmap and expose it */
-  egg_xildraw_pixmap_recompute (xildraw);
-  egg_xildraw_redraw (xildraw);
-
-  /* erk */
   egg_xildraw_adapt_widget(xildraw);
 }
 
@@ -395,24 +380,16 @@ egg_xildraw_face_new (bitstream_analyzed_t *nlz)
   {
     GtkAdjustment *hadjust, *vadjust;
     const chip_descr_t *chip = nlz->chip;
-    const unsigned dimx = chip_drawing_width(chip);
-    const unsigned dimy = chip_drawing_height(chip);
+    const double dimx = chip_drawing_width(chip);
+    const double dimy = chip_drawing_height(chip);
 
     vadjust = GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, dimy, 50, 200, dimy / 0.1));
     gtk_object_ref ( GTK_OBJECT(vadjust) );
     xildraw->vadjust = vadjust;
 
-    gtk_signal_connect (GTK_OBJECT (vadjust), "value_changed",
-			(GtkSignalFunc) egg_xildraw_adjustment_value_changed,
-			(gpointer) xildraw);
-
     hadjust = GTK_ADJUSTMENT(gtk_adjustment_new (0.0, 0.0, dimx, 50, 200, dimx / 0.1));
     gtk_object_ref ( GTK_OBJECT(hadjust) );
     xildraw->hadjust = hadjust;
-
-    gtk_signal_connect (GTK_OBJECT (hadjust), "value_changed",
-			(GtkSignalFunc) egg_xildraw_adjustment_value_changed,
-			(gpointer) xildraw);
   }
 
   {
@@ -425,7 +402,8 @@ egg_xildraw_face_new (bitstream_analyzed_t *nlz)
 }
 
 static void
-xildraw_adjust_delta(GtkAdjustment *adjust, int delta) {
+xildraw_adjust_delta(GtkAdjustment *adjust,
+		     const double delta) {
   double val;
 
   if (delta == 0)
@@ -437,24 +415,58 @@ xildraw_adjust_delta(GtkAdjustment *adjust, int delta) {
 }
 
 static void
-xildraw_scale(GtkAdjustment *zoomadjust,
-	      gdouble zoom_level) {
-  double zoom;
+xildraw_scale_at(EggXildrawFace *xildraw,
+		 const double zoom_level,
+		 const double x, const double y) {
+  GtkAdjustment *zoomadjust = xildraw->zoomadjust;
+  double zoom, scaling;
+
   if (zoom_level == 1.0)
     return;
 
   zoom = gtk_adjustment_get_value(zoomadjust);
+  /* Set new zoom value, new coordinates all in one go, by generating
+     only one redraw event: is this possible ? */
   gtk_adjustment_set_value(zoomadjust, zoom * zoom_level);
+
+  scaling = (zoom_level - 1) / (zoom_level * zoom);
+  xildraw_adjust_delta(xildraw->hadjust, x * scaling);
+  xildraw_adjust_delta(xildraw->vadjust, y * scaling);
+
+  /* Redraw now */
+  egg_xildraw_pixmap_recompute (xildraw);
+  egg_xildraw_redraw (xildraw);
+}
+
+static void
+xildraw_scale_center(EggXildrawFace *xildraw,
+		     const double zoom_level) {
+  GtkWidget *widget = GTK_WIDGET (xildraw);
+  double width = widget->allocation.width,
+    height = widget->allocation.height;
+  xildraw_scale_at (xildraw, zoom_level, width / 2, height / 2);
 }
 
 static inline void
 zoom_in(EggXildrawFace *xildraw) {
-  xildraw_scale(xildraw->zoomadjust, 1.0/0.75);
+  xildraw_scale_center(xildraw, 1.0/0.75);
+}
+
+static inline void
+zoom_in_at(EggXildrawFace *xildraw,
+	   const double x, const double y) {
+  xildraw_scale_at(xildraw, 1.0/0.75, x, y);
 }
 
 static inline void
 zoom_out(EggXildrawFace *xildraw) {
-  xildraw_scale(xildraw->zoomadjust, 0.75);
+  xildraw_scale_center(xildraw, 0.75);
+}
+
+static inline void
+zoom_out_at(EggXildrawFace *xildraw,
+	    const double x, const double y) {
+  xildraw_scale_at(xildraw, 0.75, x, y);
 }
 
 #include <gdk/gdkkeysyms.h>
@@ -488,31 +500,46 @@ egg_xildraw_key_press_event(GtkWidget *widget,
   case GDK_minus:
   case GDK_KP_Subtract:
     zoom_out(xildraw);
-    break;
+    goto redraw;
   case GDK_plus:
   case GDK_KP_Add:
     zoom_in(xildraw);
+    goto redraw;
     break;
   }
 
-  if (x_move)
+  if (x_move) {
     xildraw_adjust_delta(xildraw->hadjust, x_move * step);
-  if (y_move)
+    goto redraw;
+  }
+  if (y_move) {
     xildraw_adjust_delta(xildraw->vadjust, y_move * step);
+    goto redraw;
+  }
 
+  return FALSE;
+
+ redraw:
+  egg_xildraw_pixmap_recompute (xildraw);
+  egg_xildraw_redraw (xildraw);
   return FALSE;
 }
 
 static gboolean
 egg_xildraw_scroll_event(GtkWidget *widget,
 			 GdkEventScroll *event) {
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE (widget);
   GdkScrollDirection direction = event->direction;
+  double x, y;
+
+  gdk_event_get_coords ((GdkEvent *)event, &x, &y);
+
   switch (direction) {
   case GDK_SCROLL_UP:
-    zoom_in( EGG_XILDRAW_FACE(widget) );
+    zoom_in_at (xildraw, x, y);
     return TRUE;
   case GDK_SCROLL_DOWN:
-    zoom_out( EGG_XILDRAW_FACE(widget) );
+    zoom_out_at (xildraw, x, y);
     return TRUE;
   default:
     g_warning("Unhandled scroll direction");
@@ -642,15 +669,25 @@ egg_xildraw_unfullscreen(EggXildrawFace *self) {
 
 void
 egg_xildraw_zoom_fit(EggXildrawFace *self) {
-  double new_zoom;
+  GtkWidget *widget = GTK_WIDGET(self);
   /* The zoom is so that the pagesize matches the whole buffer width */
-  new_zoom = 1.0;
+  double pix_width = widget->allocation.width;
+  double draw_width = chip_drawing_width(self->nlz->chip);
+  double new_zoom = pix_width / draw_width;
+
+  /* zoom & adjust the view */
+  gtk_adjustment_set_value(self->zoomadjust, new_zoom);
+  gtk_adjustment_set_value(self->hadjust, 0);
+
+  /* and redraw */
+  egg_xildraw_pixmap_recompute (self);
+  egg_xildraw_redraw (self);
 }
 
 void
 egg_xildraw_site_names(EggXildrawFace *self, gboolean set) {
   drawing_context_t *ctx = self->ctx;
   ctx->text = set;
+  egg_xildraw_pixmap_recompute (self);
   egg_xildraw_redraw (self);
-/*   egg_xildraw_pixmap_recompute(self); */
 }

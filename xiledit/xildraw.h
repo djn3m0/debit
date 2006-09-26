@@ -66,6 +66,7 @@ void egg_xildraw_adapt_window(EggXildrawFace *xildraw, GtkWindow *window);
 void egg_xildraw_fullscreen(EggXildrawFace *self);
 void egg_xildraw_unfullscreen(EggXildrawFace *self);
 void egg_xildraw_site_names(EggXildrawFace *self, gboolean val);
+void egg_xildraw_zoom_fit(EggXildrawFace *self);
 
 G_END_DECLS
 

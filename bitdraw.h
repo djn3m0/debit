@@ -88,12 +88,12 @@ void set_cairo_context(drawing_context_t *ctx, cairo_t *cr) {
 }
 
 static inline
-gsize chip_drawing_width(const chip_descr_t *chip) {
+double chip_drawing_width(const chip_descr_t *chip) {
   return chip->width * SITE_WIDTH;
 }
 
 static inline
-gsize chip_drawing_height(const chip_descr_t *chip) {
+double chip_drawing_height(const chip_descr_t *chip) {
   return chip->height * SITE_HEIGHT;
 }
 

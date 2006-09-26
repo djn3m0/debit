@@ -111,8 +111,7 @@ on_best_fit1_activate                  (gpointer         user_data,
   GtkMenu * menu = GTK_MENU (user_data);
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(gtk_menu_get_attach_widget (menu));
 
-  (void) xildraw;
-  /* Fit to width */
+  egg_xildraw_zoom_fit(xildraw);
 }
 
 void
