@@ -131,8 +131,12 @@ _draw_interconnect(const drawing_context_t *ctx,
 static void
 _draw_pip(const drawing_context_t *ctx, const wire_db_t *wdb, pip_t pip) {
   _draw_interconnect(ctx, wdb, pip);
+  /* The source is not always needed --
+     sometimes the pip is connected directly by the
+     local interconnect. This should be given by the connexity
+     analysis. */
   _draw_wire(ctx, wdb, pip.source);
-  _draw_wire(ctx, wdb, pip.target);
+  /* _draw_wire(ctx, wdb, pip.target); */
 }
 
 /* so now let's talk good */
