@@ -92,9 +92,10 @@ DOXYDIR=doc
 doc: $(DOCSOURCES) $(DOXYCONFIG)
 	doxygen $(DOXYCONFIG) #&& make -C $(DOXYDIR)/latex/
 
-deb: dist-gzip
-	mv $(PACKAGE)-$(VERSION).tar.gz ../$(PACKAGE)_$(VERSION).orig.tar.gz && \
-	dpkg-buildpackage -rfakeroot -i'(trash|.git)' -Itrash -I.git
+DPKG_SOURCE_EXCLUDE=-i'(trash|.git)' -Itrash -I.git
+
+deb:
+	dpkg-buildpackage $(DEBBUILD) -D -rfakeroot -E -sn $(DPKG_SOURCE_EXCLUDE)
 
 rpms: dist-gzip
 	mkdir -p rpm/SOURCES rpm/BUILD && mv $(PACKAGE)-$(VERSION).tar.gz rpm/SOURCES && cd rpm && \
