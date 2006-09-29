@@ -31,6 +31,7 @@ to generate them is kept secret for now.
 %build
 %configure
 make RPM_OPT_FLAGS="%{optflags}"
+#"$RPM_OPT_FLAGS"
 
 %install
 rm -rf %{buildroot}
@@ -40,6 +41,14 @@ make install DESTDIR=%{buildroot} prefix=/usr
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+%post
+update-desktop-database %{_datadir}/applications || :
+update-mime-database %{_datadir}/mime || :
+
+%postun
+update-desktop-database %{_datadir}/applications || :
+update-mime-database %{_datadir}/mime || :
+
 %files
 %defattr(-,root,root)
 %dir "/"
@@ -47,14 +56,35 @@ rm -rf $RPM_BUILD_ROOT
 %dir "/usr/bin/"
 /usr/bin/*
 
+%dir %{_datadir}/applications/
+%{_datadir}/applications/%{name}.desktop
+
+%dir %{_datadir}/mime
+%dir %{_datadir}/mime/packages
+%{_datadir}/mime/packages/%{name}.xml
+
+%dir %{_datadir}
+%dir %{_datadir}/icons/
+%dir %{_datadir}/icons/hicolor/
+%dir %{_datadir}/icons/hicolor/48x48/
+%dir %{_datadir}/icons/hicolor/48x48/apps/
+%{_datadir}/icons/hicolor/48x48/apps/*
+
+%dir %{_datadir}/icons/hicolor/32x32/
+%dir %{_datadir}/icons/hicolor/32x32/apps/
+%{_datadir}/icons/hicolor/32x32/apps/*
+
+%dir %{_datadir}/icons/hicolor/48x48/mimetypes
+%{_datadir}/icons/hicolor/48x48/mimetypes/*
+
 %files data
-%dir "/"
-%dir "/usr/"
-%dir "/usr/share/"
-%dir "/usr/share/debit/"
-/usr/share/debit/*
+%dir %{_datadir}/%{name}
+%{_datadir}/%{name}/*
 
 %changelog
+* Fri Sep 29 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
+- Include desktop files
+
 * Fri Sep 29 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
 - Merge spec files, so as to be able to build with rpmbuild -tX
 
