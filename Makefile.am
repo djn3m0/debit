@@ -82,23 +82,25 @@ profile-std: $(DEBIT)
 	valgrind $(MEMCHECK_ARGS) $$OLDPWD/$< $(DEBIT_ARGS) --input $$OLDPWD/$(BITFILE_REF) &> /dev/null && \
 	popd
 
+.PHONY: doc deb srpm
+
 # doxygen documentation generation
 DOCSOURCES=$(shell find ./ -name '*.c' -or -name '*.h')
 DOXYCONFIG=doc/doxygen.cfg
 DOXYDIR=doc
-
-.PHONY: debian rpms doc
 
 doc: $(DOCSOURCES) $(DOXYCONFIG)
 	doxygen $(DOXYCONFIG) #&& make -C $(DOXYDIR)/latex/
 
 DPKG_SOURCE_EXCLUDE=-i'(trash|.git)' -Itrash -I.git
 
+#Build both source and binary deb
 deb:
 	dpkg-buildpackage $(DEBBUILD) -D -rfakeroot -E -sn $(DPKG_SOURCE_EXCLUDE)
 
-rpms: dist-gzip
-	mkdir -p rpm/SOURCES rpm/BUILD && mv $(PACKAGE)-$(VERSION).tar.gz rpm/SOURCES && cd rpm && \
-	rpmbuild --sign -bb --target noarch debit-data-0.1-1.spec && \
-	rpmbuild --sign -bb debit-0.1-1.spec && \
-	rm -rf rpm/SOURCES rpm/BUILD
+RPM_PARAMS=--clean --rmsource --sign
+
+#Build platform-independent srpms.
+#Building the actual binary rpms is left as an exercise for the reader.
+srpm: dist-gzip
+	TAR_OPTIONS=--wildcards rpmbuild $(RPMS_COMMON_PARAMS) -ts $(distdir).tar.gz
