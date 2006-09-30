@@ -20,6 +20,13 @@ typedef enum {
   V2C__NB_CFG,
 } v2_design_col_t;
 
+typedef struct _chip_struct {
+  guint32 idcode;
+  guint32 framelen;
+  const int col_count[V2C__NB_CFG];
+  const int frame_count[V2C__NB_CFG];
+} chip_struct_t;
+
 /*
  * FAR Register implementation
  */
@@ -212,84 +219,5 @@ static inline unsigned
 type_of_v2pkt(const uint32_t v2pkt) {
   return (v2pkt & V2_PKT_TYPE_MASK) >> V2_PKT_TYPE_OFFSET;
 }
-
-/*
- * Other structures
- */
-
-typedef uint32_t reg_t;
-
-#define FAMILY_LEN 128
-
-typedef struct design {
-  /* for now be simple */
-  unsigned char ***bincols;
-  int frame_len;
-  char family[FAMILY_LEN];
-} design_t;
-
-design_t *new_design(char *platform, char* family);
-void delete_design(design_t *D);
-
-void v2_design_writeback_frame(design_t *D, sw_far_t *sw_far, reg_t *frame);
-void v2_swfar_increment(design_t *D, sw_far_t *addr);
-
-static const
-int v2_col_count[V2C__NB_CFG] = {
- [V2C_IOB] = 2,
- [V2C_IOI] = 2,
- [V2C_CLB] = 48,
- [V2C_BRAM] = 4,
- [V2C_BRAM_INT] =  4,
- [V2C_GCLK] = 1,
-};
-
-static const
-int v2_frame_count[V2C__NB_CFG] = {
- [V2C_IOB] = 4,
- [V2C_IOI] = 22,
- [V2C_CLB] = 22,
- [V2C_BRAM] = 64,
- [V2C_BRAM_INT] =  22,
- [V2C_GCLK] = 4,
-};
-
-/* thoughts for later */
-
-/*-er
-  We try to use the following abstraction:
-  _ we have units of configuration on the chip;
-  _ we have a few different types of units, each type can be
-  handled only knowing its position on the chip.
- */
-//typedef void (*unit_handler_t)(unit_t *, unit_type_t *);
-
-/*-er
-  The concept is that cols describe the state of several
-  logic_units (those could be of different kinds).
-  Hopefully, two different kinds of cols do not overlap in
-  in the properties of the design they control.
-  I just hope the chip vendors are clever.
-  logic_units could be hierarchical. Should they?
-*/
-
-/*
-typedef enum {
-  // controlled by CLB
-  // general p22
-  // distributed RAM p25
-  // SRL p28
-  V2L_LUT,
-  V2L_,
-  V2L_,
-  // controlled by IOI
-  V2L_,
-  // controlled by IOB - p37(input) p41(output) p44(3-states)
-  V2L_,
-  // controlled by GCLK - p61
-  // controlled by BRAM
-  // controlled by BRAM_INT
-} v2_design_logic_units;
-*/
 
 #endif /* design.h */

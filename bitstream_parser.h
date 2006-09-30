@@ -30,6 +30,7 @@ typedef struct _bitstream_parsed {
 
   /* (virtex-II) chip type info -- from bitstream data */
   id_t chip;
+  const chip_struct_t *chip_struct;
 
   /* frames */
   gint frame_len;
@@ -66,12 +67,15 @@ const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
 			    const guint type,
 			    const guint index,
 			    const guint frame) {
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  const int *col_count = chip_struct->col_count;
+  const int *frame_count = chip_struct->frame_count;
   g_assert(type < V2C__NB_CFG);
-  g_assert(index < v2_col_count[type]);
-  g_assert(frame < v2_frame_count[type]);
+  g_assert(index < col_count[type]);
+  g_assert(frame < frame_count[type]);
 
   /* This is a double-lookup method */
-  return &parsed->frames[type][index * v2_frame_count[type] + frame];
+  return &parsed->frames[type][index * frame_count[type] + frame];
 }
 
 /* FDRI handling. Requires FAR handling.
@@ -82,7 +86,9 @@ const gchar *get_frame(const bitstream_parsed_t *parsed,
 		       const guint type,
 		       const guint index,
 		       const guint frame) {
-  return *get_frame_loc(parsed, type, index, frame);
+  const gchar *frameptr = *get_frame_loc(parsed, type, index, frame);
+  g_assert(frameptr != NULL);
+  return frameptr;
 }
 
 #endif /* _BITSTREAM_PARSER_H */

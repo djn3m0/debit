@@ -13,15 +13,9 @@
 #include "bitstream_parser.h"
 #include "debitlog.h"
 
-typedef struct _chip_descr {
-  guint32 idcode;
-  guint32 framelen;
-  const int col_count[V2C__NB_CFG];
-  const int frame_count[V2C__NB_CFG];
-} chip_descr_t;
-
 /* This is nothing but a key-value file */
-static const chip_descr_t bitdescr[XC2__NUM] = {
+static const
+chip_struct_t bitdescr[XC2__NUM] = {
   [XC2V40] = {
     .idcode = 0x01008093U,
     .framelen = 26,
@@ -606,6 +600,10 @@ void record_frame(bitstream_parsed_t *parsed,
 
 static void
 alloc_indexer(bitstream_parsed_t *parsed) {
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  const int *col_count = chip_struct->col_count;
+  const int *frame_count = chip_struct->frame_count;
+
   gsize total_size = 0;
   gsize type_offset = 0;
   gsize type;
@@ -617,7 +615,7 @@ alloc_indexer(bitstream_parsed_t *parsed) {
   /* NB: We don't memoize the column lookup -- we prefer a multiplication
      for this  */
   for (type = 0; type < V2C__NB_CFG; type++)
-    total_size += v2_frame_count[type] * v2_col_count[type] * sizeof(gchar *);
+    total_size += frame_count[type] * col_count[type] * sizeof(gchar *);
 
   /* We allocate only one big array with the type_lut at the beginning
      and the frame_array at the end */
@@ -627,7 +625,7 @@ alloc_indexer(bitstream_parsed_t *parsed) {
   /* fill in the control data */
   for (type = 0; type < V2C__NB_CFG; type++) {
     type_lut[type] = &frame_array[type_offset];
-    type_offset += v2_col_count[type] * v2_frame_count[type];
+    type_offset += col_count[type] * frame_count[type];
   }
 
   parsed->frames = type_lut;
@@ -644,14 +642,17 @@ free_indexer(bitstream_parsed_t *parsed) {
 void
 iterate_over_frames(const bitstream_parsed_t *parsed,
 		    frame_iterator_t iter, void *itdat) {
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  const int *col_counts = chip_struct->col_count;
+  const int *frame_counts = chip_struct->frame_count;
   guint type, index, frame;
 
   /* Iterate over the whole thing */
   for (type = 0; type < V2C__NB_CFG; type++) {
-    const guint col_count = v2_col_count[type];
+    const guint col_count = col_counts[type];
 
     for (index = 0; index < col_count; index++) {
-      const guint frame_count = v2_frame_count[type];
+      const guint frame_count = frame_counts[type];
 
       for (frame = 0; frame < frame_count; frame++) {
 	const gchar *data = get_frame(parsed, type, index, frame);
@@ -746,13 +747,17 @@ flr_check(const bitstream_parser_t *parser, id_t chip) {
 
 static gint
 idcode_write(bitstream_parsed_t *parsed,
-	     const bitstream_parser_t *parser) {
+	     bitstream_parser_t *parser) {
   guint32 idcode = register_read(parser, IDCODE);
   int i;
 
   for (i = 0; i < XC2__NUM; i++)
     if (bitdescr[i].idcode == idcode) {
+      parser->type = i;
       parsed->chip = i;
+      parsed->chip_struct = &bitdescr[i];
+      /* Allocate control structures */
+      alloc_indexer(parsed);
       return flr_check(parser, i);
     }
 
@@ -824,9 +829,6 @@ _parse_bitfile(bitstream_parsed_t *dest,
 
   /* Do some allocations according to the type of the bitfile */
   bytearray_init(&parser.ba, len, offset, buf_in);
-  /* XXX use idcode instead */
-  parser.type = XC2V2000;
-  alloc_indexer(dest);
 
   return _parse_bitstream_data(dest, &parser);
 }
