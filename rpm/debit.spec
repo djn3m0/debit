@@ -8,9 +8,13 @@ Group: Applications/Engineering
 Source: %{name}-%{version}.tar.gz
 Provides: %{name} = %{version}
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
-
-#%define _rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm
-#%define _unpackaged_files_terminate_build 0
+# We're not including here utils needed to rebuild the whole bunch of files,
+# only what's required to build from the dist tarball
+BuildRequires: gcc
+BuildRequires: pkgconfig
+BuildRequires: glib-devel
+BuildRequires: cairo-devel
+BuildRequires: gtk2-devel
 
 %description
 This tool allows takes as input virtex-2 bitstreams and can output
@@ -31,7 +35,6 @@ to generate them is kept secret for now.
 %build
 %configure
 make RPM_OPT_FLAGS="%{optflags}"
-#"$RPM_OPT_FLAGS"
 
 %install
 rm -rf %{buildroot}
