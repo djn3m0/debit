@@ -10,6 +10,7 @@
 #include "keyfile.h"
 
 #include "sites.h"
+#include "bitstream_parser.h"
 
 /*
  * File site control description is of form
@@ -25,6 +26,21 @@
  * Xilinx is cool: the names are okay so that this description works and
  * we don't have to repeat sitename several times
  */
+
+static const gchar *
+chipfiles[XC2__NUM] = {
+  [XC2V40] = "xc2v40",
+  [XC2V80] = "xc2v80",
+  [XC2V250] = "xc2v250",
+  [XC2V500] = "xc2v500",
+  [XC2V1000] = "xc2v1000",
+  [XC2V1500] = "xc2v1500",
+  [XC2V2000] = "xc2v2000",
+  [XC2V3000] = "xc2v3000",
+  [XC2V4000] = "xc2v4000",
+  [XC2V6000] = "xc2v6000",
+  [XC2V8000] = "xc2v8000",
+};
 
 /* iterate over intervals */
 typedef void (* interval_iterator_t)(unsigned i, void *dat);
@@ -220,8 +236,9 @@ init_chip(chip_descr_t *chip, GKeyFile *file) {
 
 /* exported alloc and destroy functions */
 chip_descr_t *
-get_chip(const gchar *dirname, const gchar *chipname) {
+get_chip(const gchar *dirname, const id_t chipid) {
   chip_descr_t *chip = g_new0(chip_descr_t, 1);
+  const gchar *chipname = chipfiles[chipid];
   GKeyFile *keyfile;
   GError *error = NULL;
   gchar *filename;

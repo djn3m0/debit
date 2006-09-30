@@ -163,7 +163,7 @@ fill_analysis(bitstream_analyzed_t *anal,
     goto err_out;
   anal->pipdb = pipdb;
 
-  chip = get_chip(datadir, "xc2v2000");
+  chip = get_chip(datadir, bitstream->chip);
   if (!chip)
     goto err_out;
   anal->chip = chip;

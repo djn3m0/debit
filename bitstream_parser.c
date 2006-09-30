@@ -20,23 +20,7 @@ typedef struct _chip_descr {
   const int frame_count[V2C__NB_CFG];
 } chip_descr_t;
 
-/* typedef enum _idcode { */
-/*   XC2V40   = 0x01008093U, */
-/*   XC2V80   = 0x01010093U, */
-/* } idcode_t; */
-
-typedef enum _id {
-  XC2V40 = 0, XC2V80,
-  XC2V250, XC2V500,
-  XC2V1000, XC2V1500,
-  XC2V2000, XC2V3000,
-  XC2V4000, XC2V6000,
-  XC2V8000,
-  XC2__NUM,
-} id_t;
-
 /* This is nothing but a key-value file */
-
 static const chip_descr_t bitdescr[XC2__NUM] = {
   [XC2V40] = {
     .idcode = 0x01008093U,
@@ -746,6 +730,36 @@ handle_cmd_write(bitstream_parsed_t *parsed,
 
 }
 
+static inline gint
+flr_check(const bitstream_parser_t *parser, id_t chip) {
+  guint32 flr = register_read(parser, FLR);
+  guint32 chipflr = bitdescr[chip].framelen;
+
+  if (chipflr != flr + 1) {
+    g_warning("written FLR value %i is inconsistent with expected value %i",
+	      flr, chipflr);
+    return -1;
+  }
+
+  return 0;
+}
+
+static gint
+idcode_write(bitstream_parsed_t *parsed,
+	     const bitstream_parser_t *parser) {
+  guint32 idcode = register_read(parser, IDCODE);
+  int i;
+
+  for (i = 0; i < XC2__NUM; i++)
+    if (bitdescr[i].idcode == idcode) {
+      parsed->chip = i;
+      return flr_check(parser, i);
+    }
+
+  g_warning("IDCODE %08x not recognized, aborting", idcode);
+  return -1;
+}
+
 int synchronize_bitstream(bitstream_parser_t *parser) {
   bytearray_t *ba = &parser->ba;
   guint32 synch;
@@ -844,6 +858,7 @@ read_next_token(bitstream_parsed_t *parsed,
   gint state = parser->state;
   bytearray_t *ba = &parser->ba;
   int offset = 1;
+  int err = 0;
 
   print_parser_state(parser);
 
@@ -904,8 +919,13 @@ read_next_token(bitstream_parsed_t *parsed,
       offset = length;
 
       /* pre-processing */
-      if (reg == FDRI)
+      switch (reg) {
+      case FDRI:
 	offset = handle_fdri_write(parsed, parser, length);
+	break;
+      default:
+	break;
+      }
 
       if (offset > avail) {
 	debit_log(L_BITSTREAM,"Register length of %zd words while only %zd words remain",
@@ -913,26 +933,37 @@ read_next_token(bitstream_parsed_t *parsed,
 	return -1;
       }
 
+      /* This function does the CRC update */
       default_register_write(parser, reg, length);
 
       /* post-processing */
-
       switch(reg) {
       case FDRI:
-	debit_log(L_BITSTREAM,"FDRI write with CMD register %s",
-		  cmd_names[register_read(parser,CMD)]);
-	debit_log(L_BITSTREAM,"FDRI handling autoCRC");
-	update_crc(parser, CRC, bytearray_get_uint32(ba));
-	break;
+	{
+	  /* Handle the AutoCRC word */
+	  guint32 autocrc = bytearray_get_uint32(ba);
+	  debit_log(L_BITSTREAM,"FDRI write with CMD register %s",
+		    cmd_names[register_read(parser,CMD)]);
+	  debit_log(L_BITSTREAM,"FDRI handling autoCRC");
+	  update_crc(parser, CRC, autocrc);
+	  break;
+	}
       case FAR:
 	debit_log(L_BITSTREAM,"FAR write reexecuting CMD register");
 	/* Fall-through to CMD register action */
       case CMD:
-	handle_cmd_write(parsed, parser);
+	err = handle_cmd_write(parsed, parser);
+	break;
+      case IDCODE:
+	/* get the index of the IDCODE & check FLR consistency */
+	err = idcode_write(parsed, parser);
 	break;
       default:
 	break;
       }
+
+      if (err)
+	return -1;
 
       /* < 0 happens with autocrc on FDRI writes */
       if (parser->active_length <= 0)

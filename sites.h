@@ -7,6 +7,7 @@
 #define _SITES_H
 
 #include <glib.h>
+#include "bitstream_parser.h"
 
 /* This is the coordinates of the site in its
    local typed grid */
@@ -101,8 +102,7 @@ void iterate_over_typed_sites(const chip_descr_t *chip, site_type_t type,
 			      site_iterator_t fun, gpointer data);
 
 void release_chip(chip_descr_t *chip);
-chip_descr_t *get_chip(const gchar *datadir,
-		       const gchar *chipname);
+chip_descr_t *get_chip(const gchar *datadir, const id_t chipid);
 
 void print_chip(chip_descr_t *chip);
 
