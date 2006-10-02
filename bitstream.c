@@ -46,7 +46,7 @@ typedef struct _type_bits {
   /** Number of frames to skip in the type array per x unit */
   guint x_width;
   /** Bytes to skip at the beginning of the type array */
-  guint y_offset;
+  gint y_offset;
   guint y_width;
   guint row_count;
 } type_bits_t;
@@ -58,7 +58,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 12,
+    .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
   },
@@ -67,7 +67,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 12,
+    .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
   },
@@ -76,7 +76,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 1,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 12,
+    .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
   },
@@ -85,7 +85,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 12,
+    .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
   },
@@ -94,7 +94,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 1,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 12,
+    .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
   },
@@ -103,7 +103,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 12 + SITE_PER_COL*sizeof(site_descr_t) + sizeof(site_descr_t),
+    .y_offset = 0,
     .y_width = 2,
     .row_count = 1,
   },
@@ -112,7 +112,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 0,
+    .y_offset = -2,
     .y_width = 2,
     .row_count = 1,
   },
@@ -121,7 +121,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 12 + SITE_PER_COL*sizeof(site_descr_t),
+    .y_offset = 2,
     .y_width = sizeof(site_descr_t),
     .row_count = 1,
   },
@@ -130,7 +130,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 2,
+    .y_offset = - (sizeof(site_descr_t) + 2),
     .y_width = sizeof(site_descr_t),
     .row_count = 1,
   },
@@ -140,7 +140,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 12,
+    .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
   },
@@ -149,7 +149,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 12 + SITE_PER_COL*sizeof(site_descr_t) + sizeof(site_descr_t),
+    .y_offset = 0,
     .y_width = 2,
     .row_count = 1,
   },
@@ -158,7 +158,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 0,
+    .y_offset = -2,
     .y_width = 2,
     .row_count = 1,
   },
@@ -167,7 +167,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 12 + SITE_PER_COL*sizeof(site_descr_t),
+    .y_offset = 2,
     .y_width = sizeof(site_descr_t),
     .row_count = 1,
   },
@@ -176,7 +176,7 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
     .x_type_off = 0,
     .x_offset = 0,
     .x_width = 1,
-    .y_offset = 2,
+    .y_offset = - (sizeof(site_descr_t) + 2),
     .y_width = sizeof(site_descr_t),
     .row_count = 1,
   },
@@ -218,23 +218,23 @@ query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
   const guint x = site->type_coord.x;
   const guint y = site->type_coord.y;
   const guint y_width = type_bits[site_type].y_width;
-  const guint flen = bitstream->chip_struct->framelen;
+  const guint flen = bitstream->chip_struct->framelen * sizeof(uint32_t);
+  const gint y_offset = type_bits[site_type].y_offset;
 
   /* site offset in the y axis -- inverted. Should not be done here maybe */
-  const unsigned row = type_bits[site_type].row_count - y - 1;
-  const off_t site_off = type_bits[site_type].y_offset + row * y_width;
-  /* all mnas of the same horizontal coordinate are grouped together */
+  const guint y_type_offset = (y_offset >= 0) ? y_offset : (flen + y_offset);
+  const off_t site_off = y * y_width + y_type_offset;
 
   /* offset in-site. only this really needs to be computed locally */
   const guint xoff = cfgbit / (y_width * 8);
   const guint yoff = cfgbit % (y_width * 8);
+  const gsize frame_offset = site_off + (y_width - 1) - (yoff >> 3);
 
   const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
 				 x+type_bits[site_type].x_type_off,
 				 xoff * type_bits[site_type].x_width + type_bits[site_type].x_offset);
-  const gsize frame_offset = site_off + (yoff >> 3);
 
-  if ((frame[flen * sizeof(uint32_t) - 1 - frame_offset] >> (yoff & 0x7)) & 1)
+  if ((frame[frame_offset] >> (yoff & 0x7)) & 1)
     return TRUE;
 
   return FALSE;
@@ -280,22 +280,23 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const guint x = site->type_coord.x;
   const guint y = site->type_coord.y;
   const guint y_width = type_bits[site_type].y_width;
-  const guint flen = bitstream->chip_struct->framelen;
+  const guint flen = bitstream->chip_struct->framelen * sizeof(uint32_t);
+  const gint y_offset = type_bits[site_type].y_offset;
 
   /* site offset in the y axis -- inverted. Should not be done here maybe */
-  const unsigned row = type_bits[site_type].row_count - y - 1;
-  const off_t site_off = type_bits[site_type].y_offset + row * y_width;
+  const guint y_type_offset = (y_offset >= 0) ? y_offset : (flen + y_offset);
+  const off_t site_off = y * y_width + y_type_offset;
 
   /* offset in-site. only this really needs to be computed locally */
   const guint xoff = cfgbyte / y_width;
   const guint yoff = cfgbyte % y_width;
+  const gsize frame_offset = site_off + (y_width - 1) - yoff;
 
   const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
 				 x+type_bits[site_type].x_type_off,
 				 xoff * type_bits[site_type].x_width + type_bits[site_type].x_offset);
-  const gsize frame_offset = site_off + yoff;
 
-  return frame[flen * sizeof(uint32_t) - 1 - frame_offset];
+  return frame[frame_offset];
 }
 
 /** \brief Get some (up to 4) config bytes from a site
@@ -393,9 +394,13 @@ guint16 bram_offset_to_mask[16] = {
   0x10, 0x800, 0x20, 0x400, 0x40, 0x200, 0x80, 0x100, 0x8, 0x1000, 0x4, 0x2000, 0x2, 0x4000, 0x1, 0x8000,
 };
 
+/* static const */
+/* gchar bram_offset_for_bit[16] = { */
+/*   1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, 1, 1, */
+/* }; */
 static const
 gchar bram_offset_for_bit[16] = {
-  1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, 1, 1,
+  -1, -1, -1, -2, -1, -1, -1, -3, -1, -1, -1, -2, -1, -1, -1,
 };
 
 /** \brief Get the bram data bits from a site
@@ -412,9 +417,9 @@ query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
   /* for now exctract the data from the bram coordinates ? */
   const guint x = site->type_coord.x;
   const guint y = site->type_coord.y;
-  const guint flen = bitstream->chip_struct->framelen;
-  const unsigned row = 14 - y - 1;
-  const unsigned site_offset = 12 + row * 4 * sizeof(site_descr_t);
+  const unsigned bram_width = 4 * sizeof(site_descr_t);
+  const unsigned site_offset = 2 + sizeof(site_descr_t) + y * bram_width + (bram_width - 2);
+
   guint16 *bram_data = g_new0(guint16,64*16);
   guint i,j,k;
 
@@ -425,7 +430,7 @@ query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
     const guint16 *frame = (const guint16 *) get_frame(bitstream, V2C_BRAM, x, i);
 
     for (j = 0; j < 16; j++) {
-      guint16 data = GUINT16_FROM_BE(frame[flen * sizeof(uint16_t) - 1 - guint_offset]);
+      guint16 data = GUINT16_FROM_BE(frame[guint_offset]);
       guint16 bit_to_write = (1 << j);
 
       for (k = 0; k < 16; k++) {
