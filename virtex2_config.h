@@ -26,24 +26,4 @@ typedef struct site_descr {
 
 #define SITE_PER_COL 56
 
-#define SLICE_OFF 12
-#define SLICE_TAIL 12
-#define SLICE_PER_COL (2*SITE_PER_COL)
-
-typedef struct slice_frame {
-	uint8_t unk1[SLICE_OFF];
-	slice_descr_t slices[SLICE_PER_COL];
-	uint8_t unk2[SLICE_TAIL];
-} __attribute__((packed)) slice_frame_t;
-
-typedef struct site_frame {
-	uint8_t unk1[SLICE_OFF];
-	site_descr_t sites[SITE_PER_COL];
-	uint8_t unk2[SLICE_TAIL];
-} __attribute__((packed)) site_frame_t;
-
-typedef struct site_config {
-	site_descr_t mna[22];
-} __attribute__((packed)) site_config_t;
-
 #endif /* _HAS_VIRTEX2_CONFIG_H */

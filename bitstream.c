@@ -218,6 +218,7 @@ query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
   const guint x = site->type_coord.x;
   const guint y = site->type_coord.y;
   const guint y_width = type_bits[site_type].y_width;
+  const guint flen = bitstream->chip_struct->framelen;
 
   /* site offset in the y axis -- inverted. Should not be done here maybe */
   const unsigned row = type_bits[site_type].row_count - y - 1;
@@ -233,7 +234,7 @@ query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
 				 xoff * type_bits[site_type].x_width + type_bits[site_type].x_offset);
   const gsize frame_offset = site_off + (yoff >> 3);
 
-  if ((frame[146 * sizeof(uint32_t) - 1 - frame_offset] >> (yoff & 0x7)) & 1)
+  if ((frame[flen * sizeof(uint32_t) - 1 - frame_offset] >> (yoff & 0x7)) & 1)
     return TRUE;
 
   return FALSE;
@@ -279,6 +280,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const guint x = site->type_coord.x;
   const guint y = site->type_coord.y;
   const guint y_width = type_bits[site_type].y_width;
+  const guint flen = bitstream->chip_struct->framelen;
 
   /* site offset in the y axis -- inverted. Should not be done here maybe */
   const unsigned row = type_bits[site_type].row_count - y - 1;
@@ -293,7 +295,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 				 xoff * type_bits[site_type].x_width + type_bits[site_type].x_offset);
   const gsize frame_offset = site_off + yoff;
 
-  return frame[146 * sizeof(uint32_t) - 1 - frame_offset];
+  return frame[flen * sizeof(uint32_t) - 1 - frame_offset];
 }
 
 /** \brief Get some (up to 4) config bytes from a site
@@ -410,6 +412,7 @@ query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
   /* for now exctract the data from the bram coordinates ? */
   const guint x = site->type_coord.x;
   const guint y = site->type_coord.y;
+  const guint flen = bitstream->chip_struct->framelen;
   const unsigned row = 14 - y - 1;
   const unsigned site_offset = 12 + row * 4 * sizeof(site_descr_t);
   guint16 *bram_data = g_new0(guint16,64*16);
@@ -422,7 +425,7 @@ query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
     const guint16 *frame = (const guint16 *) get_frame(bitstream, V2C_BRAM, x, i);
 
     for (j = 0; j < 16; j++) {
-      guint16 data = GUINT16_FROM_BE(frame[146 * sizeof(uint16_t) - 1 - guint_offset]);
+      guint16 data = GUINT16_FROM_BE(frame[flen * sizeof(uint16_t) - 1 - guint_offset]);
       guint16 bit_to_write = (1 << j);
 
       for (k = 0; k < 16; k++) {
