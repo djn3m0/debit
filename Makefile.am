@@ -15,7 +15,11 @@ SHARED_SRC	= bitarray.c bitarray.h \
 		connexity.c connexity.h \
 		wiring.c wiring.h
 
-bin_PROGRAMS	= debit bit2pdf
+bin_PROGRAMS	= debit
+
+if BUILD_BIT2PDF
+  bin_PROGRAMS += bit2pdf
+endif
 
 debit_SOURCES	= $(SHARED_SRC) debit.c \
 		config.h design.h virtex2_config.h debitlog.h

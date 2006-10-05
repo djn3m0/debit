@@ -9,7 +9,12 @@ SHARED_SRC	= ../bitarray.c ../bitheader.c ../bitstream_parser.c ../filedump.c \
 		../analysis.c ../connexity.c
 #SHARED_COUCOU	= $(addprefix ../,$(SHARED_SRC))
 
-bin_PROGRAMS	= xiledit
+bin_PROGRAMS	=
+
+if BUILD_GUI
+  bin_PROGRAMS += xiledit
+endif
+
 xiledit_SOURCES	= xiledit.c xildraw.c xildraw.h callbacks.c callbacks.h \
 		  ../sites.c ../sites_draw.c ../wiring_draw.c $(SHARED_SRC) $(glade_generated)
 BUILT_SOURCES	= $(glade_generated)

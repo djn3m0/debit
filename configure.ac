@@ -5,7 +5,7 @@ AC_INIT([debit], [0.1], [jean-baptiste.note@m4x.org])
 AC_CONFIG_SRCDIR([debit.c])
 AC_CONFIG_HEADER([config.h])
 
-AM_INIT_AUTOMAKE([dist-bzip2])
+AM_INIT_AUTOMAKE([-Wall dist-bzip2])
 
 # Checks for programs.
 AC_PROG_CC
@@ -20,17 +20,29 @@ PKG_CHECK_MODULES(GLIB, [glib-2.0 >= $GLIB_REQUIRED])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-dnl Check for Cairo
+dnl Check for Cairo pdf/ps backend
 CAIRO_REQUIRED=1.2.0
-PKG_CHECK_MODULES(CAIRO, [cairo >= $CAIRO_REQUIRED])
+PKG_CHECK_MODULES(CAIRO, [cairo-pdf >= $CAIRO_REQUIRED cairo-ps >= $CAIRO_REQUIRED],
+			 [want_bit2pdf=yes], [want_bit2pdf=no])
 AC_SUBST(CAIRO_CFLAGS)
 AC_SUBST(CAIRO_LIBS)
 
+AM_CONDITIONAL([BUILD_BIT2PDF], [test "x$want_bit2pdf" = xyes])
+if test "x$want_bit2pdf" = "xno"; then
+  AC_MSG_WARN(Not building bit2pdf tool)
+fi
+
 dnl First version which supports cairo ?
 GTK_REQUIRED=2.8.0
-PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= $GTK_REQUIRED])
+PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= $GTK_REQUIRED],
+		       [want_gui=yes], [want_gui=no])
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
+
+AM_CONDITIONAL(BUILD_GUI, [test "x$want_gui" = xyes])
+if test "x$want_gui" = "xno"; then
+  AC_MSG_WARN(Not building gui tools)
+fi
 
 # Checks for header files.
 AC_HEADER_STDC
