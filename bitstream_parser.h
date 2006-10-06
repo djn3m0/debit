@@ -73,6 +73,7 @@ const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
   g_assert(type < V2C__NB_CFG);
   g_assert(index < col_count[type]);
   g_assert(frame < frame_count[type]);
+  (void) col_count;
 
   /* This is a double-lookup method */
   return &parsed->frames[type][index * frame_count[type] + frame];

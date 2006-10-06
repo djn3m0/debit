@@ -65,12 +65,14 @@ parse_option(altera_bitstream_t *altera,
     {
       guint32 id = GUINT32_FROM_LE(get_32(data));
       debit_log(L_BITSTREAM, "Something, maybe the package is %04x\n", id);
+      (void) id;
     }
     break;
   case CRC:
     {
       guint32 crc = GUINT32_FROM_LE(get_32(data));
       debit_log(L_BITSTREAM, "CRC for the bitstream is %08x\n", crc);
+      (void) crc;
     }
     break;
   default:

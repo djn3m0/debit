@@ -130,6 +130,7 @@ check_consistency(const altera_bitstream_t *bit) {
 /*   unsigned nx = width_total(x_offsets_descr); */
 /*   g_print("offset total is %i for %i sites\n", offset, nx); */
   g_assert( offset == coords[SLICE].offset );
+  (void) offset;
 }
 
 /* accumulate the x_offsets_descr and build corresponding

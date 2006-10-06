@@ -41,6 +41,8 @@ header_option_t *next_option(const header_option_t *data) {
   /* TODO: case on type, more info, then move this to parse_option */
   debit_log(L_HEADER, "Option code %i, length %i", code, len);
   debit_log(L_HEADER, "data: %.*s",len,data->payload);
+  (void) code;
+  (void) len;
   return (void *)&data->payload[len];
 }
 

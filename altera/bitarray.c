@@ -210,10 +210,10 @@ void
 bitarray_intersect (bitarray_t *a, const bitarray_t *b)
 {
   int i;
-  unsigned asize = a->size, bsize = b->size;
+  unsigned asize = a->size;
   array_storage_t *aarr = a->array, *barr = b->array;
 
-  g_assert(asize == bsize);
+  g_assert(asize == b->size);
   for (i = 0; i < asize; i++)
     aarr[i] &= barr[i];
 }

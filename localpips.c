@@ -467,6 +467,8 @@ static void examine_node_memory (GNode *node,
       exam_arg->startwire = cfgarg->startwire;
     }
   }
+  (void) start;
+  (void) end;
 }
 
 typedef struct _examine_endpoint_memory {

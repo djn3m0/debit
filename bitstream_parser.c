@@ -255,6 +255,17 @@ typedef enum _registers_index {
   __NUM_REGISTERS,
 } register_index_t;
 
+typedef enum _cmd_code {
+  WCFG = 1,
+  C_MFWR,
+  LFRM, RCFG, START, RCAP, RCRC,
+  AGHIGH, SWITCH, GRESTORE,
+  SHUTDOWN, GCAPTURE,
+  DESYNCH,
+  __NUM_CMD_CODE,
+} cmd_code_t;
+
+#if DEBIT_DEBUG > 0
 static const
 char *reg_names[__NUM_REGISTERS] = {
   [CRC] = "CRC",
@@ -274,16 +285,6 @@ char *reg_names[__NUM_REGISTERS] = {
   [IDCODE] = "IDCODE",
 };
 
-typedef enum _cmd_code {
-  WCFG = 1,
-  C_MFWR,
-  LFRM, RCFG, START, RCAP, RCRC,
-  AGHIGH, SWITCH, GRESTORE,
-  SHUTDOWN, GCAPTURE,
-  DESYNCH,
-  __NUM_CMD_CODE,
-} cmd_code_t;
-
 static const
 char *cmd_names[__NUM_CMD_CODE] = {
   [WCFG] = "WCFG",
@@ -300,6 +301,7 @@ char *cmd_names[__NUM_CMD_CODE] = {
   [GCAPTURE] = "GCAPTURE",
   [DESYNCH] = "DESYNCH",
 };
+#endif
 
 typedef enum _cmd_pkt_ver {
   V1 = 1, V2 =2,

@@ -10,6 +10,7 @@ static void
 parse_synchro (synchro_option_t *opt) {
   guint len = GUINT32_FROM_BE(opt->bitstream_length);
   debit_log(L_HEADER, "Synchro option, bitstream length %i", len);
+  (void) len;
   return;
 }
 
