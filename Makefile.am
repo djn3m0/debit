@@ -5,7 +5,7 @@ AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
 
 SHARED_SRC	= bitarray.c bitarray.h \
 		bitheader.c bitheader.h \
-		bitstream_parser.c bitstream_parser.h \
+		bitstream_parser_v4.c bitstream_parser.h \
 		filedump.c filedump.h \
 		localpips.c localpips.h \
 		bitstream.c bitstream.h \

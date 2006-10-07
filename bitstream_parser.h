@@ -35,6 +35,7 @@ typedef struct _bitstream_parsed {
   /* frames */
   gint frame_len;
   const gchar ***frames;
+  GArray *frame_array;
 
   /* mmapped file information */
   GMappedFile *file;
