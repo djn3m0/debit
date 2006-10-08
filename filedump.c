@@ -51,6 +51,15 @@ static FILE *open_frame_file(const unsigned type,
   return f;
 }
 
+static FILE *
+open_unk_frame_file(const frame_record_t *frame) {
+  FILE *f;
+  char fn[64];
+  snprintf(fn, sizeof(fn), "frame_%i_%i.bin", frame->far, frame->offset);
+  f = fopen(fn, "w");
+  return f;
+}
+
 static void
 seq_frame_name(char *buf, unsigned buf_len,
 	       const unsigned type,
@@ -74,6 +83,7 @@ typedef struct _dumping {
   naming_hook_t naming;
 } dumping_t;
 
+/* XXX Frame length is static */
 static void
 design_write_frames_iter(const char *frame,
 			 guint type, guint index, guint frameidx,
@@ -89,6 +99,16 @@ design_write_frames_iter(const char *frame,
   fclose(f);
 }
 
+static void
+design_write_unk_frames_iter(const frame_record_t *framerec,
+			     void *data) {
+  dumping_t *dumping = data;
+  dump_hook_t dump = dumping->dump;
+  FILE *f = open_unk_frame_file(framerec);
+  dump(f, framerec->frame, framerec->framelen);
+  fclose(f);
+}
+
 void design_write_frames(const bitstream_parsed_t *parsed,
 			 const gchar *outdir) {
   dumping_t data;
@@ -101,4 +121,13 @@ void design_write_frames(const bitstream_parsed_t *parsed,
     data.naming = seq_frame_name;
 
   iterate_over_frames(parsed, design_write_frames_iter, &data);
+}
+
+void
+design_dump_frames(const bitstream_parsed_t *parsed,
+		   const gchar *outdir) {
+  dumping_t data;
+  data.dump = dump_bin;
+  data.naming = seq_frame_name;
+  iterate_over_unk_frames(parsed, design_write_unk_frames_iter, &data);
 }

@@ -54,6 +54,19 @@ typedef void (*frame_iterator_t)(const char *frame,
 void iterate_over_frames(const bitstream_parsed_t *parsed,
 			 frame_iterator_t iter, void *data);
 
+typedef struct _frame_record {
+  guint32 far;
+  guint32 offset;
+  unsigned framelen;
+  const char *frame;
+} frame_record_t;
+
+typedef void (*frame_unk_iterator_t)(const frame_record_t *frame,
+				     void *data);
+
+void iterate_over_unk_frames(const bitstream_parsed_t *parsed,
+			     frame_unk_iterator_t iter, void *itdat);
+
 /****
  * Bitstream frame indexing
  ****/

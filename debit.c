@@ -29,6 +29,7 @@
 #include "analysis.h"
 
 static gboolean framedump = FALSE;
+static gboolean unkdump = FALSE;
 static gboolean pipdump = FALSE;
 
 static gchar *ifile = NULL;
@@ -53,7 +54,10 @@ debit_file(gchar *input_file, gchar *output_dir) {
 
   /* Have some action */
   if (framedump)
-    design_write_frames(bit,NULL);
+    design_write_frames(bit, odir);
+
+  if (unkdump)
+    design_dump_frames(bit, odir);
 
   if (pipdump) {
     bitstream_analyzed_t *analysis = analyze_bitstream(bit, datadir);
@@ -77,6 +81,7 @@ static GOptionEntry entries[] =
   {"outdir", 'o', 0, G_OPTION_ARG_FILENAME, &odir, "Write data files in directory <odir>", "<odir>"},
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
   {"framedump", 'f', 0, G_OPTION_ARG_NONE, &framedump, "Dump raw data frames", NULL},
+  {"unkdump", 'u', 0, G_OPTION_ARG_NONE, &unkdump, "Dump raw data frames uninterpreted", NULL},
   {"pipdump", 'p', 0, G_OPTION_ARG_NONE, &pipdump, "Dump pips in the bitstream", NULL},
   { NULL }
 };

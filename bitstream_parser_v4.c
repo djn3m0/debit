@@ -260,13 +260,6 @@ default_register_write(bitstream_parser_t *parser,
 
 }
 
-typedef struct _frame_record {
-  guint32 far;
-  guint32 offset;
-  unsigned framelen;
-  const char *frame;
-} frame_record_t;
-
 static inline
 void record_frame(bitstream_parsed_t *parsed,
 		  bitstream_parser_t *bitstream,
@@ -314,6 +307,20 @@ iterate_over_frames(const bitstream_parsed_t *parsed,
 	iter(data, type, index, frame, itdat);
       }
     }
+  }
+}
+
+void
+iterate_over_unk_frames(const bitstream_parsed_t *parsed,
+			frame_unk_iterator_t iter, void *itdat) {
+  GArray *array = parsed->frame_array;
+  guint nframes = array->len, i;
+
+  /* Iterate over the whole thing */
+  for (i = 0; i < nframes; i++) {
+    frame_record_t *frame;
+    frame = &g_array_index (array, frame_record_t, i);
+    iter(frame, itdat);
   }
 }
 
