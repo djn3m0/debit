@@ -9,6 +9,7 @@
 
 #include "bitarray.h"
 #include "design.h"
+#include "design_v4.h"
 #include "bitheader.h"
 #include "bitstream_parser.h"
 #include "debitlog.h"
@@ -142,6 +143,7 @@ typedef struct _bitstream_parser {
   id_t type;
 
   /* Specific FDRI quirks */
+  gboolean fdri_direct_mode;
   const void *last_frame;
   unsigned far_offset;
 
@@ -235,8 +237,12 @@ update_crc(bitstream_parser_t *parser,
  ***/
 
 static inline void
-print_far(const guint32 far, const guint32 index) {
-  debit_log(L_BITSTREAM, "FAR is [%i, offset %i]", far, index);
+print_far(bitstream_parser_t *parser) {
+  const guint32 far = register_read(parser, FAR);
+  const guint32 index = parser->far_offset;
+  gchar far_name[32];
+  snprintf_far_v4(far_name, sizeof(far_name), far);
+  debit_log(L_BITSTREAM, "FAR is [%i, offset %i], %s", far, index, far_name);
 }
 
 static inline void
@@ -325,9 +331,49 @@ iterate_over_unk_frames(const bitstream_parsed_t *parsed,
 }
 
 static gint
-handle_fdri_write(bitstream_parsed_t *parsed,
-		  bitstream_parser_t *parser,
-		  const unsigned length) {
+handle_fdri_write_direct(bitstream_parsed_t *parsed,
+			 bitstream_parser_t *parser,
+			 const unsigned length) {
+  bytearray_t *ba = &parser->ba;
+  const gchar *frame = bytearray_get_ptr(ba);
+  const guint frame_len = frame_length(parser);
+  guint i, nrframes;
+  guint32 last_far = 0;
+
+  /* Frame length writes must be a multiple of the flr length */
+  if (length % frame_len) {
+    debit_log(L_BITSTREAM,"%i bytes in FDRI write, "
+	      "which is inconsistent with the FLR value %i",
+	      length, frame_len);
+    return -1;
+  }
+
+  nrframes = length / frame_len;
+
+  /* We handle here a complete series of writes, so that we have
+     the ability to see the start and end frames */
+  last_far = register_read(parser, FAR);
+
+  for (i = 0; i < nrframes; i++) {
+
+    /* V4 has no flush frame - yeepee ! */
+    parser->last_frame = frame;
+    record_frame(parsed, parser, last_far);
+
+    /* evolution of the state machine */
+    far_increment(parser);
+    frame += frame_len * sizeof(guint32);
+  }
+
+  debit_log(L_BITSTREAM,"%i frames written to fdri", i);
+
+  return length;
+}
+
+static gint
+handle_fdri_write_flush(bitstream_parsed_t *parsed,
+			bitstream_parser_t *parser,
+			const unsigned length) {
   bytearray_t *ba = &parser->ba;
   const gchar *frame = bytearray_get_ptr(ba);
   const guint frame_len = frame_length(parser);
@@ -353,21 +399,45 @@ handle_fdri_write(bitstream_parsed_t *parsed,
     /* The first write of a FDRI write in WCFG mode does not flush the
        previous writes. As I don't know what other modes may be on, be
        conservative wrt to mode setting */
-    if (i != 0)
-      /* flush the previous frame into the frame array with the previous FAR
-	 address */
+    if (i != 0) {
+      /* flush the previous frame into the frame array with the previous
+	 FAR address */
       record_frame(parsed, parser, last_far);
+      far_increment(parser);
+    }
 
     parser->last_frame = frame;
-
-    /* evolution of the state machine */
-    far_increment(parser);
     frame += frame_len * sizeof(guint32);
   }
 
   debit_log(L_BITSTREAM,"%i frames written to fdri", i);
 
   return length;
+}
+
+static gint
+handle_fdri_write(bitstream_parsed_t *parsed,
+		  bitstream_parser_t *parser,
+		  const unsigned length) {
+  if (parser->fdri_direct_mode)
+    return handle_fdri_write_direct(parsed,parser,length);
+  return handle_fdri_write_flush(parsed,parser,length);
+}
+
+static void
+handle_far_write(bitstream_parser_t *parser) {
+  cmd_code_t cmd = register_read(parser, CMD);
+  debit_log(L_BITSTREAM,"FAR write resetting the far offset");
+  far_offset_reset(parser);
+  print_far(parser);
+  if (cmd == CMD_NULL) {
+    /* This is "direct mode" for FDRI write */
+    debit_log(L_BITSTREAM,"FAR write with NULL command activating direct FDRI mode");
+    parser->fdri_direct_mode = TRUE;
+  } else {
+    debit_log(L_BITSTREAM,"FAR write with standard command disabling FDRI mode");
+    parser->fdri_direct_mode = FALSE;
+  }
 }
 
 static gint
@@ -593,8 +663,7 @@ read_next_token(bitstream_parsed_t *parsed,
 	/* no AutoCRC processing in v4 */
 	break;
       case FAR:
-	debit_log(L_BITSTREAM,"FAR write resetting the far offset");
-	far_offset_reset(parser);
+	handle_far_write(parser);
 	debit_log(L_BITSTREAM,"FAR write reexecuting CMD register");
 	/* Fall-through to CMD register action */
       case CMD:

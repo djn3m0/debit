@@ -11,6 +11,7 @@
 //#include "virtex2_config.h"
 #include "bitstream_parser.h"
 #include "design.h"
+#include "design_v4.h"
 
 static const
 char *type_names[V2C__NB_CFG] = {
@@ -23,16 +24,35 @@ char *type_names[V2C__NB_CFG] = {
 };
 
 typedef void (*dump_hook_t)(FILE *out, const void *_data, const unsigned num);
-static void dump_bin(FILE *out, const void *_data, const unsigned num);
+static void dump_bin_rev(FILE *out, const void *_data, const unsigned num);
 
 static void
-dump_bin(FILE *out, const void *_data, const unsigned num) {
+dump_bin_rev(FILE *out, const void *_data, const unsigned num) {
   const unsigned char *const data = _data;
   unsigned i;
   for( i = 0; i < num; i++) {
     unsigned char atom = data[num-1-i];
     putc(atom, out);
   }
+}
+
+static inline void
+dump_32be(FILE *out, const uint32_t dat) {
+  unsigned i;
+  /* dump le first */
+  for( i = 0; i < 4; i++) {
+    unsigned char atom;
+    atom = (dat >> (8 * (3-i))) & 0xff;
+    putc(atom, out);
+  }
+}
+
+static void
+dump_bin(FILE *out, const void *_data, const unsigned num) {
+  const uint32_t *const data = _data;
+  unsigned i;
+  for( i = 0; i < num / sizeof(uint32_t); i++)
+    dump_32be(out, GUINT32_FROM_LE(data[i]));
 }
 
 typedef void (*naming_hook_t)(char *buf, unsigned buf_len,
@@ -55,7 +75,9 @@ static FILE *
 open_unk_frame_file(const frame_record_t *frame) {
   FILE *f;
   char fn[64];
-  snprintf(fn, sizeof(fn), "frame_%i_%i.bin", frame->far, frame->offset);
+  char farname[64];
+  snprintf_far_v4(farname, sizeof(farname), frame->far);
+  snprintf(fn, sizeof(fn), "frame_%s_%i.bin", farname, frame->offset);
   f = fopen(fn, "w");
   return f;
 }
@@ -105,7 +127,7 @@ design_write_unk_frames_iter(const frame_record_t *framerec,
   dumping_t *dumping = data;
   dump_hook_t dump = dumping->dump;
   FILE *f = open_unk_frame_file(framerec);
-  dump(f, framerec->frame, framerec->framelen);
+  dump(f, framerec->frame, framerec->framelen * sizeof(uint32_t));
   fclose(f);
 }
 
@@ -113,7 +135,7 @@ void design_write_frames(const bitstream_parsed_t *parsed,
 			 const gchar *outdir) {
   dumping_t data;
 
-  data.dump = dump_bin;
+  data.dump = dump_bin_rev;
 
   if (TRUE)
     data.naming = typed_frame_name;
