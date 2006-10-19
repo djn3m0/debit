@@ -1,4 +1,4 @@
-SUBDIRS = data debian rpm windows altera utils xiledit desktop
+SUBDIRS = data debian doc rpm windows altera utils xiledit desktop
 
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\"
 AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
@@ -93,7 +93,7 @@ DOCSOURCES=$(shell find ./ -name '*.c' -or -name '*.h')
 DOXYCONFIG=doc/doxygen.cfg
 DOXYDIR=doc
 
-doc: $(DOCSOURCES) $(DOXYCONFIG)
+doxy: $(DOCSOURCES) $(DOXYCONFIG)
 	doxygen $(DOXYCONFIG) #&& make -C $(DOXYDIR)/latex/
 
 DPKG_SOURCE_EXCLUDE=-i'(trash|.git)' -Itrash -I.git

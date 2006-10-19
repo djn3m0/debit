@@ -82,5 +82,6 @@ AC_CONFIG_FILES([Makefile data/Makefile \
 		altera/Makefile \
 		utils/Makefile utils/correlation/Makefile \
 		xiledit/Makefile \
-		desktop/Makefile desktop/artwork/Makefile])
+		desktop/Makefile desktop/artwork/Makefile
+		doc/Makefile doc/man/Makefile])
 AC_OUTPUT

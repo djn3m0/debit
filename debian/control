@@ -1,5 +1,5 @@
 Source: debit
-Section: unstable
+Section: contrib/electronics
 Priority: optional
 Maintainer: Jean-Baptiste Note <jean-baptiste.note@m4x.org>
 Build-Depends: debhelper (>= 5), autotools-dev

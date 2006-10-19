@@ -1,22 +1,11 @@
 This package was debianized by Jean-Baptiste Note <jean-baptiste.note@m4x.org> on
 Wed, 19 Jul 2006 15:36:28 +0200.
 
-It was downloaded from <fill in http/ftp site>
+It was downloaded from http://www.ulogic.org/trac
 
-Upstream Author: <put author(s) name and email here>
+Upstream Author: Jean-Baptiste Note <jean-baptiste.note@m4x.org>
 
-Copyright: <put the year(s) of the copyright, and the names of the
-            copyright holder(s) here>
+Copyright: 2006, Jean-Baptiste Note
 
-License:
-
-<Put the license of the package here>
-
-
-The Debian packaging is (C) 2006, Jean-Baptiste Note <jean-baptiste.note@m4x.org> and
-is licensed under the GPL, see `/usr/share/common-licenses/GPL'.
-
-
-# Please also look if there are files or directories which have a
-# different copyright/license attached and list them here.
+License: GPL, see `/usr/share/common-licenses/GPL'
 

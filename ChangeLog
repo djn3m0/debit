@@ -1,0 +1,8 @@
+2006-10-19  Jean-Baptiste Note  <jean-baptiste.note@m4x.org>
+
+	Start to fill in the changelog, essentially so that the debian
+	packages do validate agains lintian.
+
+	* doc/man: add the start of a man page for debit
+
+
