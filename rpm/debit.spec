@@ -5,11 +5,10 @@ Release: 1
 Vendor: Jean-Baptiste Note <jean-baptiste.note@m4x.org>
 License: GPL
 Group: Applications/Engineering
+URL: http://www.ulogic.org/trac
 Source: %{name}-%{version}.tar.gz
-Provides: %{name} = %{version}
 BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
-# We're not including here utils needed to rebuild the whole bunch of files,
-# only what's required to build from the dist tarball
+# what's required to build from the dist tarball
 BuildRequires: gcc
 BuildRequires: pkgconfig
 BuildRequires: glib-devel
@@ -54,37 +53,38 @@ update-mime-database %{_datadir}/mime || :
 
 %files
 %defattr(-,root,root)
-%dir "/"
-%dir "/usr/"
-%dir "/usr/bin/"
-/usr/bin/*
 
-%dir %{_datadir}/applications/
+%doc AUTHORS COPYING README
+%{_bindir}/*
 %{_datadir}/applications/%{name}.desktop
-
-%dir %{_datadir}/mime
-%dir %{_datadir}/mime/packages
 %{_datadir}/mime/packages/%{name}.xml
-
-%dir %{_datadir}
-%dir %{_datadir}/icons/
-%dir %{_datadir}/icons/hicolor/
-%dir %{_datadir}/icons/hicolor/48x48/
-%dir %{_datadir}/icons/hicolor/48x48/apps/
-%{_datadir}/icons/hicolor/48x48/apps/*
-
-%dir %{_datadir}/icons/hicolor/32x32/
-%dir %{_datadir}/icons/hicolor/32x32/apps/
-%{_datadir}/icons/hicolor/32x32/apps/*
-
-%dir %{_datadir}/icons/hicolor/48x48/mimetypes
-%{_datadir}/icons/hicolor/48x48/mimetypes/*
+%{_datadir}/icons/*/*/*/*
 
 %files data
+
+%doc AUTHORS COPYING README
 %dir %{_datadir}/%{name}
 %{_datadir}/%{name}/*
+%{_mandir}/*/*
 
 %changelog
+* Fri Oct 20 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org> - 0.1-1
+- Fix some rpmlint errors and warnings
+W: debit no-version-in-last-changelog
+W: debit no-url-tag
+E: debit useless-explicit-provides debit
+W: debit no-documentation
+E: debit standard-dir-owned-by-package /usr/bin
+E: debit standard-dir-owned-by-package /usr/share/icons
+E: debit standard-dir-owned-by-package /usr
+E: debit standard-dir-owned-by-package /
+E: debit standard-dir-owned-by-package /usr/share
+W: debit-data no-version-in-last-changelog
+W: debit-data no-url-tag
+W: debit-data no-documentation
+W: debit-debuginfo no-version-in-last-changelog
+W: debit-debuginfo no-url-tag
+
 * Fri Sep 29 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
 - Include desktop files
 
