@@ -1,13 +1,13 @@
 Summary: Reverse-engeneering tools for xilinx bitstreams
 Name: debit
 Version: 0.1
-Release: 1
+Release: 2%{?dist}
 Vendor: Jean-Baptiste Note <jean-baptiste.note@m4x.org>
 License: GPL
 Group: Applications/Engineering
 URL: http://www.ulogic.org/trac
 Source: %{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-buildroot
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # what's required to build from the dist tarball
 BuildRequires: gcc
 BuildRequires: pkgconfig
@@ -68,6 +68,10 @@ update-mime-database %{_datadir}/mime || :
 %{_mandir}/*/*
 
 %changelog
+* Sun Oct 22 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org> - 0.1-2
+- Set the buildroot as per FedoraCore recommendations
+- Set the distribution in the release name as per FedoraCore recommendations
+
 * Fri Oct 20 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org> - 0.1-1
 - Fix some rpmlint errors and warnings
 W: debit no-version-in-last-changelog
