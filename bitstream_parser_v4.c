@@ -552,49 +552,10 @@ iterate_over_unk_frames(const bitstream_parsed_t *parsed,
   }
 }
 
-/* static gint */
-/* handle_fdri_write_direct(bitstream_parsed_t *parsed, */
-/* 			 bitstream_parser_t *parser, */
-/* 			 const unsigned length) { */
-/*   bytearray_t *ba = &parser->ba; */
-/*   const gchar *frame = bytearray_get_ptr(ba); */
-/*   const guint frame_len = frame_length(parser); */
-/*   guint i, nrframes; */
-/*   guint32 last_far = 0; */
-
-/*   /\* Frame length writes must be a multiple of the flr length *\/ */
-/*   if (length % frame_len) { */
-/*     debit_log(L_BITSTREAM,"%i bytes in FDRI write, " */
-/* 	      "which is inconsistent with the FLR value %i", */
-/* 	      length, frame_len); */
-/*     return -1; */
-/*   } */
-
-/*   nrframes = length / frame_len; */
-
-/*   /\* We handle here a complete series of writes, so that we have */
-/*      the ability to see the start and end frames *\/ */
-/*   for (i = 0; i < nrframes; i++) { */
-
-/*     /\* V4 has no flush frame - yeepee ! *\/ */
-/*     parser->last_frame = frame; */
-/*     last_far = register_read(parser, FAR); */
-/*     record_frame(parsed, parser, last_far); */
-
-/*     /\* evolution of the state machine *\/ */
-/*     far_increment(parser); */
-/*     frame += frame_len * sizeof(guint32); */
-/*   } */
-
-/*   debit_log(L_BITSTREAM,"%i frames written to fdri", i); */
-
-/*   return length; */
-/* } */
-
 static gint
-handle_fdri_write_flush(bitstream_parsed_t *parsed,
-			bitstream_parser_t *parser,
-			const unsigned length) {
+handle_fdri_write(bitstream_parsed_t *parsed,
+		  bitstream_parser_t *parser,
+		  const unsigned length) {
   bytearray_t *ba = &parser->ba;
   const gchar *frame = bytearray_get_ptr(ba);
   const guint frame_len = frame_length(parser);
@@ -635,29 +596,6 @@ handle_fdri_write_flush(bitstream_parsed_t *parsed,
   debit_log(L_BITSTREAM,"%i frames written to fdri", i);
 
   return length;
-}
-
-static gint
-handle_fdri_write(bitstream_parsed_t *parsed,
-		  bitstream_parser_t *parser,
-		  const unsigned length) {
-/*   if (parser->fdri_direct_mode) */
-/*     return handle_fdri_write_direct(parsed,parser,length); */
-  return handle_fdri_write_flush(parsed,parser,length);
-}
-
-static void
-handle_far_write(bitstream_parser_t *parser) {
-  cmd_code_t cmd = register_read(parser, CMD);
-  print_far(parser);
-  if (cmd == CMD_NULL) {
-    /* This is "direct mode" for FDRI write */
-    debit_log(L_BITSTREAM,"FAR write with NULL command activating direct FDRI mode");
-/*     parser->fdri_direct_mode = TRUE; */
-  } else {
-    debit_log(L_BITSTREAM,"FAR write with standard command disabling FDRI mode");
-/*     parser->fdri_direct_mode = FALSE; */
-  }
 }
 
 static gint
@@ -885,7 +823,7 @@ read_next_token(bitstream_parsed_t *parsed,
 	/* no AutoCRC processing in v4 */
 	break;
       case FAR:
-	handle_far_write(parser);
+	print_far(parser);
 	debit_log(L_BITSTREAM,"FAR write reexecuting CMD register");
 	/* Fall-through to CMD register action */
       case CMD:
