@@ -47,8 +47,10 @@ typedef struct {
 
 typedef enum _v4_col_type {
   V4_TYPE_CLB = 0,
-  V4_TYPE_BRAM,
   V4_TYPE_BRAM_INT,
+  V4_TYPE_BRAM,
+  V4_TYPE_CFG_CLB,
+  V4_TYPE_CFG_BRAM,
   V4__NB_COL_TYPES,
 } v4_col_type_t;
 
@@ -128,12 +130,12 @@ snprintf_far_v4(char *buf, const size_t buf_len,
 
 typedef enum {
   V4C_IOB = 0,
-  V4C_IOR,
   V4C_CLB,
   V4C_DSP48,
   V4C_GCLK,
   V4C_BRAM,
   V4C_BRAM_INT,
+  V4C_PAD,
   V4C__NB_CFG,
 } v4_design_col_t;
 

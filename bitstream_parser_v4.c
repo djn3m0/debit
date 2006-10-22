@@ -23,7 +23,6 @@ typedef enum _id_v4 {
 } id_v4vlx_t;
 
 #define VLX15_COL_MAX 29
-
 v4_design_col_t col_type_vlx15[VLX15_COL_MAX] = {
   /* This is only for the CLB frame types */
   V4C_IOB,
@@ -38,7 +37,7 @@ v4_design_col_t col_type_vlx15[VLX15_COL_MAX] = {
   V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
   /* V4C_BRAMINT, */
   V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_IOR,
+  V4C_IOB,
 };
 
 #define VLX25_COL_MAX 34
@@ -56,7 +55,7 @@ v4_design_col_t col_type_vlx25[VLX25_COL_MAX] = {
   V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
   /* V4C_BRAMINT, */
   V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_IOR,
+  V4C_IOB,
 };
 
 #define VLX40_COL_MAX 34
@@ -101,13 +100,14 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
   [XC4VLX15] = { .idcode = 0x01658093,
 		 .frame_count = {
 		   [V4C_IOB] = 30, /* 22 + 8 */
-		   [V4C_IOR] = 32,
 		   [V4C_GCLK] = 3,
 		   [V4C_CLB] = 22,
 		   [V4C_DSP48] = 21,
-		   /* Dunno */
 		   [V4C_BRAM] = 64,
-		   [V4C_BRAM_INT] = 22,
+		   [V4C_BRAM_INT] = 20,
+		   /* the padding frames are seen as a compulsory column
+		      of two frames at the end of any row */
+		   [V4C_PAD] = 2,
 		 },
 		 .framelen = 41,
 		 .col_count = {
@@ -205,12 +205,13 @@ char *cmd_names[__NUM_CMD_CODE] = {
 #endif
 
 typedef enum _cmd_pkt_ver {
-  TYPE_NULL = 0, TYPE_V1 = 1, TYPE_V2 = 2,
+  TYPE_V1 = 1, TYPE_V2 = 2,
 } cmd_pkt_ver_t;
 
 typedef enum _special_words {
   SYNCHRO = 0xAA995566U,
   NOOP    = 0x20000000U,
+  NULLPKT = 0x00000000U,
 } special_word_t;
 
 typedef struct _xil_register {
@@ -233,7 +234,7 @@ typedef struct _bitstream_parser {
   id_t type;
 
   /* Specific FDRI quirks */
-  gboolean fdri_direct_mode;
+/*   gboolean fdri_direct_mode; */
   const void *last_frame;
 
   /* Bitstream proper */
@@ -292,6 +293,13 @@ update_crc(bitstream_parser_t *parser,
   unsigned i;
   xil_register_t *crcreg = &parser->registers[CRC];
   guint32 bcc = crcreg->value;
+
+  switch (reg) {
+  case LOUT:
+    return;
+  default:
+    break;
+  }
 
   /* first go through the value bits */
   for (i=0; i < 32; i++)
@@ -376,13 +384,27 @@ _far_increment_col(bitstream_parser_t *bitstream,
   col = addr->col;
   col += 1;
 
-  if (col == col_count[type]) {
+  /* There are two pad columns */
+  if (col == col_count[type] + 1) {
     col = 0;
     _far_increment_row(bitstream, addr);
   }
 
   /* writeback the col value */
   addr->col = col;
+}
+
+static inline gboolean
+_far_is_pad(const bitstream_parser_t *bitstream,
+	    const sw_far_v4_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const unsigned *col_count = bitdescr[chiptype].col_count;
+  const v4_col_type_t type = addr->type;
+  unsigned col = addr->col;
+
+  if (col >= col_count[type])
+    return TRUE;
+  return FALSE;
 }
 
 /* Type is a bit strange -- it watches the type from the far and the col
@@ -393,6 +415,9 @@ static inline v4_design_col_t
 _type_of_far(bitstream_parser_t *bitstream, const sw_far_v4_t *addr) {
   const id_t chiptype = bitstream->type;
   const v4_col_type_t type = addr->type;
+
+  if (_far_is_pad(bitstream, addr))
+    return V4C_PAD;
 
   switch (type) {
   case V4_TYPE_CLB:
@@ -405,6 +430,9 @@ _type_of_far(bitstream_parser_t *bitstream, const sw_far_v4_t *addr) {
     return V4C_BRAM;
   case V4_TYPE_BRAM_INT:
     return V4C_BRAM_INT;
+  case V4_TYPE_CFG_CLB:
+  case V4_TYPE_CFG_BRAM:
+    g_print("Unknown frame type, please report your bitstream");
   default:
     g_assert_not_reached();
   }
@@ -441,7 +469,7 @@ far_increment_mna(bitstream_parser_t *bitstream) {
 static inline void
 far_increment(bitstream_parser_t *parser) {
   far_increment_mna(parser);
-  //  print_far(parser);
+  print_far(parser);
 }
 
 static inline void
@@ -457,9 +485,22 @@ default_register_write(bitstream_parser_t *parser,
   for (i = 0; i < length; i++) {
     guint32 val = bytearray_get_uint32(ba);
     update_crc(parser, reg, val);
-    /* XXX For v4 this is correct code. Check for others (v2) */
-    if (reg != CRC)
+
+    switch (reg) {
+    case CRC:
+      /* CRC write does not really write the crc register, only updates
+	 it as a side-effect */
+      break;
+    case LOUT: {
+      gchar far_name[32];
+      snprintf_far_v4(far_name, sizeof(far_name), val);
+      g_print("LOUT: %08x ", val);
+      g_print("LOUT as FAR is [%i], %s\n", val, far_name);
+      /* Fall through */
+    }
+    default:
       regp->value = val;
+    }
   }
   parser->active_length -= length;
 
@@ -511,44 +552,44 @@ iterate_over_unk_frames(const bitstream_parsed_t *parsed,
   }
 }
 
-static gint
-handle_fdri_write_direct(bitstream_parsed_t *parsed,
-			 bitstream_parser_t *parser,
-			 const unsigned length) {
-  bytearray_t *ba = &parser->ba;
-  const gchar *frame = bytearray_get_ptr(ba);
-  const guint frame_len = frame_length(parser);
-  guint i, nrframes;
-  guint32 last_far = 0;
+/* static gint */
+/* handle_fdri_write_direct(bitstream_parsed_t *parsed, */
+/* 			 bitstream_parser_t *parser, */
+/* 			 const unsigned length) { */
+/*   bytearray_t *ba = &parser->ba; */
+/*   const gchar *frame = bytearray_get_ptr(ba); */
+/*   const guint frame_len = frame_length(parser); */
+/*   guint i, nrframes; */
+/*   guint32 last_far = 0; */
 
-  /* Frame length writes must be a multiple of the flr length */
-  if (length % frame_len) {
-    debit_log(L_BITSTREAM,"%i bytes in FDRI write, "
-	      "which is inconsistent with the FLR value %i",
-	      length, frame_len);
-    return -1;
-  }
+/*   /\* Frame length writes must be a multiple of the flr length *\/ */
+/*   if (length % frame_len) { */
+/*     debit_log(L_BITSTREAM,"%i bytes in FDRI write, " */
+/* 	      "which is inconsistent with the FLR value %i", */
+/* 	      length, frame_len); */
+/*     return -1; */
+/*   } */
 
-  nrframes = length / frame_len;
+/*   nrframes = length / frame_len; */
 
-  /* We handle here a complete series of writes, so that we have
-     the ability to see the start and end frames */
-  for (i = 0; i < nrframes; i++) {
+/*   /\* We handle here a complete series of writes, so that we have */
+/*      the ability to see the start and end frames *\/ */
+/*   for (i = 0; i < nrframes; i++) { */
 
-    /* V4 has no flush frame - yeepee ! */
-    parser->last_frame = frame;
-    last_far = register_read(parser, FAR);
-    record_frame(parsed, parser, last_far);
+/*     /\* V4 has no flush frame - yeepee ! *\/ */
+/*     parser->last_frame = frame; */
+/*     last_far = register_read(parser, FAR); */
+/*     record_frame(parsed, parser, last_far); */
 
-    /* evolution of the state machine */
-    far_increment(parser);
-    frame += frame_len * sizeof(guint32);
-  }
+/*     /\* evolution of the state machine *\/ */
+/*     far_increment(parser); */
+/*     frame += frame_len * sizeof(guint32); */
+/*   } */
 
-  debit_log(L_BITSTREAM,"%i frames written to fdri", i);
+/*   debit_log(L_BITSTREAM,"%i frames written to fdri", i); */
 
-  return length;
-}
+/*   return length; */
+/* } */
 
 static gint
 handle_fdri_write_flush(bitstream_parsed_t *parsed,
@@ -579,14 +620,15 @@ handle_fdri_write_flush(bitstream_parsed_t *parsed,
     /* The first write of a FDRI write in WCFG mode does not flush the
        previous writes. As I don't know what other modes may be on, be
        conservative wrt to mode setting */
-    if (i != 0) {
+    if (i != 0)
       /* flush the previous frame into the frame array with the previous
 	 FAR address */
       record_frame(parsed, parser, last_far);
-      far_increment(parser);
-    }
 
+    last_far = register_read(parser, FAR);
     parser->last_frame = frame;
+
+    far_increment(parser);
     frame += frame_len * sizeof(guint32);
   }
 
@@ -599,8 +641,8 @@ static gint
 handle_fdri_write(bitstream_parsed_t *parsed,
 		  bitstream_parser_t *parser,
 		  const unsigned length) {
-  if (parser->fdri_direct_mode)
-    return handle_fdri_write_direct(parsed,parser,length);
+/*   if (parser->fdri_direct_mode) */
+/*     return handle_fdri_write_direct(parsed,parser,length); */
   return handle_fdri_write_flush(parsed,parser,length);
 }
 
@@ -611,10 +653,10 @@ handle_far_write(bitstream_parser_t *parser) {
   if (cmd == CMD_NULL) {
     /* This is "direct mode" for FDRI write */
     debit_log(L_BITSTREAM,"FAR write with NULL command activating direct FDRI mode");
-    parser->fdri_direct_mode = TRUE;
+/*     parser->fdri_direct_mode = TRUE; */
   } else {
     debit_log(L_BITSTREAM,"FAR write with standard command disabling FDRI mode");
-    parser->fdri_direct_mode = FALSE;
+/*     parser->fdri_direct_mode = FALSE; */
   }
 }
 
@@ -776,8 +818,12 @@ read_next_token(bitstream_parsed_t *parsed,
       pkt = bytearray_get_uint32(ba);
 
       /* catch a noop */
-      if (pkt == NOOP) {
+      switch (pkt) {
+      case NOOP:
 	debit_log(L_BITSTREAM,"Got NOOP packet");
+	return offset;
+      case NULLPKT:
+	debit_log(L_BITSTREAM,"Null packet while in state %i", state);
 	return offset;
       }
 
@@ -795,9 +841,6 @@ read_next_token(bitstream_parsed_t *parsed,
 	parser->active_length = wordc_of_v2pkt(pkt);
 	break;
       }
-      case TYPE_NULL:
-	debit_log(L_BITSTREAM,"Null packet %08x while in state %i", pkt, state);
-	break;
 
       default:
 	debit_log(L_BITSTREAM,"Unrecognized packet %08x while in state %i", pkt, state);
