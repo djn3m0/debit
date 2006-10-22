@@ -3,11 +3,12 @@
  * All rights reserved.
  */
 
-#include "bitarray.h"
-
 #ifndef _DESIGN_H
 #define _DESIGN_H
 
+#include <stdint.h>
+#include <glib.h>
+#include "bitarray.h"
 
 /* family specific */
 typedef enum {
@@ -107,117 +108,49 @@ get_hwfar(const sw_far_t *sw_far) {
 		(sw_far->ba  << FAR_BA_OFFSET));
 }
 
-/*
- * V1 packet type
- */
+/****
+ * Bitstream frame indexing
+ ****/
 
-typedef struct {
-  unsigned word_count :11;
-  unsigned __rsvd :2;
-  unsigned reg_addr :14;
-  unsigned rd :1;
-  unsigned wr :1;
-  unsigned type :3;
-} v2_packet1_t;
-
-#define V1_PKT_WORDC_OFFSET 0
-#define V1_PKT_WORDC_LEN 11
-#define V1_PKT_WORDC_MASK ((1<<V1_PKT_WORDC_LEN) - 1) << V1_PKT_WORDC_OFFSET
-
-#define V1_PKT_RSVD_OFFSET (V1_PKT_WORDC_OFFSET + V1_PKT_WORDC_LEN)
-#define V1_PKT_RSVD_LEN 2
-#define V1_PKT_RSVD_MASK ((1<<V1_PKT_RSVD_LEN) - 1) << V1_PKT_RSVD_OFFSET
-
-#define V1_PKT_REGA_OFFSET (V1_PKT_RSVD_OFFSET + V1_PKT_RSVD_LEN)
-#define V1_PKT_REGA_LEN 14
-#define V1_PKT_REGA_MASK ((1<<V1_PKT_REGA_LEN) - 1) << V1_PKT_REGA_OFFSET
-
-#define V1_PKT_RD_OFFSET (V1_PKT_REGA_OFFSET + V1_PKT_REGA_LEN)
-#define V1_PKT_RD_LEN 1
-#define V1_PKT_RD_MASK ((1<<V1_PKT_RD_LEN) - 1) << V1_PKT_RD_OFFSET
-
-#define V1_PKT_WR_OFFSET (V1_PKT_RD_OFFSET + V1_PKT_RD_LEN)
-#define V1_PKT_WR_LEN 1
-#define V1_PKT_WR_MASK ((1<<V1_PKT_WR_LEN) - 1) << V1_PKT_WR_OFFSET
-
-#define V1_PKT_TYPE_OFFSET (V1_PKT_WR_OFFSET + V1_PKT_WR_LEN)
-#define V1_PKT_TYPE_LEN 3
-#define V1_PKT_TYPE_MASK ((1<<V1_PKT_TYPE_LEN) - 1) << V1_PKT_TYPE_OFFSET
-
-static inline unsigned
-wordc_of_pkt1(const uint32_t pkt1) {
-  return (pkt1 & V1_PKT_WORDC_MASK) >> V1_PKT_WORDC_OFFSET;
-}
-
-static inline unsigned
-rsvd_of_pkt1(const uint32_t pkt1) {
-  return (pkt1 & V1_PKT_RSVD_MASK) >> V1_PKT_RSVD_OFFSET;
-}
-
-static inline unsigned
-rega_of_pkt1(const uint32_t pkt1) {
-  return (pkt1 & V1_PKT_REGA_MASK) >> V1_PKT_REGA_OFFSET;
-}
-
-static inline unsigned
-rd_of_pkt1(const uint32_t pkt1) {
-  return (pkt1 & V1_PKT_RD_MASK) >> V1_PKT_RD_OFFSET;
-}
-
-static inline unsigned
-wr_of_pkt1(const uint32_t pkt1) {
-  return (pkt1 & V1_PKT_WR_MASK) >> V1_PKT_WR_OFFSET;
-}
-
-static inline unsigned
-type_of_pkt1(const uint32_t pkt1) {
-  return (pkt1 & V1_PKT_TYPE_MASK) >> V1_PKT_TYPE_OFFSET;
-}
+void
+typed_frame_name(char *buf, unsigned buf_len,
+		 const unsigned type,
+		 const unsigned index,
+		 const unsigned frameid);
 
 /*
- * V2 packet type
+ * The frame index is a three-way lookup table. We choose for now to use
+ * a two-way lookup table to index the frames internally.
  */
-typedef struct {
-  unsigned word_count :27;
-  unsigned rd :1;
-  unsigned wr :1;
-  unsigned type :3;
-} v2_packet2_t;
 
-#define V2_PKT_WORDC_OFFSET 0
-#define V2_PKT_WORDC_LEN 27
-#define V2_PKT_WORDC_MASK ((1<<V2_PKT_WORDC_LEN) - 1) << V2_PKT_WORDC_OFFSET
+static inline
+const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
+			    const guint type,
+			    const guint index,
+			    const guint frame) {
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  const int *col_count = chip_struct->col_count;
+  const int *frame_count = chip_struct->frame_count;
+  g_assert(type < V2C__NB_CFG);
+  g_assert(index < col_count[type]);
+  g_assert(frame < frame_count[type]);
+  (void) col_count;
 
-#define V2_PKT_WR_OFFSET (V2_PKT_WORDC_OFFSET + V2_PKT_WORDC_LEN)
-#define V2_PKT_WR_LEN 1
-#define V2_PKT_WR_MASK ((1<<V2_PKT_WR_LEN) - 1) << V2_PKT_WR_OFFSET
-
-#define V2_PKT_RD_OFFSET (V2_PKT_WR_OFFSET + V2_PKT_WR_LEN)
-#define V2_PKT_RD_LEN 1
-#define V2_PKT_RD_MASK ((1<<V2_PKT_RD_LEN) - 1) << V2_PKT_RD_OFFSET
-
-#define V2_PKT_TYPE_OFFSET (V2_PKT_RD_OFFSET + V2_PKT_RD_LEN)
-#define V2_PKT_TYPE_LEN 3
-#define V2_PKT_TYPE_MASK ((1<<V2_PKT_TYPE_LEN) - 1) << V2_PKT_TYPE_OFFSET
-
-static inline unsigned
-wordc_of_v2pkt(const uint32_t v2pkt) {
-  return (v2pkt & V2_PKT_WORDC_MASK) >> V2_PKT_WORDC_OFFSET;
+  /* This is a double-lookup method */
+  return &parsed->frames[type][index * frame_count[type] + frame];
 }
 
-static inline unsigned
-rd_of_v2pkt(const uint32_t v2pkt) {
-  return (v2pkt & V2_PKT_RD_MASK) >> V2_PKT_RD_OFFSET;
-}
+/* FDRI handling. Requires FAR handling.
+   Registers a frame */
 
-static inline unsigned
-wr_of_v2pkt(const uint32_t v2pkt) {
-  return (v2pkt & V2_PKT_WR_MASK) >> V2_PKT_WR_OFFSET;
-}
-
-static inline unsigned
-type_of_v2pkt(const uint32_t v2pkt) {
-  return (v2pkt & V2_PKT_TYPE_MASK) >> V2_PKT_TYPE_OFFSET;
+static inline
+const gchar *get_frame(const bitstream_parsed_t *parsed,
+		       const guint type,
+		       const guint index,
+		       const guint frame) {
+  const gchar *frameptr = *get_frame_loc(parsed, type, index, frame);
+  g_assert(frameptr != NULL);
+  return frameptr;
 }
 
 #endif /* design.h */

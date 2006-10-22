@@ -1,14 +1,14 @@
 /*
  * (C) Copyright 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
  * All rights reserved.
- * Agnostic parser. Used for reverse-engineering.
+ * Virtex4 bitstream parser.
  */
 
 #include <glib.h>
 #include <string.h>
 
 #include "bitarray.h"
-#include "design.h"
+#include "bitstream_packets.h"
 #include "design_v4.h"
 #include "bitheader.h"
 #include "bitstream_parser.h"
@@ -22,11 +22,101 @@ typedef enum _id_v4 {
   XC4VLX200, XC4VLX__NUM,
 } id_v4vlx_t;
 
+#define VLX15_COL_MAX 29
+
+v4_design_col_t col_type_vlx15[VLX15_COL_MAX] = {
+  /* This is only for the CLB frame types */
+  V4C_IOB,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_DSP48,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_IOB, V4C_GCLK,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_IOR,
+};
+
+#define VLX25_COL_MAX 34
+v4_design_col_t col_type_vlx25[VLX25_COL_MAX] = {
+  /* This is only for the CLB frame types */
+  V4C_IOB,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_DSP48,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_IOB, V4C_GCLK,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_IOR,
+};
+
+#define VLX40_COL_MAX 34
+v4_design_col_t col_type_vlx40[VLX25_COL_MAX] = {
+  /* This is only for the CLB frame types */
+  V4C_IOB,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_DSP48,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_IOB, V4C_GCLK,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_IOB,
+};
+
+#define VLX60_COL_MAX 50
+v4_design_col_t col_type_vlx60[VLX60_COL_MAX] = {
+  /* This is only for the CLB frame types */
+  V4C_IOB,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_DSP48,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_IOB, V4C_GCLK,
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  /* V4C_BRAMINT, */
+  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
+  V4C_IOB,
+};
+
 static const
 chip_struct_t bitdescr[XC4VLX__NUM] = {
   /* FLR is always 41 for virtex-4 */
   [XC4VLX15] = { .idcode = 0x01658093,
-		 .framelen = 41, },
+		 .frame_count = {
+		   [V4C_IOB] = 30, /* 22 + 8 */
+		   [V4C_IOR] = 32,
+		   [V4C_GCLK] = 3,
+		   [V4C_CLB] = 22,
+		   [V4C_DSP48] = 21,
+		   /* Dunno */
+		   [V4C_BRAM] = 64,
+		   [V4C_BRAM_INT] = 22,
+		 },
+		 .framelen = 41,
+		 .col_count = {
+		   [V4_TYPE_CLB] = VLX15_COL_MAX,
+		   [V4_TYPE_BRAM] = 3,
+		   [V4_TYPE_BRAM_INT] = 3,
+		 },
+		 .col_type = col_type_vlx15,
+		 .row_count = 2, },
   [XC4VLX25] = { .idcode = 0x0167C093,
 		 .framelen = 41, },
   [XC4VLX40] = { .idcode = 0x016A4093,
@@ -115,7 +205,7 @@ char *cmd_names[__NUM_CMD_CODE] = {
 #endif
 
 typedef enum _cmd_pkt_ver {
-  V1 = 1, V2 =2,
+  TYPE_NULL = 0, TYPE_V1 = 1, TYPE_V2 = 2,
 } cmd_pkt_ver_t;
 
 typedef enum _special_words {
@@ -145,7 +235,6 @@ typedef struct _bitstream_parser {
   /* Specific FDRI quirks */
   gboolean fdri_direct_mode;
   const void *last_frame;
-  unsigned far_offset;
 
   /* Bitstream proper */
   bytearray_t ba;
@@ -158,16 +247,6 @@ typedef struct _bitstream_parser {
 static inline guint
 frame_length(const bitstream_parser_t *parser) {
   return 41;
-}
-
-static inline void
-far_increment(bitstream_parser_t *parser) {
-  parser->far_offset++;
-}
-
-static inline void
-far_offset_reset(bitstream_parser_t *parser) {
-  parser->far_offset = 0;
 }
 
 /***
@@ -236,13 +315,133 @@ update_crc(bitstream_parser_t *parser,
  * FAR -- no far decoding thus far.
  ***/
 
+/***
+ * FAR handling
+ */
+
 static inline void
 print_far(bitstream_parser_t *parser) {
   const guint32 far = register_read(parser, FAR);
-  const guint32 index = parser->far_offset;
   gchar far_name[32];
   snprintf_far_v4(far_name, sizeof(far_name), far);
-  debit_log(L_BITSTREAM, "FAR is [%i, offset %i], %s", far, index, far_name);
+  debit_log(L_BITSTREAM, "FAR is [%i], %s", far, far_name);
+}
+
+static inline void
+_far_increment_type(sw_far_v4_t *addr) {
+  addr->type++;
+}
+
+static inline void
+_far_increment_tb(sw_far_v4_t *addr) {
+  v4_tb_t tb = addr->tb;
+  switch (tb) {
+  case V4_TB_TOP:
+    addr->tb = V4_TB_BOTTOM;
+    break;
+  case V4_TB_BOTTOM:
+    addr->tb = V4_TB_TOP;
+    /* increase type */
+    _far_increment_type(addr);
+    break;
+  default:
+    g_assert_not_reached();
+  }
+}
+
+static inline void
+_far_increment_row(bitstream_parser_t *bitstream,
+		   sw_far_v4_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const unsigned row_count = bitdescr[chiptype].row_count;
+  unsigned row = addr->row;
+
+  row += 1;
+  if (row == row_count) {
+    row = 0;
+    _far_increment_tb(addr);
+  }
+
+  addr->row = row;
+}
+
+static inline void
+_far_increment_col(bitstream_parser_t *bitstream,
+		   sw_far_v4_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const unsigned *col_count = bitdescr[chiptype].col_count;
+  const v4_col_type_t type = addr->type;
+  guint col;
+
+  col = addr->col;
+  col += 1;
+
+  if (col == col_count[type]) {
+    col = 0;
+    _far_increment_row(bitstream, addr);
+  }
+
+  /* writeback the col value */
+  addr->col = col;
+}
+
+/* Type is a bit strange -- it watches the type from the far and the col
+   count, so as to get a mixed type which depends on both these
+   parameters. */
+
+static inline v4_design_col_t
+_type_of_far(bitstream_parser_t *bitstream, const sw_far_v4_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const v4_col_type_t type = addr->type;
+
+  switch (type) {
+  case V4_TYPE_CLB:
+    {
+      const int col = addr->col;
+      const v4_design_col_t *col_type = bitdescr[chiptype].col_type;
+      return col_type[col];
+    }
+  case V4_TYPE_BRAM:
+    return V4C_BRAM;
+  case V4_TYPE_BRAM_INT:
+    return V4C_BRAM_INT;
+  default:
+    g_assert_not_reached();
+  }
+
+  return -1;
+}
+
+static inline void
+_far_increment_mna(bitstream_parser_t *bitstream,
+		   sw_far_v4_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const int *frame_count = bitdescr[chiptype].frame_count;
+  const v4_design_col_t col_type = _type_of_far(bitstream, addr);
+  unsigned mna = addr->mna;
+
+  mna += 1;
+
+  if (mna == frame_count[col_type]) {
+    mna = 0;
+    _far_increment_col(bitstream, addr);
+  }
+
+  addr->mna = mna;
+}
+
+static inline void
+far_increment_mna(bitstream_parser_t *bitstream) {
+  sw_far_v4_t far;
+  fill_swfar_v4(&far, register_read(bitstream, FAR));
+  _far_increment_mna(bitstream, &far);
+  register_write(bitstream, FAR, get_hwfar_v4(&far));
+}
+
+static inline void
+far_increment(bitstream_parser_t *parser) {
+  far_increment_mna(parser);
+  //  print_far(parser);
 }
 
 static inline void
@@ -273,7 +472,6 @@ void record_frame(bitstream_parsed_t *parsed,
   const char *dataframe = bitstream->last_frame;
   frame_record_t framerec;
   framerec.far = myfar;
-  framerec.offset = bitstream->far_offset;
   framerec.framelen = 41;
   framerec.frame = dataframe;
   /* record the framerec */
@@ -296,24 +494,7 @@ free_indexer(bitstream_parsed_t *parsed) {
 void
 iterate_over_frames(const bitstream_parsed_t *parsed,
 		    frame_iterator_t iter, void *itdat) {
-  const chip_struct_t *chip_struct = parsed->chip_struct;
-  const int *col_counts = chip_struct->col_count;
-  const int *frame_counts = chip_struct->frame_count;
-  guint type, index, frame;
-
-  /* Iterate over the whole thing */
-  for (type = 0; type < V2C__NB_CFG; type++) {
-    const guint col_count = col_counts[type];
-
-    for (index = 0; index < col_count; index++) {
-      const guint frame_count = frame_counts[type];
-
-      for (frame = 0; frame < frame_count; frame++) {
-	const gchar *data = get_frame(parsed, type, index, frame);
-	iter(data, type, index, frame, itdat);
-      }
-    }
-  }
+  return;
 }
 
 void
@@ -352,12 +533,11 @@ handle_fdri_write_direct(bitstream_parsed_t *parsed,
 
   /* We handle here a complete series of writes, so that we have
      the ability to see the start and end frames */
-  last_far = register_read(parser, FAR);
-
   for (i = 0; i < nrframes; i++) {
 
     /* V4 has no flush frame - yeepee ! */
     parser->last_frame = frame;
+    last_far = register_read(parser, FAR);
     record_frame(parsed, parser, last_far);
 
     /* evolution of the state machine */
@@ -427,8 +607,6 @@ handle_fdri_write(bitstream_parsed_t *parsed,
 static void
 handle_far_write(bitstream_parser_t *parser) {
   cmd_code_t cmd = register_read(parser, CMD);
-  debit_log(L_BITSTREAM,"FAR write resetting the far offset");
-  far_offset_reset(parser);
   print_far(parser);
   if (cmd == CMD_NULL) {
     /* This is "direct mode" for FDRI write */
@@ -605,19 +783,20 @@ read_next_token(bitstream_parsed_t *parsed,
 
       /* v1 or v2 packet */
       switch (type_of_pkt1(pkt)) {
-      case V1: {
+      case TYPE_V1: {
 	debit_log(L_BITSTREAM,"Got V1 packet");
 	parser->active_register = rega_of_pkt1(pkt);
 	parser->active_length = wordc_of_pkt1(pkt);
 	parser->write__read = wr_of_pkt1(pkt);
 	break;
       }
-      case V2: {
+      case TYPE_V2: {
 	debit_log(L_BITSTREAM,"Got V2 packet");
 	parser->active_length = wordc_of_v2pkt(pkt);
 	break;
       }
-      case NOOP:
+      case TYPE_NULL:
+	debit_log(L_BITSTREAM,"Null packet %08x while in state %i", pkt, state);
 	break;
 
       default:

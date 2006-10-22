@@ -413,6 +413,25 @@ update_crc(bitstream_parser_t *parser,
  * FAR
  ***/
 
+static const
+char *type_names[V2C__NB_CFG] = {
+  [V2C_IOB] = "IOB",
+  [V2C_IOI] = "IOI",
+  [V2C_CLB] = "CLB",
+  [V2C_BRAM] = "BRAM",
+  [V2C_BRAM_INT] = "BRAM_INT",
+  [V2C_GCLK] = "GCLK",
+};
+
+void
+typed_frame_name(char *buf, unsigned buf_len,
+		 const unsigned type,
+		 const unsigned index,
+		 const unsigned frameid) {
+  snprintf(buf, buf_len, "frame_%s_%02x_%02x",
+	   type_names[type], index, frameid);
+}
+
 static inline void
 print_far(sw_far_t *far) {
   debit_log(L_BITSTREAM, "FAR is [ba %i, mja %i, mna %i, bn %i]",
