@@ -4,7 +4,7 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 
-    <!ENTITY debit "<command>debit</command>">
+    <!ENTITY diff_bin_pos "<command>diff_bin_pos</command>">
 ]>
 
 <refentry>
@@ -34,77 +34,58 @@
 </refentryinfo>
 
 <refmeta>
-	<refentrytitle>debit</refentrytitle>
+	<refentrytitle>diff_bin_pos</refentrytitle>
 	<manvolnum>1</manvolnum>
 </refmeta>
 
 <refnamediv>
-	<refname>debit</refname>
-	<refpurpose>command line Xilinx bitstream interpretation tool</refpurpose>
+	<refname>diff_bin_pos</refname>
+	<refpurpose>command line bitwise file comparison tool</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
-	<cmdsynopsis>
-	<command>debit</command>
-		<group choice="opt">
-			<arg choice="plain"><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></arg>
-			<arg choice="plain"><option>--outdir <replaceable class="option">DIRECTORY</replaceable></option></arg>
-			<arg choice="plain"><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></arg>
-			<arg choice="plain"><option>--framedump</option></arg>
-			<arg choice="plain"><option>--pipdump</option></arg>
-		</group>
-		<group choice="req">
-			<arg choice="plain"><option>--input</option><replaceable>BITSTREAM-FILE</replaceable></arg>
-		</group>
-	</cmdsynopsis>
-	<cmdsynopsis>
-		<command>debit</command>
-		<arg choice="plain"><option>--help</option></arg>
-	</cmdsynopsis>
+  <cmdsynopsis>
+    <command>diff_bin_pos</command>
+    <group choice="opt">
+      <arg choice="plain"><option>--chomp <replaceable class="option">NBITS</replaceable></option></arg>
+      <arg choice="plain"><option>--valdump</option></arg>
+    </group>
+    <group choice="req">
+      <arg choice="plain" rep="repeat"><replaceable>FILES</replaceable></arg>
+    </group>
+  </cmdsynopsis>
+  <cmdsynopsis>
+    <command>diff_bin_pos</command>
+    <arg choice="plain"><option>--help</option></arg>
+  </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsect1 id="description">
 	<title>DESCRIPTION</title>
 	<para>
-		The &debit; program parses one xilinx bitstream
+		The &diff_bin_pos; program compares the two files
 		specified on the command line as
-		<replaceable>BITSTREAM-FILE</replaceable>. It prints
-		various types of output, depending upon the options
-		selected. Its ultimate purpose is to generate a full
-		netlist from the bitstream.
+		<replaceable>FILES</replaceable> bit-by-bit. It prints
+		the differing bit offsets along with the bit values if
+		the <option>--valdump</option> option is selected.  You
+		can tell it to ignore bits from the end-of-files in the
+		<option>--chomp</option> argument.
 	</para>
 </refsect1>
 
 <refsect1 id="options">
 	<title>OPTIONS</title>
 	<para>
-		&debit; accepts the following options (in alphabetical order):
+		&diff_bin_pos; accepts the following options (in alphabetical order):
 	</para>
 
 	<variablelist>
 
 		<varlistentry>
-	<term><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></term>
+	<term><option>--chomp <replaceable class="option">NBITS</replaceable></option></term>
 	<listitem>
-	  <para>Read debit's database files from
-	  <replaceable>DIRECTORY</replaceable> instread of the default
-	  compile-time location. Use with care !</para>
-	</listitem>
-		</varlistentry>
-
-		<varlistentry>
-	<term><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></term>
-	<listitem>
-	  <para>Selectively enable debugging according to the <replaceable>DEBUGMASK</replaceable>.</para>
-	</listitem>
-		</varlistentry>
-
-		<varlistentry>
-	<term><option>--framedump</option></term>
-	<listitem>
-	  <para>Dump individual bitstream frames. For frames programmed
-	  several times (can happen with FreezeDCI option), the last
-	  frame is dumped</para>
+		<para>Drop NBITS from the end of the files; they will
+		not be taken into account for comparison</para>
 	</listitem>
 		</varlistentry>
 
@@ -116,18 +97,9 @@
 		</varlistentry>
 
 		<varlistentry>
-	<term><option>--outdir <replaceable class="option">DIRECTORY</replaceable></option></term>
+	<term><option>--valdump</option></term>
 	<listitem>
-	  <para>Put generated files (if any) in
-	  <replaceable>DIRECTORY</replaceable>.</para>
-	</listitem>
-		</varlistentry>
-
-		<varlistentry>
-	<term><option>--pipdump</option></term>
-	<listitem>
-	  <para>Gross command dumping everything known: pips, lut
-	  contents, bram data contents</para>
+		<para>Display bit values on differing bits</para>
 	</listitem>
 		</varlistentry>
 
@@ -137,23 +109,34 @@
 <refsect1 id="diagnostics">
 	<title>DIAGNOSTICS</title>
 	<para>
-		&debit; return codes provide information that can be used when
+		&diff_bin_pos; return codes provide information that can be used when
 		calling it from scripts.
 	</para>
-
+	<!-- better use segmentedlist element later,
+	     which is currently only supported in snapshots -->
 	<variablelist>
 
 		<varlistentry>
 	<term><errorcode>0</errorcode></term>
 	<listitem>
-		<para>No error</para>
+		<para>No error, files identical in the region where they
+		have been compared</para>
 	</listitem>
 		</varlistentry>
 
 		<varlistentry>
 	<term><errorcode>-1</errorcode></term>
 	<listitem>
-		<para>Something wrong happened</para>
+		<para>System error opening files, or file sizes are different</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><errorcode>k</errorcode></term>
+	<listitem>
+		<para>No error, files are different, and they differ by
+		thus many bits (good practice does not recommend doing
+		this...)</para>
 	</listitem>
 		</varlistentry>
 
@@ -172,7 +155,7 @@
 	  <manvolnum>1</manvolnum>
 	</citerefentry>,
 	<citerefentry>
-	  <refentrytitle>diff_bin_pos</refentrytitle>
+	  <refentrytitle>debit</refentrytitle>
 	  <manvolnum>1</manvolnum>
 	</citerefentry>,
 	<citerefentry>
@@ -188,6 +171,4 @@
 
 <!-- W: debit: binary-without-manpage bit2pdf -->
 <!-- W: debit: binary-without-manpage bitisolation -->
-<!-- W: debit: binary-without-manpage debit -->
-<!-- W: debit: binary-without-manpage diff_bin_pos -->
 <!-- W: debit: binary-without-manpage xiledit -->
