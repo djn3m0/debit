@@ -130,6 +130,7 @@ typedef enum _cmd_pkt_ver {
 typedef enum _special_words {
   SYNCHRO = 0xAA995566U,
   NOOP    = 0x20000000U,
+  NULLPKT = 0x00000000U,
 } special_word_t;
 
 typedef struct _xil_register {
@@ -267,9 +268,21 @@ default_register_write(bitstream_parser_t *parser,
   for (i = 0; i < length; i++) {
     guint32 val = bytearray_get_uint32(ba);
     update_crc(parser, reg, val);
-    /* XXX For v4 this is correct code. Check for others (v2) */
-    if (reg != CRC)
+    switch (reg) {
+    case CRC:
+      /* CRC write does not really write the crc register, only updates
+	 it as a side-effect */
+      break;
+    case LOUT: {
+      gchar far_name[32];
+      snprintf_far_v5(far_name, sizeof(far_name), val);
+      g_print("LOUT: %08x\n", val);
+      g_print("LOUT as FAR is [%i], %s\n", val, far_name);
+      /* Fall through */
+    }
+    default:
       regp->value = val;
+    }
   }
   parser->active_length -= length;
 
@@ -554,9 +567,15 @@ read_next_token(bitstream_parsed_t *parsed,
       pkt = bytearray_get_uint32(ba);
 
       /* catch a noop */
-      if (pkt == NOOP) {
+      switch (pkt) {
+      case NOOP:
 	debit_log(L_BITSTREAM,"Got NOOP packet");
 	return offset;
+      case NULLPKT:
+	debit_log(L_BITSTREAM,"Got NULL packet");
+	return offset;
+      default:
+	break;
       }
 
       /* v1 or v2 packet */
