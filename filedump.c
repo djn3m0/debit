@@ -8,20 +8,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-//#include "virtex2_config.h"
 #include "bitstream_parser.h"
-#include "design.h"
-#include "design_v4.h"
-
-static const
-char *type_names[V2C__NB_CFG] = {
-  [V2C_IOB] = "IOB",
-  [V2C_IOI] = "IOI",
-  [V2C_CLB] = "CLB",
-  [V2C_BRAM] = "BRAM",
-  [V2C_BRAM_INT] = "BRAM_INT",
-  [V2C_GCLK] = "GCLK",
-};
+//#include "design.h"
+#include "design_v5.h"
 
 typedef void (*dump_hook_t)(FILE *out, const void *_data, const unsigned num);
 static void dump_bin_rev(FILE *out, const void *_data, const unsigned num);
@@ -76,8 +65,8 @@ open_unk_frame_file(const frame_record_t *frame) {
   FILE *f;
   char fn[64];
   char farname[64];
-  snprintf_far_v4(farname, sizeof(farname), frame->far);
-  snprintf(fn, sizeof(fn), "frame_%s_%i.bin", farname, frame->offset);
+  snprintf_far_v5(farname, sizeof(farname), frame->far);
+  snprintf(fn, sizeof(fn), "frame_%s.bin", farname);
   f = fopen(fn, "w");
   return f;
 }
@@ -89,15 +78,6 @@ seq_frame_name(char *buf, unsigned buf_len,
 	       const unsigned frameid) {
   snprintf(buf, buf_len, "frame_%02x_%02x_%02x",
 	   type, index, frameid);
-}
-
-static void
-typed_frame_name(char *buf, unsigned buf_len,
-		 const unsigned type,
-		 const unsigned index,
-		 const unsigned frameid) {
-  snprintf(buf, buf_len, "frame_%s_%02x_%02x",
-	   type_names[type], index, frameid);
 }
 
 typedef struct _dumping {
@@ -136,12 +116,7 @@ void design_write_frames(const bitstream_parsed_t *parsed,
   dumping_t data;
 
   data.dump = dump_bin_rev;
-
-  if (TRUE)
-    data.naming = typed_frame_name;
-  else
-    data.naming = seq_frame_name;
-
+  data.naming = seq_frame_name;
   iterate_over_frames(parsed, design_write_frames_iter, &data);
 }
 

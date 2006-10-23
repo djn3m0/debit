@@ -214,11 +214,12 @@ query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
 			 const csite_descr_t *site,
 			 const guint cfgbit) {
   /* first indirected implementation */
+  const chip_struct_t *chip_struct = bitstream->chip_struct;
   const guint site_type = site->type;
   const guint x = site->type_coord.x;
   const guint y = site->type_coord.y;
   const guint y_width = type_bits[site_type].y_width;
-  const guint flen = bitstream->chip_struct->framelen * sizeof(uint32_t);
+  const guint flen = chip_struct->framelen * sizeof(uint32_t);
   const gint y_offset = type_bits[site_type].y_offset;
 
   /* site offset in the y axis -- inverted. Should not be done here maybe */
@@ -276,11 +277,12 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 			  const csite_descr_t *site,
 			  const int cfgbyte) {
   /* first indirected implementation */
+  const chip_struct_t *chip_struct = bitstream->chip_struct;
   const guint site_type = site->type;
   const guint x = site->type_coord.x;
   const guint y = site->type_coord.y;
   const guint y_width = type_bits[site_type].y_width;
-  const guint flen = bitstream->chip_struct->framelen * sizeof(uint32_t);
+  const guint flen = chip_struct->framelen * sizeof(uint32_t);
   const gint y_offset = type_bits[site_type].y_offset;
 
   /* site offset in the y axis -- inverted. Should not be done here maybe */
