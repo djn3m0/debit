@@ -14,6 +14,8 @@
 #include "bitstream_parser.h"
 #include "debitlog.h"
 
+#include "v4_bitstreams.h"
+
 typedef enum _id_v4 {
   XC4VLX15 = 0,
   XC4VLX25, XC4VLX40,
@@ -21,78 +23,6 @@ typedef enum _id_v4 {
   XC4VLX100, XC4VLX160,
   XC4VLX200, XC4VLX__NUM,
 } id_v4vlx_t;
-
-#define VLX15_COL_MAX 29
-v4_design_col_t col_type_vlx15[VLX15_COL_MAX] = {
-  /* This is only for the CLB frame types */
-  V4C_IOB,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_DSP48,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_IOB, V4C_GCLK,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_IOB,
-};
-
-#define VLX25_COL_MAX 34
-v4_design_col_t col_type_vlx25[VLX25_COL_MAX] = {
-  /* This is only for the CLB frame types */
-  V4C_IOB,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_DSP48,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_IOB, V4C_GCLK,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_IOB,
-};
-
-#define VLX40_COL_MAX 34
-v4_design_col_t col_type_vlx40[VLX25_COL_MAX] = {
-  /* This is only for the CLB frame types */
-  V4C_IOB,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_DSP48,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_IOB, V4C_GCLK,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_IOB,
-};
-
-#define VLX60_COL_MAX 50
-v4_design_col_t col_type_vlx60[VLX60_COL_MAX] = {
-  /* This is only for the CLB frame types */
-  V4C_IOB,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_DSP48,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_IOB, V4C_GCLK,
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  /* V4C_BRAMINT, */
-  V4C_CLB, V4C_CLB, V4C_CLB, V4C_CLB,
-  V4C_IOB,
-};
 
 static const
 chip_struct_t bitdescr[XC4VLX__NUM] = {
@@ -118,19 +48,132 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		 .col_type = col_type_vlx15,
 		 .row_count = 2, },
   [XC4VLX25] = { .idcode = 0x0167C093,
-		 .framelen = 41, },
+		 .frame_count = {
+		   [V4C_IOB] = 30,
+		   [V4C_GCLK] = 3,
+		   [V4C_CLB] = 22,
+		   [V4C_DSP48] = 21,
+		   [V4C_BRAM] = 64,
+		   [V4C_BRAM_INT] = 20,
+		   [V4C_PAD] = 2,
+		 },
+		 .framelen = 41,
+		 .col_count = {
+		   [V4_TYPE_CLB] = VLX25_COL_MAX,
+		   [V4_TYPE_BRAM] = 3,
+		   [V4_TYPE_BRAM_INT] = 3,
+		 },
+		 .col_type = col_type_vlx25,
+		 .row_count = 3, },
   [XC4VLX40] = { .idcode = 0x016A4093,
-		 .framelen = 41, },
+		 .framelen = 41,
+		 .frame_count = {
+		   [V4C_IOB] = 30,
+		   [V4C_GCLK] = 3,
+		   [V4C_CLB] = 22,
+		   [V4C_DSP48] = 21,
+		   [V4C_BRAM] = 64,
+		   [V4C_BRAM_INT] = 20,
+		   [V4C_PAD] = 2,
+		 },
+		 .col_count = {
+		   [V4_TYPE_CLB] = VLX40_COL_MAX,
+		   [V4_TYPE_BRAM] = 3,
+		   [V4_TYPE_BRAM_INT] = 3,
+		 },
+		 .col_type = col_type_vlx40,
+		 .row_count = 4, },
   [XC4VLX60] = { .idcode = 0x016B4093,
-		 .framelen = 41, },
+		 .framelen = 41,
+		 .frame_count = {
+		   [V4C_IOB] = 30,
+		   [V4C_GCLK] = 3,
+		   [V4C_CLB] = 22,
+		   [V4C_DSP48] = 21,
+		   [V4C_BRAM] = 64,
+		   [V4C_BRAM_INT] = 20,
+		   [V4C_PAD] = 2,
+		 },
+		 .col_count = {
+		   [V4_TYPE_CLB] = VLX60_COL_MAX,
+		   [V4_TYPE_BRAM] = 4,
+		   [V4_TYPE_BRAM_INT] = 4,
+		 },
+		 .col_type = col_type_vlx60,
+		 .row_count = 5, },
   [XC4VLX80] = { .idcode = 0x016D8093,
-		 .framelen = 41, },
+		 .framelen = 41,
+		 .frame_count = {
+		   [V4C_IOB] = 30,
+		   [V4C_GCLK] = 3,
+		   [V4C_CLB] = 22,
+		   [V4C_DSP48] = 21,
+		   [V4C_BRAM] = 64,
+		   [V4C_BRAM_INT] = 20,
+		   [V4C_PAD] = 2,
+		 },
+		 .col_count = {
+		   [V4_TYPE_CLB] = VLX80_COL_MAX,
+		   [V4_TYPE_BRAM] = 5,
+		   [V4_TYPE_BRAM_INT] = 5,
+		 },
+		 .col_type = col_type_vlx80,
+		 .row_count = 5, },
+
   [XC4VLX100] = { .idcode = 0x01700093,
-		  .framelen = 41, },
+		  .framelen = 41,
+		  .frame_count = {
+		    [V4C_IOB] = 30,
+		    [V4C_GCLK] = 3,
+		    [V4C_CLB] = 22,
+		    [V4C_DSP48] = 21,
+		    [V4C_BRAM] = 64,
+		    [V4C_BRAM_INT] = 20,
+		    [V4C_PAD] = 2,
+		  },
+		  .col_count = {
+		    [V4_TYPE_CLB] = VLX100_COL_MAX,
+		    [V4_TYPE_BRAM] = 5,
+		    [V4_TYPE_BRAM_INT] = 5,
+		  },
+		  .col_type = col_type_vlx100,
+		  .row_count = 6, },
   [XC4VLX160] = { .idcode = 0x01718093,
-		  .framelen = 41, },
+		  .framelen = 41,
+		  .frame_count = {
+		    [V4C_IOB] = 30,
+		    [V4C_GCLK] = 3,
+		    [V4C_CLB] = 22,
+		    [V4C_DSP48] = 21,
+		    [V4C_BRAM] = 64,
+		    [V4C_BRAM_INT] = 20,
+		    [V4C_PAD] = 2,
+		  },
+		  .col_count = {
+		    [V4_TYPE_CLB] = VLX160_COL_MAX,
+		    [V4_TYPE_BRAM] = 6,
+		    [V4_TYPE_BRAM_INT] = 6,
+		  },
+		  .col_type = col_type_vlx160,
+		  .row_count = 6, },
   [XC4VLX200] = { .idcode = 0x01734093,
-		  .framelen = 41, },
+		  .framelen = 41,
+		  .frame_count = {
+		    [V4C_IOB] = 30,
+		    [V4C_GCLK] = 3,
+		    [V4C_CLB] = 22,
+		    [V4C_DSP48] = 21,
+		    [V4C_BRAM] = 64,
+		    [V4C_BRAM_INT] = 20,
+		    [V4C_PAD] = 2,
+		  },
+		  .col_count = {
+		    [V4_TYPE_CLB] = VLX200_COL_MAX,
+		    [V4_TYPE_BRAM] = 7,
+		    [V4_TYPE_BRAM_INT] = 7,
+		  },
+		  .col_type = col_type_vlx200,
+		  .row_count = 6, },
 };
 
 typedef enum _ba_v4_col_type {
