@@ -37,10 +37,8 @@ GIT_DIR		= $(srcdir)/.git
 GIT_COMMIT_REF	= $(shell cat $(GIT_DIR)/refs/heads/master)
 GIT_TREE_REF	= $(shell git cat-file commit $(GIT_COMMIT_REF) | head -n1 | awk '{print $$2}')
 
-git-ref:
-	echo "$(GIT_COMMIT_REF)" > $<
-
-EXTRA_DIST      = git-ref
+dist-hook:
+	echo "$(GIT_COMMIT_REF)" > $(distdir)/git-ref
 
 #Specific testing and profiling targets. To be reorganized
 
