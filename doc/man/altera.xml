@@ -4,8 +4,11 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 
-    <!ENTITY bit2pdf "<command>bit2pdf</command>">
-    <!ENTITY Xilinx "<trademark class='registered'>Xilinx</trademark>">
+    <!ENTITY debit "<command>debit</command>">
+    <!ENTITY altera "<command>altera</command>">
+    <!ENTITY Altera "<trademark class='registered'>Altera</trademark>">
+    <!ENTITY CycloneII "<productname class='registered'>Cyclone II</productname>">
+    <!ENTITY EP35 "<productnumber>EP35</productnumber>">
 ]>
 
 <refentry>
@@ -35,25 +38,24 @@
 </refentryinfo>
 
 <refmeta>
-	<refentrytitle>bit2pdf</refentrytitle>
+	<refentrytitle>altera</refentrytitle>
 	<manvolnum>1</manvolnum>
 </refmeta>
 
 <refnamediv>
-	<refname>bit2pdf</refname>
-	<refpurpose>convert &Xilinx; bitstreams to <acronym>PDF</acronym>s</refpurpose>
+	<refname>altera</refname>
+	<refpurpose>command-line bitstream interpreter for &Altera; bitstreams</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
 	<cmdsynopsis>
-	<command>bit2pdf</command>
-	<arg><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></arg>
-	<arg><option>--output <replaceable class="option">PDFFILE</replaceable></option></arg>
-	<arg><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></arg>
-	<arg choice="req"><option>--input</option> <replaceable>BITSTREAM-FILE</replaceable></arg>
+	  <command>altera</command>
+	  <arg><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></arg>
+	  <arg><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></arg>
+	  <arg choice="req"><option>--input <replaceable class="option">BITSTREAM-FILE</replaceable></option></arg>
 	</cmdsynopsis>
 	<cmdsynopsis>
-	  <command>bit2pdf</command>
+	  <command>altera</command>
 	  <arg choice="plain"><option>--help</option></arg>
 	</cmdsynopsis>
 </refsynopsisdiv>
@@ -61,50 +63,29 @@
 <refsect1 id="description">
 	<title>DESCRIPTION</title>
 	<para>
-		The &bit2pdf; program parses one &Xilinx; bitstream
-		specified on the command line as
-		<replaceable>BITSTREAM-FILE</replaceable> and prints a
-		nice pdf from it.
+		The &altera; program can analyze altera bitstreams very
+		roughly for the EP35 &CycloneII; device. The bitstream file
+		is specified on the command line as
+		<replaceable>BITSTREAM-FILE</replaceable>. The intent of this
+		program is to allow further reverse-engineering of the
+		&Altera; bitstream format.
 	</para>
 </refsect1>
 
 <refsect1 id="options">
 	<title>OPTIONS</title>
 	<para>
-		&bit2pdf; accepts the following options (in alphabetical order):
+	  &altera; accepts the following options (in alphabetical order):
 	</para>
 
 	<variablelist>
 
-		<varlistentry>
-	<term><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></term>
-	<listitem>
-	  <para>Read debit's database files from
-	  <replaceable>DIRECTORY</replaceable> instread of the default
-	  compile-time location. Use with care !</para>
-	</listitem>
-		</varlistentry>
-
-		<varlistentry>
-	<term><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></term>
-	<listitem>
-	  <para>Selectively enable debugging according to the <replaceable>DEBUGMASK</replaceable>.</para>
-	</listitem>
-		</varlistentry>
-
-		<varlistentry>
-	<term><option>--help</option></term>
-	<listitem>
-		<para>Display some basic help</para>
-	</listitem>
-		</varlistentry>
-
-		<varlistentry>
-	<term><option>--output <replaceable class="option">PDFFILE</replaceable></option></term>
-	<listitem>
-	  <para>Output pdf file <replaceable>PDFFILE</replaceable>.</para>
-	</listitem>
-		</varlistentry>
+	  <varlistentry>
+	    <term><option>--help</option></term>
+	    <listitem>
+	      <para>Display some basic help.</para>
+	    </listitem>
+	  </varlistentry>
 
 	</variablelist>
 </refsect1>
@@ -112,7 +93,7 @@
 <refsect1 id="diagnostics">
 	<title>DIAGNOSTICS</title>
 	<para>
-		&bit2pdf; return codes provide information that can be used when
+		&altera; return codes provide information that can be used when
 		calling it from scripts.
 	</para>
 	<!-- better use segmentedlist element later,
@@ -139,6 +120,10 @@
 <refsect1 id="seealso">
 	<title>SEE ALSO</title>
 	<para>
+	<citerefentry>
+	  <refentrytitle>bit2pdf</refentrytitle>
+	  <manvolnum>1</manvolnum>
+	</citerefentry>,
 	<citerefentry>
 	  <refentrytitle>debit</refentrytitle>
 	  <manvolnum>1</manvolnum>

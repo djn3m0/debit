@@ -47,10 +47,8 @@
 <refsynopsisdiv>
   <cmdsynopsis>
     <command>diff_bin_pos</command>
-    <group choice="opt">
-      <arg choice="plain"><option>--chomp <replaceable class="option">NBITS</replaceable></option></arg>
-      <arg choice="plain"><option>--valdump</option></arg>
-    </group>
+    <arg><option>--chomp <replaceable class="option">NBITS</replaceable></option></arg>
+    <arg><option>--valdump</option></arg>
     <group choice="req">
       <arg choice="plain" rep="repeat"><replaceable>FILES</replaceable></arg>
     </group>
@@ -148,21 +146,10 @@
 	<title>SEE ALSO</title>
 	<para>
 	<citerefentry>
-	  <refentrytitle>bit2pdf</refentrytitle>
-	  <manvolnum>1</manvolnum>
-	</citerefentry>,
-	<citerefentry>
 	  <refentrytitle>bitisolation</refentrytitle>
 	  <manvolnum>1</manvolnum>
-	</citerefentry>,
-	<citerefentry>
-	  <refentrytitle>debit</refentrytitle>
-	  <manvolnum>1</manvolnum>
-	</citerefentry>,
-	<citerefentry>
-	  <refentrytitle>xiledit</refentrytitle>
-	  <manvolnum>1</manvolnum>
-	</citerefentry></para>
+	</citerefentry>
+	</para>
 	<para>
 		More information can be found at ulogic's homepage <ulink url="http://www.ulogic.org/trac"/>
 	</para>

@@ -5,6 +5,7 @@
     "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 
     <!ENTITY debit "<command>debit</command>">
+    <!ENTITY Xilinx "<trademark class='registered'>Xilinx</trademark>">
 ]>
 
 <refentry>
@@ -40,22 +41,18 @@
 
 <refnamediv>
 	<refname>debit</refname>
-	<refpurpose>command line Xilinx bitstream interpretation tool</refpurpose>
+	<refpurpose>command line &Xilinx; bitstream interpretation tool</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
 	<cmdsynopsis>
 	<command>debit</command>
-		<group choice="opt">
-			<arg choice="plain"><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></arg>
-			<arg choice="plain"><option>--outdir <replaceable class="option">DIRECTORY</replaceable></option></arg>
-			<arg choice="plain"><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></arg>
-			<arg choice="plain"><option>--framedump</option></arg>
-			<arg choice="plain"><option>--pipdump</option></arg>
-		</group>
-		<group choice="req">
-			<arg choice="plain"><option>--input</option> <replaceable>BITSTREAM-FILE</replaceable></arg>
-		</group>
+	<arg><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></arg>
+	<arg><option>--outdir <replaceable class="option">DIRECTORY</replaceable></option></arg>
+	<arg><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></arg>
+	<arg><option>--framedump</option></arg>
+	<arg><option>--pipdump</option></arg>
+	<arg choice="req"><option>--input</option> <replaceable>BITSTREAM-FILE</replaceable></arg>
 	</cmdsynopsis>
 	<cmdsynopsis>
 		<command>debit</command>
@@ -66,7 +63,7 @@
 <refsect1 id="description">
 	<title>DESCRIPTION</title>
 	<para>
-		The &debit; program parses one xilinx bitstream
+		The &debit; program parses one &Xilinx; bitstream
 		specified on the command line as
 		<replaceable>BITSTREAM-FILE</replaceable>. It prints
 		various types of output, depending upon the options
