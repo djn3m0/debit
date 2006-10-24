@@ -1,6 +1,6 @@
-dist_man1_MANS = debit.1 diff_bin_pos.1
+dist_man1_MANS = debit.1 diff_bin_pos.1 bit2pdf.1
 
-EXTRA_DIST = debit.xml diff_bin_pos.xml
+EXTRA_DIST = debit.xml diff_bin_pos.xml bit2pdf.xml
 MAINTAINERCLEANFILES = $(dist_man1_MANS)
 
 %.1: %.xml

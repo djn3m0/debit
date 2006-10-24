@@ -4,9 +4,11 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 
-    <!ENTITY diff_bin_pos "<command>diff_bin_pos</command>">
+    <!ENTITY bit2pdf "<command>bit2pdf</command>">
     <!ENTITY debit "<command>debit</command>">
 ]>
+
+<!-- This is completely copied from xmllint's manpage -->
 
 <refentry>
 
@@ -35,72 +37,78 @@
 </refentryinfo>
 
 <refmeta>
-	<refentrytitle>diff_bin_pos</refentrytitle>
+	<refentrytitle>bit2pdf</refentrytitle>
 	<manvolnum>1</manvolnum>
 </refmeta>
 
 <refnamediv>
-	<refname>diff_bin_pos</refname>
-	<refpurpose>command line bitwise file comparison tool</refpurpose>
+	<refname>bit2pdf</refname>
+	<refpurpose>command line <acronym>XML</acronym> tool</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
-  <cmdsynopsis>
-    <command>diff_bin_pos</command>
-    <group choice="opt">
-      <arg choice="plain"><option>--chomp <replaceable class="option">NBITS</replaceable></option></arg>
-      <arg choice="plain"><option>--valdump</option></arg>
-    </group>
-    <group choice="req">
-      <arg choice="plain" rep="repeat"><replaceable>FILES</replaceable></arg>
-    </group>
-  </cmdsynopsis>
-  <cmdsynopsis>
-    <command>diff_bin_pos</command>
-    <arg choice="plain"><option>--help</option></arg>
-  </cmdsynopsis>
+	<cmdsynopsis>
+	<command>bit2pdf</command>
+		<group choice="opt">
+			<arg choice="plain"><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></arg>
+			<arg choice="plain"><option>--output <replaceable class="option">PDFFILE</replaceable></option></arg>
+			<arg choice="plain"><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></arg>
+		</group>
+		<group choice="req">
+			<arg choice="plain"><option>--input</option> <replaceable>BITSTREAM-FILE</replaceable></arg>
+		</group>
+	</cmdsynopsis>
+	<cmdsynopsis>
+		<command>bit2pdf</command>
+		<arg choice="plain"><option>--help</option></arg>
+	</cmdsynopsis>
 </refsynopsisdiv>
 
 <refsect1 id="description">
 	<title>DESCRIPTION</title>
 	<para>
-		The &diff_bin_pos; program compares the two files
+		The &bit2pdf; program parses one xilinx bitstream
 		specified on the command line as
-		<replaceable>FILES</replaceable> bit-by-bit. It prints
-		the differing bit offsets along with the bit values if
-		the <option>--valdump</option> option is selected.  You
-		can tell it to ignore bits from the end-of-files in the
-		<option>--chomp</option> argument.
+		<replaceable>BITSTREAM-FILE</replaceable> and prints a
+		nice pdf from it.
 	</para>
 </refsect1>
 
 <refsect1 id="options">
 	<title>OPTIONS</title>
 	<para>
-		&diff_bin_pos; accepts the following options (in alphabetical order):
+		&bit2pdf; accepts the following options (in alphabetical order):
 	</para>
 
 	<variablelist>
 
 		<varlistentry>
-	<term><option>--chomp <replaceable class="option">NBITS</replaceable></option></term>
+	<term><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></term>
 	<listitem>
-		<para>Drop NBITS from the end of the files; they will
-		not be taken into account for comparison.</para>
+	  <para>Read debit's database files from
+	  <replaceable>DIRECTORY</replaceable> instread of the default
+	  compile-time location. Use with care !</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></term>
+	<listitem>
+	  <para>Selectively enable debugging according to the <replaceable>DEBUGMASK</replaceable>.</para>
 	</listitem>
 		</varlistentry>
 
 		<varlistentry>
 	<term><option>--help</option></term>
 	<listitem>
-		<para>Display some basic help.</para>
+		<para>Display some basic help</para>
 	</listitem>
 		</varlistentry>
 
 		<varlistentry>
-	<term><option>--valdump</option></term>
+	<term><option>--output <replaceable class="option">PDFFILE</replaceable></option></term>
 	<listitem>
-		<para>Display bit values on differing bits.</para>
+	  <para>Output pdf file <replaceable>PDFFILE</replaceable>.</para>
 	</listitem>
 		</varlistentry>
 
@@ -110,7 +118,7 @@
 <refsect1 id="diagnostics">
 	<title>DIAGNOSTICS</title>
 	<para>
-		&diff_bin_pos; return codes provide information that can be used when
+		&bit2pdf; return codes provide information that can be used when
 		calling it from scripts.
 	</para>
 	<!-- better use segmentedlist element later,
@@ -120,24 +128,14 @@
 		<varlistentry>
 	<term><errorcode>0</errorcode></term>
 	<listitem>
-		<para>No error, files identical in the region where they
-		have been compared</para>
+		<para>No error</para>
 	</listitem>
 		</varlistentry>
 
 		<varlistentry>
 	<term><errorcode>-1</errorcode></term>
 	<listitem>
-		<para>System error opening files, or file sizes are different</para>
-	</listitem>
-		</varlistentry>
-
-		<varlistentry>
-	<term><errorcode>k</errorcode></term>
-	<listitem>
-		<para>No error, files are different, and they differ by
-		thus many bits (good practice does not recommend doing
-		this...)</para>
+		<para>Something wrong happened</para>
 	</listitem>
 		</varlistentry>
 
@@ -148,15 +146,15 @@
 	<title>SEE ALSO</title>
 	<para>
 	<citerefentry>
-	  <refentrytitle>bit2pdf</refentrytitle>
-	  <manvolnum>1</manvolnum>
-	</citerefentry>,
-	<citerefentry>
 	  <refentrytitle>bitisolation</refentrytitle>
 	  <manvolnum>1</manvolnum>
 	</citerefentry>,
 	<citerefentry>
 	  <refentrytitle>debit</refentrytitle>
+	  <manvolnum>1</manvolnum>
+	</citerefentry>,
+	<citerefentry>
+	  <refentrytitle>diff_bin_pos</refentrytitle>
 	  <manvolnum>1</manvolnum>
 	</citerefentry>,
 	<citerefentry>
@@ -172,4 +170,6 @@
 
 <!-- W: debit: binary-without-manpage bit2pdf -->
 <!-- W: debit: binary-without-manpage bitisolation -->
+<!-- W: debit: binary-without-manpage debit -->
+<!-- W: debit: binary-without-manpage diff_bin_pos -->
 <!-- W: debit: binary-without-manpage xiledit -->
