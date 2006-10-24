@@ -14,8 +14,6 @@
 #include "bitstream_parser.h"
 #include "debitlog.h"
 
-#include "v4_bitstreams.h"
-
 typedef enum _id_v4 {
   XC4VLX15 = 0,
   XC4VLX25, XC4VLX40,
@@ -41,11 +39,10 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		 },
 		 .framelen = 41,
 		 .col_count = {
-		   [V4_TYPE_CLB] = VLX15_COL_MAX,
+		   [V4_TYPE_CLB] = 29,
 		   [V4_TYPE_BRAM] = 3,
 		   [V4_TYPE_BRAM_INT] = 3,
 		 },
-		 .col_type = col_type_vlx15,
 		 .row_count = 2, },
   [XC4VLX25] = { .idcode = 0x0167C093,
 		 .frame_count = {
@@ -59,11 +56,10 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		 },
 		 .framelen = 41,
 		 .col_count = {
-		   [V4_TYPE_CLB] = VLX25_COL_MAX,
+		   [V4_TYPE_CLB] = 33,
 		   [V4_TYPE_BRAM] = 3,
 		   [V4_TYPE_BRAM_INT] = 3,
 		 },
-		 .col_type = col_type_vlx25,
 		 .row_count = 3, },
   [XC4VLX40] = { .idcode = 0x016A4093,
 		 .framelen = 41,
@@ -77,11 +73,10 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		   [V4C_PAD] = 2,
 		 },
 		 .col_count = {
-		   [V4_TYPE_CLB] = VLX40_COL_MAX,
+		   [V4_TYPE_CLB] = 41,
 		   [V4_TYPE_BRAM] = 3,
 		   [V4_TYPE_BRAM_INT] = 3,
 		 },
-		 .col_type = col_type_vlx40,
 		 .row_count = 4, },
   [XC4VLX60] = { .idcode = 0x016B4093,
 		 .framelen = 41,
@@ -95,11 +90,10 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		   [V4C_PAD] = 2,
 		 },
 		 .col_count = {
-		   [V4_TYPE_CLB] = VLX60_COL_MAX,
+		   [V4_TYPE_CLB] = 57,
 		   [V4_TYPE_BRAM] = 4,
 		   [V4_TYPE_BRAM_INT] = 4,
 		 },
-		 .col_type = col_type_vlx60,
 		 .row_count = 5, },
   [XC4VLX80] = { .idcode = 0x016D8093,
 		 .framelen = 41,
@@ -113,11 +107,10 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		   [V4C_PAD] = 2,
 		 },
 		 .col_count = {
-		   [V4_TYPE_CLB] = VLX80_COL_MAX,
+		   [V4_TYPE_CLB] = 61,
 		   [V4_TYPE_BRAM] = 5,
 		   [V4_TYPE_BRAM_INT] = 5,
 		 },
-		 .col_type = col_type_vlx80,
 		 .row_count = 5, },
 
   [XC4VLX100] = { .idcode = 0x01700093,
@@ -132,11 +125,10 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		    [V4C_PAD] = 2,
 		  },
 		  .col_count = {
-		    [V4_TYPE_CLB] = VLX100_COL_MAX,
+		    [V4_TYPE_CLB] = 69,
 		    [V4_TYPE_BRAM] = 5,
 		    [V4_TYPE_BRAM_INT] = 5,
 		  },
-		  .col_type = col_type_vlx100,
 		  .row_count = 6, },
   [XC4VLX160] = { .idcode = 0x01718093,
 		  .framelen = 41,
@@ -150,11 +142,10 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		    [V4C_PAD] = 2,
 		  },
 		  .col_count = {
-		    [V4_TYPE_CLB] = VLX160_COL_MAX,
+		    [V4_TYPE_CLB] = 93,
 		    [V4_TYPE_BRAM] = 6,
 		    [V4_TYPE_BRAM_INT] = 6,
 		  },
-		  .col_type = col_type_vlx160,
 		  .row_count = 6, },
   [XC4VLX200] = { .idcode = 0x01734093,
 		  .framelen = 41,
@@ -168,11 +159,10 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		    [V4C_PAD] = 2,
 		  },
 		  .col_count = {
-		    [V4_TYPE_CLB] = VLX200_COL_MAX,
+		    [V4_TYPE_CLB] = 121,
 		    [V4_TYPE_BRAM] = 7,
 		    [V4_TYPE_BRAM_INT] = 7,
 		  },
-		  .col_type = col_type_vlx200,
 		  .row_count = 6, },
 };
 
@@ -466,8 +456,19 @@ _type_of_far(bitstream_parser_t *bitstream, const sw_far_v4_t *addr) {
   case V4_TYPE_CLB:
     {
       const int col = addr->col;
-      const v4_design_col_t *col_type = bitdescr[chiptype].col_type;
-      return col_type[col];
+      const unsigned end = bitdescr[chiptype].col_count[V4_TYPE_CLB] - 1;
+      const unsigned middle = end >> 1;
+      const unsigned dsp = end > 50 ? 9 : 12;
+      /* Let's be more intelligent.
+	 Middle, extremities: IO.
+	 DSP is at fixed position and the rest is CLB */
+      if (col == 0 || col == end || col == middle)
+	return V4C_IOB;
+      if (col == (middle + 1))
+	return V4C_GCLK;
+      if (col == dsp)
+	return V4C_DSP48;
+      return V4C_CLB;
     }
   case V4_TYPE_BRAM:
     return V4C_BRAM;

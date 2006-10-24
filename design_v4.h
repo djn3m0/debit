@@ -145,7 +145,6 @@ typedef struct _chip_struct {
   const int frame_count[V4C__NB_CFG];
   const unsigned col_count[V4__NB_COL_TYPES];
   const unsigned row_count;
-  const v4_design_col_t *col_type;
 } chip_struct_t;
 
 static inline void
