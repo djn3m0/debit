@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl"
+   href="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+
+    <!ENTITY bitisolation "<command>bitisolation</command>">
+    <!ENTITY debit "<command>debit</command>">
+]>
+
+<refentry>
+
+<refentryinfo>
+	<title>debit Manual</title>
+	<productname>ulogic's debitting tools</productname>
+	<copyright>
+		<year>2006</year>
+	</copyright>
+	<authorgroup>
+		<author>
+			<firstname>Jean-Baptiste</firstname>
+			<surname>Note</surname>
+			<affiliation>
+				<address>
+					<email>jean-baptiste.note@m4x.org</email>
+				</address>
+			</affiliation>
+		</author>
+	</authorgroup>
+	<!-- date should be the date of the latest change or the release version -->
+	<date>$Date: 2006/10/19 21:00:00 $</date>
+	<!-- still a bit buggy output, will talk to docbook-xsl upstream to fix this -->
+	<!-- <releaseinfo>This is release 0.1 of the debit Manual.</releaseinfo> -->
+	<!-- <edition>0.0</edition> -->
+</refentryinfo>
+
+<refmeta>
+	<refentrytitle>bitisolation</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+<refnamediv>
+	<refname>bitisolation</refname>
+	<refpurpose>command line bitwise file comparison tool</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+  <cmdsynopsis>
+    <command>bitisolation</command>
+    <arg><option>--chomp <replaceable class="option">NBITS</replaceable></option></arg>
+    <arg><option>--valdump</option></arg>
+    <group choice="req">
+      <arg choice="plain" rep="repeat"><replaceable>FILES</replaceable></arg>
+    </group>
+  </cmdsynopsis>
+  <cmdsynopsis>
+    <command>bitisolation</command>
+    <arg choice="plain"><option>--help</option></arg>
+  </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id="description">
+	<title>DESCRIPTION</title>
+	<para>
+		The &bitisolation; program compares the two files
+		specified on the command line as
+		<replaceable>FILES</replaceable> bit-by-bit. It prints
+		the differing bit offsets along with the bit values if
+		the <option>--valdump</option> option is selected.  You
+		can tell it to ignore bits from the end-of-files in the
+		<option>--chomp</option> argument.
+	</para>
+</refsect1>
+
+<refsect1 id="options">
+	<title>OPTIONS</title>
+	<para>
+		&bitisolation; accepts the following options (in alphabetical order):
+	</para>
+
+	<variablelist>
+
+		<varlistentry>
+	<term><option>--chomp <replaceable class="option">NBITS</replaceable></option></term>
+	<listitem>
+		<para>Drop NBITS from the end of the files; they will
+		not be taken into account for comparison.</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--help</option></term>
+	<listitem>
+		<para>Display some basic help.</para>
+	</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1 id="diagnostics">
+	<title>DIAGNOSTICS</title>
+	<para>
+		&bitisolation; return codes provide information that can be used when
+		calling it from scripts.
+	</para>
+	<!-- better use segmentedlist element later,
+	     which is currently only supported in snapshots -->
+	<variablelist>
+
+		<varlistentry>
+	<term><errorcode>0</errorcode></term>
+	<listitem>
+		<para>No error</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><errorcode>-1</errorcode></term>
+	<listitem>
+		<para>Something wrong happened</para>
+	</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1 id="seealso">
+	<title>SEE ALSO</title>
+	<para>
+	<citerefentry>
+	  <refentrytitle>bitisolation</refentrytitle>
+	  <manvolnum>1</manvolnum>
+	</citerefentry>
+	</para>
+	<para>
+	  More information can be found at ulogic's homepage <ulink url="http://www.ulogic.org/trac"/>
+	</para>
+</refsect1>
+
+</refentry>
+
+<!-- W: debit: binary-without-manpage bit2pdf -->
+<!-- W: debit: binary-without-manpage bitisolation -->
+<!-- W: debit: binary-without-manpage xiledit -->
