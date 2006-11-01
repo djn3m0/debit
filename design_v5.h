@@ -45,6 +45,18 @@ typedef struct {
 #define FAR_V5_TYPE_LEN 3
 #define FAR_V5_TYPE_MASK ((1<<FAR_V5_TYPE_LEN) - 1) << FAR_V5_TYPE_OFFSET
 
+typedef enum _v5_col_type {
+  V5_TYPE_CLB = 0,
+  V5_TYPE_BRAM,
+  V5_TYPE_CFG_CLB,
+  V5__NB_COL_TYPES,
+} v5_col_type_t;
+
+typedef enum _v5_tb_t {
+  V5_TB_TOP = 0,
+  V5_TB_BOTTOM,
+} v5_tb_t;
+
 static inline unsigned
 v5_mna_of_far(const uint32_t far) {
 	return (far & FAR_V5_MNA_MASK) >> FAR_V5_MNA_OFFSET;
@@ -114,4 +126,31 @@ snprintf_far_v5(char *buf, const size_t buf_len,
 		  v5_mna_of_far(hwfar));
 }
 
+typedef enum {
+  V5C_IOB = 0,
+  V5C_CLB,
+  V5C_DSP48,
+  V5C_GCLK,
+  V5C_BRAM_INT,
+  V5C_BRAM,
+  V5C_PAD,
+  V5C__NB_CFG,
+} v5_design_col_t;
+
+typedef struct _chip_struct {
+  guint32 idcode;
+  guint32 framelen;
+  const unsigned frame_count[V5C__NB_CFG];
+  const unsigned col_count[V5__NB_COL_TYPES];
+  unsigned bram_count;
+  unsigned row_count;
+  const v5_design_col_t *col_type;
+} chip_struct_t;
+
+static inline void
+typed_frame_name(char *buf, unsigned buf_len,
+		 const unsigned type,
+		 const unsigned index,
+		 const unsigned frameid) {
+}
 #endif /* design_v5.h */

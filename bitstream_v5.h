@@ -1,0 +1,46 @@
+#include "design_v5.h"
+
+#define XC5VLX30_NFRAMES 37
+static const v5_design_col_t
+xc5vlx30[XC5VLX30_NFRAMES] = {
+  V5C_IOB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_BRAM_INT,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_DSP48,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_IOB,
+  V5C_GCLK,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_BRAM_INT,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_IOB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+  V5C_CLB,
+};
+
+#define XC5VLX30_NBRAMS 2
+#define XC5VLX30_NROWS  2

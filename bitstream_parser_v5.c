@@ -8,8 +8,8 @@
 #include <string.h>
 
 #include "bitarray.h"
-#include "design.h"
 #include "design_v5.h"
+#include "bitstream_v5.h"
 #include "bitheader.h"
 #include "bitstream_parser.h"
 #include "bitstream_packets.h"
@@ -28,7 +28,23 @@ static const
 chip_struct_t bitdescr[XC5VLX__NUM] = {
   /* FLR is always 41 for virtex-5 */
   [XC5VLX30] = { .idcode = 0x286E093,
-		 .framelen = 41, },
+		 .framelen = 41,
+		 .frame_count = {
+		   [V5C_IOB] = 54,
+		   [V5C_CLB] = 36,
+		   [V5C_DSP48] = 28,
+		   [V5C_GCLK] = 4,
+		   [V5C_BRAM_INT] = 30,
+		   [V5C_BRAM] = 128,
+		   [V5C_PAD] = 2,
+		 },
+		 .col_count = {
+		   [V5_TYPE_CLB] = XC5VLX30_NFRAMES,
+		   [V5_TYPE_BRAM] = XC5VLX30_NBRAMS,
+		 },
+		 .col_type = xc5vlx30,
+		 .row_count = 2,
+  },
   [XC5VLX50] = { .idcode = 0x2896093,
 		 .framelen = 41, },
   [XC5VLX85] = { .idcode = 0x28AE093,
@@ -169,16 +185,6 @@ frame_length(const bitstream_parser_t *parser) {
   return 41;
 }
 
-static inline void
-far_increment(bitstream_parser_t *parser) {
-  parser->far_offset++;
-}
-
-static inline void
-far_offset_reset(bitstream_parser_t *parser) {
-  parser->far_offset = 0;
-}
-
 /***
  * Raw register IO
  ***/
@@ -245,6 +251,10 @@ update_crc(bitstream_parser_t *parser,
  * FAR -- no far decoding thus far.
  ***/
 
+/***
+ * FAR handling
+ */
+
 static inline void
 print_far(bitstream_parser_t *parser) {
   const guint32 far = register_read(parser, FAR);
@@ -252,6 +262,145 @@ print_far(bitstream_parser_t *parser) {
   gchar far_name[32];
   snprintf_far_v5(far_name, sizeof(far_name), far);
   debit_log(L_BITSTREAM, "FAR is [%i, offset %i], %s", far, index, far_name);
+}
+
+static inline void
+_far_increment_type(sw_far_v5_t *addr) {
+  addr->type++;
+}
+
+static inline void
+_far_increment_tb(sw_far_v5_t *addr) {
+  v5_tb_t tb = addr->tb;
+  switch (tb) {
+  case V5_TB_TOP:
+    addr->tb = V5_TB_BOTTOM;
+    break;
+  case V5_TB_BOTTOM:
+    addr->tb = V5_TB_TOP;
+    /* increase type */
+    _far_increment_type(addr);
+    break;
+  default:
+    g_assert_not_reached();
+  }
+}
+
+static inline void
+_far_increment_row(bitstream_parser_t *bitstream,
+		   sw_far_v5_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const unsigned row_count = bitdescr[chiptype].row_count;
+  unsigned row = addr->row;
+
+  row += 1;
+  if (row == row_count) {
+    row = 0;
+    _far_increment_tb(addr);
+  }
+
+  addr->row = row;
+}
+
+static inline void
+_far_increment_col(bitstream_parser_t *bitstream,
+		   sw_far_v5_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const unsigned *col_count = bitdescr[chiptype].col_count;
+  const v5_col_type_t type = addr->type;
+  guint col;
+
+  col = addr->col;
+  col += 1;
+
+  /* There are two pad columns */
+  if (col == col_count[type] + 1) {
+    col = 0;
+    _far_increment_row(bitstream, addr);
+  }
+
+  /* writeback the col value */
+  addr->col = col;
+}
+
+static inline gboolean
+_far_is_pad(const bitstream_parser_t *bitstream,
+	    const sw_far_v5_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const unsigned *col_count = bitdescr[chiptype].col_count;
+  const v5_col_type_t type = addr->type;
+  unsigned col = addr->col;
+
+  if (col >= col_count[type])
+    return TRUE;
+  return FALSE;
+}
+
+static inline gboolean
+far_is_pad(bitstream_parser_t *bitstream, guint32 myfar) {
+  sw_far_v5_t far;
+  fill_swfar_v5(&far, myfar);
+  return _far_is_pad(bitstream, &far);
+}
+
+/* Type is a bit strange -- it watches the type from the far and the col
+   count, so as to get a mixed type which depends on both these
+   parameters. */
+
+static inline v5_design_col_t
+_type_of_far(bitstream_parser_t *bitstream, const sw_far_v5_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const v5_col_type_t type = addr->type;
+
+  if (_far_is_pad(bitstream, addr))
+    return V5C_PAD;
+
+  switch (type) {
+  case V5_TYPE_CLB: {
+    const unsigned col = addr->col;
+    return bitdescr[chiptype].col_type[col];
+  }
+  case V5_TYPE_BRAM:
+    return V5C_BRAM;
+  case V5_TYPE_CFG_CLB:
+    g_print("Unknown frame type, please report your bitstream");
+  default:
+    g_assert_not_reached();
+  }
+
+  return -1;
+}
+
+static inline void
+_far_increment_mna(bitstream_parser_t *bitstream,
+		   sw_far_v5_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const unsigned *frame_count = bitdescr[chiptype].frame_count;
+  const v5_design_col_t col_type = _type_of_far(bitstream, addr);
+  unsigned mna = addr->mna;
+
+  mna += 1;
+
+  if (mna == frame_count[col_type]) {
+    mna = 0;
+    _far_increment_col(bitstream, addr);
+  }
+
+  addr->mna = mna;
+}
+
+static inline void
+far_increment_mna(bitstream_parser_t *bitstream) {
+  sw_far_v5_t far;
+  fill_swfar_v5(&far, register_read(bitstream, FAR));
+  _far_increment_mna(bitstream, &far);
+  register_write(bitstream, FAR, get_hwfar_v5(&far));
+}
+
+static inline void
+far_increment(bitstream_parser_t *parser) {
+  far_increment_mna(parser);
+  print_far(parser);
 }
 
 static inline void
@@ -299,8 +448,9 @@ void record_frame(bitstream_parsed_t *parsed,
   framerec.offset = far_offset;
   framerec.framelen = 41;
   framerec.frame = dataframe;
-  /* record the framerec */
-  g_array_append_val(parsed->frame_array, framerec);
+  /* record the framerec, iif the frame is not a pad frame */
+  if (far_is_pad(bitstream, myfar) == FALSE)
+    g_array_append_val(parsed->frame_array, framerec);
 }
 
 static void
@@ -319,24 +469,7 @@ free_indexer(bitstream_parsed_t *parsed) {
 void
 iterate_over_frames(const bitstream_parsed_t *parsed,
 		    frame_iterator_t iter, void *itdat) {
-  const chip_struct_t *chip_struct = parsed->chip_struct;
-  const int *col_counts = chip_struct->col_count;
-  const int *frame_counts = chip_struct->frame_count;
-  guint type, index, frame;
-
   /* Iterate over the whole thing */
-  for (type = 0; type < V2C__NB_CFG; type++) {
-    const guint col_count = col_counts[type];
-
-    for (index = 0; index < col_count; index++) {
-      const guint frame_count = frame_counts[type];
-
-      for (frame = 0; frame < frame_count; frame++) {
-	const gchar *data = get_frame(parsed, type, index, frame);
-	iter(data, type, index, frame, itdat);
-      }
-    }
-  }
 }
 
 void
@@ -404,8 +537,7 @@ handle_fdri_write(bitstream_parsed_t *parsed,
 
 static void
 handle_far_write(bitstream_parser_t *parser) {
-  debit_log(L_BITSTREAM,"FAR write resetting the far offset");
-  far_offset_reset(parser);
+  debit_log(L_BITSTREAM,"FAR write");
   print_far(parser);
 }
 
