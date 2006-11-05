@@ -88,8 +88,8 @@ static GOptionEntry entries[] =
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
   {"framedump", 'f', 0, G_OPTION_ARG_NONE, &framedump, "Dump raw data frames", NULL},
   {"pipdump", 'p', 0, G_OPTION_ARG_NONE, &pipdump, "Dump pips in the bitstream", NULL},
-  {"lutdump", 'l', 0, G_OPTION_ARG_NONE, &pipdump, "Dump lut data from the bitstream", NULL},
-  {"bramdump", 'b', 0, G_OPTION_ARG_NONE, &pipdump, "Dump bram data from the bitstream", NULL},
+  {"lutdump", 'l', 0, G_OPTION_ARG_NONE, &lutdump, "Dump lut data from the bitstream", NULL},
+  {"bramdump", 'b', 0, G_OPTION_ARG_NONE, &bramdump, "Dump bram data from the bitstream", NULL},
   { NULL }
 };
 
