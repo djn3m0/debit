@@ -52,6 +52,8 @@
 	<arg><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></arg>
 	<arg><option>--framedump</option></arg>
 	<arg><option>--pipdump</option></arg>
+	<arg><option>--lutdump</option></arg>
+	<arg><option>--bramdump</option></arg>
 	<arg choice="req"><option>--input</option> <replaceable>BITSTREAM-FILE</replaceable></arg>
 	</cmdsynopsis>
 	<cmdsynopsis>
@@ -79,6 +81,13 @@
 	</para>
 
 	<variablelist>
+
+		<varlistentry>
+	<term><option>--bramdump</option></term>
+	<listitem>
+	  <para>Dump bram contents from the bitstream to stdout</para>
+	</listitem>
+		</varlistentry>
 
 		<varlistentry>
 	<term><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></term>
@@ -113,6 +122,13 @@
 		</varlistentry>
 
 		<varlistentry>
+	<term><option>--lutdump</option></term>
+	<listitem>
+	  <para>Dump lut contents from the bitstream to stdout</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
 	<term><option>--outdir <replaceable class="option">DIRECTORY</replaceable></option></term>
 	<listitem>
 	  <para>Put generated files (if any) in
@@ -123,8 +139,7 @@
 		<varlistentry>
 	<term><option>--pipdump</option></term>
 	<listitem>
-	  <para>Gross command dumping everything known: pips, lut
-	  contents, bram data contents</para>
+	  <para>Dump pips from the bitstream to stdout</para>
 	</listitem>
 		</varlistentry>
 
@@ -182,9 +197,3 @@
 </refsect1>
 
 </refentry>
-
-<!-- W: debit: binary-without-manpage bit2pdf -->
-<!-- W: debit: binary-without-manpage bitisolation -->
-<!-- W: debit: binary-without-manpage debit -->
-<!-- W: debit: binary-without-manpage diff_bin_pos -->
-<!-- W: debit: binary-without-manpage xiledit -->

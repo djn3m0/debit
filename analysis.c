@@ -112,16 +112,16 @@ print_all_bram(const chip_descr_t *chip,
  *
  */
 
-static void dump_all_pips(const pip_db_t *pipdb, const chip_descr_t *chipdb,
-			  const pip_parsed_dense_t *pipdat,
-			  const bitstream_parsed_t *bitstream) {
-  print_all_bram(chipdb, bitstream);
-  print_all_luts(chipdb, bitstream);
-  print_all_pips(pipdb, chipdb, pipdat);
+void dump_pips(bitstream_analyzed_t *bitstream) {
+  print_all_pips(bitstream->pipdb, bitstream->chip, bitstream->pipdat);
 }
 
-void dump_pips(bitstream_analyzed_t *bitstream) {
-  dump_all_pips(bitstream->pipdb, bitstream->chip, bitstream->pipdat, bitstream->bitstream);
+void dump_bram(bitstream_analyzed_t *bitstream) {
+  print_all_bram(bitstream->chip, bitstream->bitstream);
+}
+
+void dump_luts(bitstream_analyzed_t *bitstream) {
+  print_all_luts(bitstream->chip, bitstream->bitstream);
 }
 
 /*

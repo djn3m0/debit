@@ -30,6 +30,8 @@
 
 static gboolean framedump = FALSE;
 static gboolean pipdump = FALSE;
+static gboolean lutdump = FALSE;
+static gboolean bramdump = FALSE;
 
 static gchar *ifile = NULL;
 static gchar *odir = "";
@@ -55,14 +57,22 @@ debit_file(gchar *input_file, gchar *output_dir) {
   if (framedump)
     design_write_frames(bit,odir);
 
-  if (pipdump) {
+  if (pipdump || lutdump || bramdump) {
     bitstream_analyzed_t *analysis = analyze_bitstream(bit, datadir);
-    if (analysis != NULL) {
+    if (analysis == NULL)
+      goto out_free;
+
+    if (pipdump)
       dump_pips(analysis);
-      free_analysis(analysis);
-    }
+    if (lutdump)
+      dump_luts(analysis);
+    if (bramdump)
+      dump_bram(analysis);
+
+    free_analysis(analysis);
   }
 
+ out_free:
   free_bitstream(bit);
  out:
   return err;
@@ -78,6 +88,8 @@ static GOptionEntry entries[] =
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
   {"framedump", 'f', 0, G_OPTION_ARG_NONE, &framedump, "Dump raw data frames", NULL},
   {"pipdump", 'p', 0, G_OPTION_ARG_NONE, &pipdump, "Dump pips in the bitstream", NULL},
+  {"lutdump", 'l', 0, G_OPTION_ARG_NONE, &pipdump, "Dump lut data from the bitstream", NULL},
+  {"bramdump", 'b', 0, G_OPTION_ARG_NONE, &pipdump, "Dump bram data from the bitstream", NULL},
   { NULL }
 };
 

@@ -31,7 +31,8 @@ bitstream_analyzed_t *
 analyze_bitstream(bitstream_parsed_t *bitstream,
 		  const gchar *datadir);
 
-void
-dump_pips(bitstream_analyzed_t *bitstream);
+void dump_pips(bitstream_analyzed_t *bitstream);
+void dump_luts(bitstream_analyzed_t *bitstream);
+void dump_bram(bitstream_analyzed_t *bitstream);
 
 #endif /* _HAS_ANALYSIS_H */
