@@ -78,6 +78,7 @@ typed_frame_name(char *buf, unsigned buf_len,
 typedef struct _dumping {
   dump_hook_t dump;
   naming_hook_t naming;
+  unsigned framelen;
   const gchar *dir;
 } dumping_t;
 
@@ -88,9 +89,10 @@ design_write_frames_iter(const char *frame,
   dumping_t *dumping = data;
   dump_hook_t dump = dumping->dump;
   naming_hook_t naming = dumping->naming;
+  unsigned framelen = dumping->framelen;
   const gchar *odir = dumping->dir;
   FILE *f;
-  gsize frame_len = 146 * sizeof(uint32_t);
+  gsize frame_len = framelen * sizeof(uint32_t);
 
   f = open_frame_file(type, index, frameidx, odir, naming);
   if (!f) {
@@ -107,6 +109,7 @@ void design_write_frames(const bitstream_parsed_t *parsed,
 
   data.dump = dump_bin;
   data.dir  = outdir;
+  data.framelen = parsed->frame_len;
 
   if (TRUE)
     data.naming = typed_frame_name;
