@@ -36,7 +36,7 @@ print_bram_data(const csite_descr_t *site, const guint16 *data) {
   guint i,j;
   g_printf("BRAM_%02x_%02x\n",
 	   site->type_coord.x,
-	   site->type_coord.y);
+	   site->type_coord.y >> 2);
   for (i = 0; i < 64; i++) {
     g_printf("INIT_%02x:",i);
     for (j = 0; j < 16; j++)
@@ -93,6 +93,8 @@ print_bram_iter(unsigned site_x, unsigned site_y,
 		csite_descr_t *site, gpointer dat) {
   bitstream_parsed_t *bitstream = dat;
   guint16 *bram;
+  if ((site->type_coord.y & 0x3) != 0)
+    return;
   bram = query_bitstream_bram_data(bitstream, site);
   print_bram_data(site,bram);
   g_warning("Did BRAM %i x %i", site_x, site_y);

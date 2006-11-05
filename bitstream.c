@@ -416,7 +416,8 @@ query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
   /* Actually this is only bit reordering */
   /* for now exctract the data from the bram coordinates ? */
   const guint x = site->type_coord.x;
-  const guint y = site->type_coord.y;
+  /* the bram spans 4 sites in height */
+  const guint y = site->type_coord.y >> 2;
   const unsigned bram_width = 4 * sizeof(site_descr_t);
   const unsigned site_offset = 2 + sizeof(site_descr_t) + y * bram_width + (bram_width - 2);
 
