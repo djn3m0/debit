@@ -43,11 +43,17 @@ typedef void (*naming_hook_t)(char *buf, unsigned buf_len,
 static FILE *open_frame_file(const unsigned type,
 			     const unsigned index,
 			     const unsigned frameid,
+			     const gchar *odir,
 			     naming_hook_t name) {
   FILE *f;
   char fn[64];
+  gchar *filename = NULL;
   name(fn, sizeof(fn), type, index, frameid);
-  f = fopen(fn, "w");
+  filename = g_build_filename(odir,fn,NULL);
+  f = fopen(filename, "w");
+  if (!f)
+    g_warning("could not open file %s", filename);
+  g_free(filename);
   return f;
 }
 
@@ -72,6 +78,7 @@ typed_frame_name(char *buf, unsigned buf_len,
 typedef struct _dumping {
   dump_hook_t dump;
   naming_hook_t naming;
+  const gchar *dir;
 } dumping_t;
 
 static void
@@ -81,10 +88,15 @@ design_write_frames_iter(const char *frame,
   dumping_t *dumping = data;
   dump_hook_t dump = dumping->dump;
   naming_hook_t naming = dumping->naming;
+  const gchar *odir = dumping->dir;
   FILE *f;
   gsize frame_len = 146 * sizeof(uint32_t);
 
-  f = open_frame_file(type, index, frameidx, naming);
+  f = open_frame_file(type, index, frameidx, odir, naming);
+  if (!f) {
+    g_warning("could not open file for frame");
+    return;
+  }
   dump(f, frame, frame_len);
   fclose(f);
 }
@@ -94,6 +106,7 @@ void design_write_frames(const bitstream_parsed_t *parsed,
   dumping_t data;
 
   data.dump = dump_bin;
+  data.dir  = outdir;
 
   if (TRUE)
     data.naming = typed_frame_name;

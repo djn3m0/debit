@@ -32,7 +32,7 @@ static gboolean framedump = FALSE;
 static gboolean pipdump = FALSE;
 
 static gchar *ifile = NULL;
-static gchar *odir = NULL;
+static gchar *odir = "";
 static gchar *datadir = DATADIR;
 
 #if DEBIT_DEBUG > 0
@@ -53,7 +53,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
 
   /* Have some action */
   if (framedump)
-    design_write_frames(bit,NULL);
+    design_write_frames(bit,odir);
 
   if (pipdump) {
     bitstream_analyzed_t *analysis = analyze_bitstream(bit, datadir);
