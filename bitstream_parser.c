@@ -588,6 +588,7 @@ void record_frame(bitstream_parsed_t *parsed,
   sw_far_t far;
   guint type, index, frame;
   const char *dataframe = bitstream->last_frame;
+  const char **frame_loc;
 
   fill_swfar(&far, myfar);
 
@@ -597,7 +598,11 @@ void record_frame(bitstream_parsed_t *parsed,
 
   debit_log(L_BITSTREAM,"flushing frame [type:%i,index:%02i,frame:%2X]",
 	    type, index, frame);
-  *get_frame_loc(parsed, type, index, frame) = dataframe;
+
+  frame_loc = get_frame_loc(parsed, type, index, frame);
+  if (*frame_loc != NULL)
+	  g_warning("Overwriting already present frame");
+  *frame_loc = dataframe;
 }
 
 static void
