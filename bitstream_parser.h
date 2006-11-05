@@ -33,7 +33,6 @@ typedef struct _bitstream_parsed {
   const chip_struct_t *chip_struct;
 
   /* frames */
-  gint frame_len;
   const gchar ***frames;
 
   /* mmapped file information */

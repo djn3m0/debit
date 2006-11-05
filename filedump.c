@@ -109,7 +109,7 @@ void design_write_frames(const bitstream_parsed_t *parsed,
 
   data.dump = dump_bin;
   data.dir  = outdir;
-  data.framelen = parsed->frame_len;
+  data.framelen = parsed->chip_struct->framelen;
 
   if (TRUE)
     data.naming = typed_frame_name;
