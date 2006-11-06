@@ -1,4 +1,4 @@
-SUBDIRS = data debian doc rpm windows altera utils xiledit desktop
+SUBDIRS = data debian doc rpm windows altera utils xiledit desktop tests
 
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\"
 AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
