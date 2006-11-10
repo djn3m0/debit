@@ -41,16 +41,19 @@
 
 <refnamediv>
 	<refname>bitisolation</refname>
-	<refpurpose>command line bitwise file comparison tool</refpurpose>
+	<refpurpose>command line bit isolation tool</refpurpose>
 </refnamediv>
 
 <refsynopsisdiv>
   <cmdsynopsis>
     <command>bitisolation</command>
-    <arg><option>--chomp <replaceable class="option">NBITS</replaceable></option></arg>
-    <arg><option>--valdump</option></arg>
+    <arg choice="req"><option>--data <replaceable class="option">REF_FILE(S)</replaceable></option></arg>
+    <arg><option>--zero <replaceable class="option">FILE</replaceable></option></arg>
+    <arg><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></arg>
     <group choice="req">
-      <arg choice="plain" rep="repeat"><replaceable>FILES</replaceable></arg>
+      <arg><option>--allelems</option></arg>
+      <arg><option>--thorough</option></arg>
+      <arg><option>--union</option></arg>
     </group>
   </cmdsynopsis>
   <cmdsynopsis>
@@ -62,13 +65,11 @@
 <refsect1 id="description">
 	<title>DESCRIPTION</title>
 	<para>
-		The &bitisolation; program compares the two files
-		specified on the command line as
-		<replaceable>FILES</replaceable> bit-by-bit. It prints
-		the differing bit offsets along with the bit values if
-		the <option>--valdump</option> option is selected.  You
-		can tell it to ignore bits from the end-of-files in the
-		<option>--chomp</option> argument.
+		The &bitisolation; program tries to reconstitute a
+		boolean function from some samples presented in the
+		<replaceable>REF_FILES</replaceable>. It prints the
+		value of the function at all points which it could
+		isolate the values of.
 	</para>
 </refsect1>
 
@@ -81,10 +82,33 @@
 	<variablelist>
 
 		<varlistentry>
-	<term><option>--chomp <replaceable class="option">NBITS</replaceable></option></term>
+	<term><option>--allelems</option></term>
 	<listitem>
-		<para>Drop NBITS from the end of the files; they will
-		not be taken into account for comparison.</para>
+		<para>
+		  Try to isolate all elements.
+		</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--data <replaceable class="option">REF_FILE(S)</replaceable></option></term>
+	<listitem>
+		<para>
+		  Reference files showcasing the function behaviour. For
+		  each item <replaceable>REF_FILE</replaceable> present
+		  in this list, the program will search for two files
+		  named <replaceable>REF_FILE.bin</replaceable> and
+		  <replaceable>REF_FILE.dat</replaceable>. The first one
+		  is the value of the function for the set represented
+		  in the second file.
+		</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></term>
+	<listitem>
+	  <para>Selectively enable debugging according to the <replaceable>DEBUGMASK</replaceable>.</para>
 	</listitem>
 		</varlistentry>
 
@@ -92,6 +116,37 @@
 	<term><option>--help</option></term>
 	<listitem>
 		<para>Display some basic help.</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--thorough</option></term>
+	<listitem>
+		<para>
+		  Enable expensive research (noop for now).
+		</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--unite</option></term>
+	<listitem>
+		<para>
+		  ???
+		</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--zero <replaceable class="option">ZERO_FILE</replaceable></option></term>
+	<listitem>
+		<para>
+		  This is the image of the empty set. Basically, this is
+		  file needs to be XOR'd to every
+		  <replaceable>REF_FILE.bin</replaceable> so that the
+		  default value in the destination set is uniformly
+		  zero.
+		</para>
 	</listitem>
 		</varlistentry>
 
@@ -129,7 +184,7 @@
 	<title>SEE ALSO</title>
 	<para>
 	<citerefentry>
-	  <refentrytitle>bitisolation</refentrytitle>
+	  <refentrytitle>diff_bin_pos</refentrytitle>
 	  <manvolnum>1</manvolnum>
 	</citerefentry>
 	</para>
