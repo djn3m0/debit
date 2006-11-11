@@ -1,6 +1,6 @@
-DEBIT		?= debit
-DATADIR		?=$(top_srcdir)/data
-DEBITDBG	?=
+DEBIT		?= $(top_builddir)/debit
+DATADIR		?= $(top_srcdir)/data
+DEBITDBG	?= -g 0xffff
 DEBIT_CMD	=$(VALGRIND) $(DEBIT) $(DEBITDBG) --datadir=$(DATADIR)
 
 %.frames: %.bit
@@ -14,6 +14,21 @@ DEBIT_CMD	=$(VALGRIND) $(DEBIT) $(DEBITDBG) --datadir=$(DATADIR)
 
 %.pip: %.bit
 	$(DEBIT_CMD) --pipdump --input $< > $@ 2> $@.log
+
+############################
+### XDL/Debit comparison ###
+############################
+
+%.pipdebit: %.bit
+	$(DEBIT_CMD) --lutdump --input $< > $@ 2> $@.log
+
+#extract some information from the xdl
+%.pipxdl: %.xdl
+	cat $< | grep pip | awk  '{print $$1 " " $$2 " " $$3 " -> " $$5}' | sort > $@
+
+#compare
+%.pipcompare: %.pipdebit %.pipxdl
+	diff --speed-large-file $^ > $@
 
 #use cautiously
 %.golden: %
