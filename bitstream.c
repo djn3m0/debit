@@ -41,10 +41,6 @@ typedef struct _type_bits {
   guint col_type;
   /** Frames to skip at the beginning of the type array */
   guint x_type_off;
-  /** MNA frames to skip */
-  guint x_offset;
-  /** Number of frames to skip in the type array per x unit */
-  guint x_width;
   /** Bytes to skip at the beginning of the type array */
   gint y_offset;
   guint y_width;
@@ -56,8 +52,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [CLB] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
@@ -65,8 +59,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [LTERM] = {
     .col_type = V2C_IOB,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
@@ -74,8 +66,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [RTERM] = {
     .col_type = V2C_IOB,
     .x_type_off = 1,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
@@ -83,8 +73,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [LIOI] = {
     .col_type = V2C_IOI,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
@@ -92,8 +80,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [RIOI] = {
     .col_type = V2C_IOI,
     .x_type_off = 1,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
@@ -101,8 +87,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [TTERM] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = 0,
     .y_width = 2,
     .row_count = 1,
@@ -110,8 +94,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [BTERM] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = -2,
     .y_width = 2,
     .row_count = 1,
@@ -119,8 +101,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [TIOI] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = 2,
     .y_width = sizeof(site_descr_t),
     .row_count = 1,
@@ -128,8 +108,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [BIOI] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = - ((int)sizeof(site_descr_t) + 2),
     .y_width = sizeof(site_descr_t),
     .row_count = 1,
@@ -138,8 +116,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [BRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
     .row_count = SITE_PER_COL,
@@ -147,8 +123,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [TTERMBRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = 0,
     .y_width = 2,
     .row_count = 1,
@@ -156,8 +130,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [BTERMBRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = -2,
     .y_width = 2,
     .row_count = 1,
@@ -165,8 +137,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [TIOIBRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = 2,
     .y_width = sizeof(site_descr_t),
     .row_count = 1,
@@ -174,8 +144,6 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
   [BIOIBRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
-    .x_offset = 0,
-    .x_width = 1,
     .y_offset = - ((int)sizeof(site_descr_t) + 2),
     .y_width = sizeof(site_descr_t),
     .row_count = 1,
@@ -231,8 +199,7 @@ query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
   const gsize frame_offset = site_off + (y_width - 1) - (yoff >> 3);
 
   const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
-				 x+type_bits[site_type].x_type_off,
-				 xoff * type_bits[site_type].x_width + type_bits[site_type].x_offset);
+				 x+type_bits[site_type].x_type_off, xoff);
 
   if ((frame[frame_offset] >> (yoff & 0x7)) & 1)
     return TRUE;
@@ -293,8 +260,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const gsize frame_offset = site_off + (y_width - 1) - yoff;
 
   const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
-				 x+type_bits[site_type].x_type_off,
-				 xoff * type_bits[site_type].x_width + type_bits[site_type].x_offset);
+				 x+type_bits[site_type].x_type_off, xoff);
 
   return frame[frame_offset];
 }
