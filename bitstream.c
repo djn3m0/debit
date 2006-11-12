@@ -215,9 +215,6 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 guint32
 query_bitstream_site_bytes(const bitstream_parsed_t * bitstream, const csite_descr_t *site,
 			   const guint *cfgbytes, const gsize nbytes) {
-  /* unsigned char *data = bitstream->bincols[pip_type]; */
-  /* The data has already been sliced according to its type. It is not
-     obvious that this is what we should do */
   guint32 result = 0;
   gsize i;
 
@@ -415,3 +412,41 @@ query_bitstream_bram_parity(const bitstream_parsed_t *bitstream,
   return NULL;
 }
 
+/** \brief Get the total configuration size in bytes for a site type
+ *
+ * @param bitstream the bitstream data
+ * @param site the site queried
+ * @return the bram parity bits array
+ */
+gsize
+query_bitstream_type_size(const bitstream_parsed_t *parsed,
+			  const site_type_t type) {
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  const int *frame_count = chip_struct->frame_count;
+  const type_bits_t *type_bit = &type_bits[type];
+  return frame_count[type_bit->col_type] * type_bit->y_width;
+}
+
+/** \brief Get all configuration bits from a site
+ *
+ * @param bitstream the bitstream data
+ * @param site the site queried
+ * @data the data buffer whereto write the data. It must be sufficiently
+ * large for receiving the data
+ * @return error code
+ *
+ * @see query_bitstream_type_size
+ * @see query_bitstream_byte
+ */
+
+int
+query_bitstream_site_data(gchar *data, const gsize nbytes,
+	                  const bitstream_parsed_t *parsed,
+			  const csite_descr_t *site) {
+  gsize i;
+
+  for (i = 0; i < nbytes; i++)
+    data[i] = query_bitstream_site_byte(parsed, site, i);
+
+  return 0;
+}

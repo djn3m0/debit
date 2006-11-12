@@ -107,9 +107,8 @@ print_all_bram(const chip_descr_t *chip,
   iterate_over_typed_sites(chip, BRAM, print_bram_iter, (gpointer)bitstream);
 }
 
-/** \brief Test function which dumps the pips of a bitstream on stdout
+/** \brief Test function which dumps the pips of a bitstream on stdout.
  *
- * @param pipdb the pip database
  * @param bitstream the bitstream data
  *
  */
@@ -118,12 +117,76 @@ void dump_pips(bitstream_analyzed_t *bitstream) {
   print_all_pips(bitstream->pipdb, bitstream->chip, bitstream->pipdat);
 }
 
+/** \brief Test function which dumps the bram data of a bitstream on
+ * stdout.
+ *
+ * @param bitstream the bitstream data
+ *
+ */
+
 void dump_bram(bitstream_analyzed_t *bitstream) {
   print_all_bram(bitstream->chip, bitstream->bitstream);
 }
 
+/** \brief Test function which dumps the lut contents of a bitstream on
+ * stdout.
+ *
+ * @param bitstream the bitstream data
+ *
+ */
+
 void dump_luts(bitstream_analyzed_t *bitstream) {
   print_all_luts(bitstream->chip, bitstream->bitstream);
+}
+
+typedef struct _dump_site {
+  const gchar *odir;
+  const bitstream_parsed_t *parsed;
+  gsize buffer_len;
+  gchar *buffer;
+} dump_site_t;
+
+static void
+dump_site_iter(unsigned site_x, unsigned site_y,
+	       csite_descr_t *site, gpointer dat) {
+  dump_site_t *dumpsite = dat;
+  gchar *buffer = dumpsite->buffer;
+  gsize buffer_len = dumpsite->buffer_len;
+  gchar *filename, site_buf[32];
+  gboolean ok;
+
+  /* Get the bitstream contents */
+  query_bitstream_site_data(buffer, buffer_len, dumpsite->parsed, site);
+
+  sprint_csite(site_buf, site);
+  filename = g_build_filename(dumpsite->odir, site_buf, NULL);
+
+  ok = g_file_set_contents(filename, buffer, buffer_len, NULL);
+  if (!ok)
+    g_warning("Failed to dump %s", filename);
+  g_free(filename);
+}
+
+/** \brief Test function which dumps the site configuration data in a
+ * specific directory.
+ *
+ * @param bitstream the bitstream data
+ * @param directory the directory where to put the dump files
+ *
+ */
+
+void dump_sites(const bitstream_analyzed_t *nlz, const gchar *odir) {
+  dump_site_t dump = { .parsed = nlz->bitstream, .odir = odir };
+  site_type_t types[] = { CLB, TTERM, LTERM, BTERM, RTERM, TTERMBRAM, BTERMBRAM, TIOI, LIOI, BIOI, RIOI, TIOIBRAM, BIOIBRAM, BRAM };
+  unsigned index;
+
+  for (index = 0; index < G_N_ELEMENTS(types); index++) {
+    site_type_t type = types[index];
+    dump.buffer_len = query_bitstream_type_size(nlz->bitstream, type);
+    dump.buffer = g_new(gchar, dump.buffer_len);
+    iterate_over_typed_sites(nlz->chip, type, dump_site_iter, &dump);
+    g_free(dump.buffer);
+  }
 }
 
 /*

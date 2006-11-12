@@ -31,6 +31,8 @@ bitstream_analyzed_t *
 analyze_bitstream(bitstream_parsed_t *bitstream,
 		  const gchar *datadir);
 
+void dump_sites(const bitstream_analyzed_t *nlz, const gchar *odir);
+
 void dump_pips(bitstream_analyzed_t *bitstream);
 void dump_luts(bitstream_analyzed_t *bitstream);
 void dump_bram(bitstream_analyzed_t *bitstream);

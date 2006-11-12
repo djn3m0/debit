@@ -17,13 +17,6 @@
  * pseudo-structured way.
  */
 
-/** bitstream opaque type
- *
- * This is an abstract view of a bitstream. For now this is identical to
- * design_t, but I'm not sure it should be in the long term, so keep this
- * difference in name until we're settled.
- */
-
 void
 query_bitstream_luts(const bitstream_parsed_t *, const csite_descr_t *, guint16[]);
 
@@ -32,5 +25,14 @@ query_bitstream_site_bits(const bitstream_parsed_t *, const csite_descr_t *,
 			  const guint *, const gsize);
 guint16 *
 query_bitstream_bram_data(const bitstream_parsed_t *bitstream, const csite_descr_t *site);
+
+gsize
+query_bitstream_type_size(const bitstream_parsed_t *parsed,
+			  const site_type_t type);
+
+int
+query_bitstream_site_data(gchar *data, const gsize nbytes,
+	                  const bitstream_parsed_t *bitstream,
+			  const csite_descr_t *site);
 
 #endif /* _BITSTREAM_H */
