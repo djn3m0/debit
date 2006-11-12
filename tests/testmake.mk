@@ -31,8 +31,8 @@ DEBIT_CMD	=$(VALGRIND) $(DEBIT) $(DEBITDBG) --datadir=$(DATADIR)
 	diff --speed-large-file $^ > $@
 
 #use cautiously
-%.golden: %
-	mv $< $@
+# %.golden: %
+# 	mv $< $@
 
 clean:
 	- rm -Rf $(CLEANDIR)*.frames

@@ -52,7 +52,7 @@ function test_design() {
     local DESIGN_NAME=$1;
     echo "Testing design $DESIGN_NAME"
 
-    echo "Checking uncompressed/compressed frame coherency"
+    echo "Checking uncompressed/compressed frame consistency"
     #Test that the frames are identical for uncompressed and compressed bitstreams
     make -s --no-print-directory -f $MAKEFILE ${DESIGN_NAME}.frames && \
     make -s --no-print-directory -f $MAKEFILE ${DESIGN_NAME}_u.frames && \
