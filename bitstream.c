@@ -165,23 +165,20 @@ const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
  * Untyped query functions
  */
 
-/** \brief Get one config bit from a site
+
+/** \brief Get one config byte from a site
  *
  * @param bitstream the bitstream data
  * @param site the site queried
- * @param cfgbit the bit asked for
+ * @param cfgbyte the bit asked for
  *
- * @return the configuration bit asked for
- *
- * \bug For now we use the site as a CLB site, whether I think Eric intended
- * this to be a global, type-independent site.
+ * @return the configuration byte asked for
  */
 
-static inline gboolean
-query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
-			 const csite_descr_t *site,
-			 const guint cfgbit) {
-  /* first indirected implementation */
+static guchar
+query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
+			  const csite_descr_t *site,
+			  const int cfgbyte) {
   const guint site_type = site->type;
   const guint x = site->type_coord.x;
   const guint y = site->type_coord.y;
@@ -194,14 +191,60 @@ query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
   const off_t site_off = y * y_width + y_type_offset;
 
   /* offset in-site. only this really needs to be computed locally */
-  const guint xoff = cfgbit / (y_width * 8);
-  const guint yoff = cfgbit % (y_width * 8);
-  const gsize frame_offset = site_off + (y_width - 1) - (yoff >> 3);
+  const guint xoff = cfgbyte / y_width;
+  const guint yoff = cfgbyte % y_width;
+  const gsize frame_offset = site_off + (y_width - 1) - yoff;
 
   const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
 				 x+type_bits[site_type].x_type_off, xoff);
 
-  if ((frame[frame_offset] >> (yoff & 0x7)) & 1)
+  return frame[frame_offset];
+}
+
+/** \brief Get some (up to 4) config bytes from a site
+ *
+ * @param bitstream the bitstream data
+ * @param site the site queried
+ * @param cfgbits the array of bytes asked for
+ * @param nbytes the number of bytes asked for
+ *
+ * @return the configuration bytes asked for, packed into a guint32
+ * @see query_bitstream_site_byte
+ */
+
+guint32
+query_bitstream_site_bytes(const bitstream_parsed_t * bitstream, const csite_descr_t *site,
+			   const guint *cfgbytes, const gsize nbytes) {
+  /* unsigned char *data = bitstream->bincols[pip_type]; */
+  /* The data has already been sliced according to its type. It is not
+     obvious that this is what we should do */
+  guint32 result = 0;
+  gsize i;
+
+  for(i = 0; i < nbytes; i++)
+    result |= query_bitstream_site_byte(bitstream, site, cfgbytes[i]) << (i<<3);
+
+  return result;
+}
+
+/** \brief Get one config bit from a site
+ *
+ * @param bitstream the bitstream data
+ * @param site the site queried
+ * @param cfgbit the bit asked for
+ *
+ * @return the configuration bit asked for
+ * @see query_bitstream_site_byte
+ */
+
+static inline gboolean
+query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
+			 const csite_descr_t *site,
+			 const guint cfgbit) {
+  const guchar cfgbyte_dat = query_bitstream_site_byte(bitstream, site, cfgbit >> 3);
+  const guint  cfgbyte_off = cfgbit & 7;
+
+  if ((cfgbyte_dat >> cfgbyte_off) & 1)
     return TRUE;
 
   return FALSE;
@@ -238,58 +281,9 @@ query_bitstream_site_bits(const bitstream_parsed_t * bitstream,
   return result;
 }
 
-static guchar
-query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
-			  const csite_descr_t *site,
-			  const int cfgbyte) {
-  /* first indirected implementation */
-  const guint site_type = site->type;
-  const guint x = site->type_coord.x;
-  const guint y = site->type_coord.y;
-  const guint y_width = type_bits[site_type].y_width;
-  const guint flen = bitstream->chip_struct->framelen * sizeof(uint32_t);
-  const gint y_offset = type_bits[site_type].y_offset;
-
-  /* site offset in the y axis -- inverted. Should not be done here maybe */
-  const guint y_type_offset = (y_offset >= 0) ? y_offset : (flen + y_offset);
-  const off_t site_off = y * y_width + y_type_offset;
-
-  /* offset in-site. only this really needs to be computed locally */
-  const guint xoff = cfgbyte / y_width;
-  const guint yoff = cfgbyte % y_width;
-  const gsize frame_offset = site_off + (y_width - 1) - yoff;
-
-  const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
-				 x+type_bits[site_type].x_type_off, xoff);
-
-  return frame[frame_offset];
-}
-
-/** \brief Get some (up to 4) config bytes from a site
- *
- * @param bitstream the bitstream data
- * @param site the site queried
- * @param cfgbits the array of bytes asked for
- * @param nbytes the number of bytes asked for
- *
- * @return the configuration bits asked for, packed into a guint32
- *
+/*
+ * Typed queries
  */
-
-guint32
-query_bitstream_site_bytes(const bitstream_parsed_t * bitstream, const csite_descr_t *site,
-			   const guint *cfgbytes, const gsize nbytes) {
-  /* unsigned char *data = bitstream->bincols[pip_type]; */
-  /* The data has already been sliced according to its type. It is not
-     obvious that this is what we should do */
-  guint32 result = 0;
-  gsize i;
-
-  for(i = 0; i < nbytes; i++)
-    result |= query_bitstream_site_byte(bitstream, site, cfgbytes[i]) << (i<<3);
-
-  return result;
-}
 
 /*
  * There's a nice and tidy canonical way to do this...
@@ -304,10 +298,6 @@ guint16 reverse_bits(guint16 input) {
       res |= 1 << (15-i);
   return res;
 }
-
-/*
- * Typed queries
- */
 
 /** \brief Get the LUT configuration bits from the bitstream
  *
