@@ -22,7 +22,8 @@ typedef enum _id_v4 {
   XC4VLX200, XC4VLX__NUM,
 } id_v4vlx_t;
 
-static v4_frame_count[V4C__NB_CFG] = {
+static const int
+v4_frame_count[V4C__NB_CFG] = {
   [V4C_IOB] = 30,
   [V4C_GCLK] = 3,
   [V4C_CLB] = 22,
@@ -82,7 +83,6 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		   [V4_TYPE_BRAM_INT] = 5,
 		 },
 		 .row_count = 5, },
-
   [XC4VLX100] = { .idcode = 0x01700093,
 		  .framelen = 41,
 		  .frame_count = v4_frame_count,
@@ -509,9 +509,74 @@ void record_frame(bitstream_parsed_t *parsed,
   g_array_append_val(parsed->frame_array, framerec);
 }
 
+static unsigned
+type_col_count(const unsigned *col_count,
+	       const v4_design_col_t type) {
+  switch (type) {
+  case V4C_IOB:
+    return 3;
+  case V4C_GCLK:
+    return 1;
+  case V4C_DSP48:
+    return 1;
+  case V4C_PAD:
+    return 2;
+  case V4C_CLB:
+    return col_count[V4_TYPE_CLB] - 5;
+  case V4C_BRAM:
+    return col_count[V4_TYPE_BRAM];
+  case V4C_BRAM_INT:
+    return col_count[V4_TYPE_BRAM_INT];
+  case V4C__NB_CFG:
+    /* return the total ? */
+  default:
+    g_assert_not_reached();
+  }
+}
+
+static unsigned
+frames_of_type(const chip_struct_t *chip_struct,
+	       const v4_design_col_t type) {
+  const unsigned *col_count = chip_struct->col_count;
+  return 2 * chip_struct->row_count * type_col_count(col_count,type) * v4_frame_count[type];
+}
+
 static void
 alloc_indexer(bitstream_parsed_t *parsed) {
-  /* */
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  gsize total_size = 0;
+  gsize type_offset = 0;
+  v4_design_col_t type;
+  const gchar ***type_lut, **frame_array;
+
+  /* The frame array is a triple-lookup array:
+     - first index is index type (v4_design_col_t, length V4C__NB_CFG)
+     - second index is y-location (length 2*rows)
+     - third index is x-location (complex length, to be computed from the frame type)
+     - fourth index is mna sublocation (complex length too, from the v4_frame_count)
+
+     The array is indexed on the first index.
+  */
+
+  /* We need room for control of the type lookup */
+  total_size += V4C__NB_CFG * sizeof(gchar **);
+
+  /* We need room for the frames themselves */
+  for (type = 0; type < V4C__NB_CFG; type++)
+    total_size += frames_of_type(chip_struct, type) * sizeof(gchar *);
+
+  /* We allocate only one big array with the type_lut at the beginning
+     and the frame_array at the end */
+  type_lut = g_new0(const gchar **, total_size);
+  frame_array = (const gchar **) &type_lut[V4C__NB_CFG];
+
+  /* fill in the control data */
+  for (type = 0; type < V4C__NB_CFG; type++) {
+    type_lut[type] = &frame_array[type_offset];
+    type_offset += frames_of_type(chip_struct, type);
+  }
+
+  parsed->frames = type_lut;
   parsed->frame_array = g_array_new(FALSE, FALSE, sizeof(frame_record_t));
 }
 
