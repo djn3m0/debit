@@ -509,30 +509,7 @@ void record_frame(bitstream_parsed_t *parsed,
   g_array_append_val(parsed->frame_array, framerec);
 }
 
-static unsigned
-type_col_count(const unsigned *col_count,
-	       const v4_design_col_t type) {
-  switch (type) {
-  case V4C_IOB:
-    return 3;
-  case V4C_GCLK:
-    return 1;
-  case V4C_DSP48:
-    return 1;
-  case V4C_PAD:
-    return 2;
-  case V4C_CLB:
-    return col_count[V4_TYPE_CLB] - 5;
-  case V4C_BRAM:
-    return col_count[V4_TYPE_BRAM];
-  case V4C_BRAM_INT:
-    return col_count[V4_TYPE_BRAM_INT];
-  case V4C__NB_CFG:
-    /* return the total ? */
-  default:
-    g_assert_not_reached();
-  }
-}
+/* Bitstream frame indexing */
 
 static unsigned
 frames_of_type(const chip_struct_t *chip_struct,

@@ -7,6 +7,7 @@
 #define _DESIGN_V4_H
 
 #include <stdint.h>
+#include "bitstream_parser.h"
 
 /*
  * FAR Register implementation
@@ -16,7 +17,8 @@
  * FAR register -- hardware
  */
 
-/* TODO: get rid of this. Higly non-portable */
+/* this is only as a remembrance of things past.
+   Higly non-portable, so don't you dare use it. */
 typedef struct {
   unsigned int mna :6;
   unsigned int col :8;
@@ -152,6 +154,74 @@ typed_frame_name(char *buf, unsigned buf_len,
 		 const unsigned type,
 		 const unsigned index,
 		 const unsigned frameid) {
+}
+
+/**** Frame fast indexing ****/
+
+static inline unsigned
+type_col_count(const unsigned *col_count,
+	       const v4_design_col_t type) {
+  switch (type) {
+  case V4C_IOB:
+    return 3;
+  case V4C_GCLK:
+    return 1;
+  case V4C_DSP48:
+    return 1;
+  case V4C_PAD:
+    return 2;
+  case V4C_CLB:
+    return col_count[V4_TYPE_CLB] - 5;
+  case V4C_BRAM:
+    return col_count[V4_TYPE_BRAM];
+  case V4C_BRAM_INT:
+    return col_count[V4_TYPE_BRAM_INT];
+  case V4C__NB_CFG:
+    /* return the total ? */
+  default:
+    g_assert_not_reached();
+  }
+}
+
+/*
+ * The frame index is a four-way lookup table. We have chosen for now to use
+ * a two-way lookup table to index the frames internally, redoing most
+ * of the computation for the v4.
+ */
+
+static inline
+const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
+			    const guint type,
+			    const guint row,
+			    const guint top,
+			    const guint index,
+			    const guint frame) {
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  const unsigned rowcount = chip_struct->row_count;
+  const unsigned framecount = chip_struct->frame_count[type];
+  const unsigned *col_count = chip_struct->col_count;
+  g_assert(type < V4C__NB_CFG);
+  g_assert(index < type_col_count(col_count, type));
+  g_assert(row < rowcount);
+  g_assert(frame < framecount);
+  (void) col_count;
+
+  /* This is a double-lookup method */
+  return &parsed->frames[type][ index * (2 * rowcount * framecount) +
+				(top * rowcount + row) * framecount +
+				frame ];
+}
+
+static inline
+const gchar *get_frame(const bitstream_parsed_t *parsed,
+		       const guint type,
+		       const guint row,
+		       const guint top,
+		       const guint index,
+		       const guint frame) {
+  const gchar *frameptr = *get_frame_loc(parsed, type, row, top, index, frame);
+  g_assert(frameptr != NULL);
+  return frameptr;
 }
 
 #endif /* design_v4.h */
