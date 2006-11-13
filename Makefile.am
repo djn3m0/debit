@@ -5,26 +5,33 @@ AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
 
 SHARED_SRC	= bitarray.c bitarray.h \
 		bitheader.c bitheader.h \
-		bitstream_parser_v4.c bitstream_parser.h \
 		filedump.c filedump.h \
 		localpips.c localpips.h \
-		bitstream.c bitstream.h \
 		keyfile.c keyfile.h \
 		analysis.c analysis.h \
 		sites.c sites.h \
 		connexity.c connexity.h \
 		wiring.c wiring.h
 
-bin_PROGRAMS	= debit
+bin_PROGRAMS	= debit debit_v4
 
 if BUILD_BIT2PDF
   bin_PROGRAMS += bit2pdf
 endif
 
 debit_SOURCES	= $(SHARED_SRC) debit.c \
+		bitstream.c bitstream.h \
+		bitstream_parser.c bitstream_parser.h \
 		config.h design.h virtex2_config.h debitlog.h
 debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDADD	= @GLIB_LIBS@
+
+debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
+			bitstream_v4.c bitstream_v4.h \
+			bitstream_parser_v4.c bitstream_parser.h \
+			config.h design.h debitlog.h
+debit_v4_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
+debit_v4_LDADD	= @GLIB_LIBS@
 
 bit2pdf_SOURCES = bit2pdf.c sites_draw.c wiring_draw.c bitdraw.h \
 		$(SHARED_SRC)

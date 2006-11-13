@@ -22,22 +22,24 @@ typedef enum _id_v4 {
   XC4VLX200, XC4VLX__NUM,
 } id_v4vlx_t;
 
+static v4_frame_count[V4C__NB_CFG] = {
+  [V4C_IOB] = 30,
+  [V4C_GCLK] = 3,
+  [V4C_CLB] = 22,
+  [V4C_DSP48] = 21,
+  [V4C_BRAM] = 64,
+  [V4C_BRAM_INT] = 20,
+  /* the padding frames are seen as a compulsory column
+     of two frames at the end of any row */
+  [V4C_PAD] = 2,
+};
+
 static const
 chip_struct_t bitdescr[XC4VLX__NUM] = {
   /* FLR is always 41 for virtex-4 */
   [XC4VLX15] = { .idcode = 0x01658093,
-		 .frame_count = {
-		   [V4C_IOB] = 30, /* 22 + 8 */
-		   [V4C_GCLK] = 3,
-		   [V4C_CLB] = 22,
-		   [V4C_DSP48] = 21,
-		   [V4C_BRAM] = 64,
-		   [V4C_BRAM_INT] = 20,
-		   /* the padding frames are seen as a compulsory column
-		      of two frames at the end of any row */
-		   [V4C_PAD] = 2,
-		 },
 		 .framelen = 41,
+		 .frame_count = v4_frame_count,
 		 .col_count = {
 		   [V4_TYPE_CLB] = 29,
 		   [V4_TYPE_BRAM] = 3,
@@ -45,16 +47,8 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		 },
 		 .row_count = 2, },
   [XC4VLX25] = { .idcode = 0x0167C093,
-		 .frame_count = {
-		   [V4C_IOB] = 30,
-		   [V4C_GCLK] = 3,
-		   [V4C_CLB] = 22,
-		   [V4C_DSP48] = 21,
-		   [V4C_BRAM] = 64,
-		   [V4C_BRAM_INT] = 20,
-		   [V4C_PAD] = 2,
-		 },
 		 .framelen = 41,
+		 .frame_count = v4_frame_count,
 		 .col_count = {
 		   [V4_TYPE_CLB] = 33,
 		   [V4_TYPE_BRAM] = 3,
@@ -63,15 +57,7 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		 .row_count = 3, },
   [XC4VLX40] = { .idcode = 0x016A4093,
 		 .framelen = 41,
-		 .frame_count = {
-		   [V4C_IOB] = 30,
-		   [V4C_GCLK] = 3,
-		   [V4C_CLB] = 22,
-		   [V4C_DSP48] = 21,
-		   [V4C_BRAM] = 64,
-		   [V4C_BRAM_INT] = 20,
-		   [V4C_PAD] = 2,
-		 },
+		 .frame_count = v4_frame_count,
 		 .col_count = {
 		   [V4_TYPE_CLB] = 41,
 		   [V4_TYPE_BRAM] = 3,
@@ -80,15 +66,7 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		 .row_count = 4, },
   [XC4VLX60] = { .idcode = 0x016B4093,
 		 .framelen = 41,
-		 .frame_count = {
-		   [V4C_IOB] = 30,
-		   [V4C_GCLK] = 3,
-		   [V4C_CLB] = 22,
-		   [V4C_DSP48] = 21,
-		   [V4C_BRAM] = 64,
-		   [V4C_BRAM_INT] = 20,
-		   [V4C_PAD] = 2,
-		 },
+		 .frame_count = v4_frame_count,
 		 .col_count = {
 		   [V4_TYPE_CLB] = 57,
 		   [V4_TYPE_BRAM] = 4,
@@ -97,15 +75,7 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		 .row_count = 5, },
   [XC4VLX80] = { .idcode = 0x016D8093,
 		 .framelen = 41,
-		 .frame_count = {
-		   [V4C_IOB] = 30,
-		   [V4C_GCLK] = 3,
-		   [V4C_CLB] = 22,
-		   [V4C_DSP48] = 21,
-		   [V4C_BRAM] = 64,
-		   [V4C_BRAM_INT] = 20,
-		   [V4C_PAD] = 2,
-		 },
+		 .frame_count = v4_frame_count,
 		 .col_count = {
 		   [V4_TYPE_CLB] = 61,
 		   [V4_TYPE_BRAM] = 5,
@@ -115,15 +85,7 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 
   [XC4VLX100] = { .idcode = 0x01700093,
 		  .framelen = 41,
-		  .frame_count = {
-		    [V4C_IOB] = 30,
-		    [V4C_GCLK] = 3,
-		    [V4C_CLB] = 22,
-		    [V4C_DSP48] = 21,
-		    [V4C_BRAM] = 64,
-		    [V4C_BRAM_INT] = 20,
-		    [V4C_PAD] = 2,
-		  },
+		  .frame_count = v4_frame_count,
 		  .col_count = {
 		    [V4_TYPE_CLB] = 69,
 		    [V4_TYPE_BRAM] = 5,
@@ -132,15 +94,7 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		  .row_count = 6, },
   [XC4VLX160] = { .idcode = 0x01718093,
 		  .framelen = 41,
-		  .frame_count = {
-		    [V4C_IOB] = 30,
-		    [V4C_GCLK] = 3,
-		    [V4C_CLB] = 22,
-		    [V4C_DSP48] = 21,
-		    [V4C_BRAM] = 64,
-		    [V4C_BRAM_INT] = 20,
-		    [V4C_PAD] = 2,
-		  },
+		  .frame_count = v4_frame_count,
 		  .col_count = {
 		    [V4_TYPE_CLB] = 93,
 		    [V4_TYPE_BRAM] = 6,
@@ -149,15 +103,7 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		  .row_count = 6, },
   [XC4VLX200] = { .idcode = 0x01734093,
 		  .framelen = 41,
-		  .frame_count = {
-		    [V4C_IOB] = 30,
-		    [V4C_GCLK] = 3,
-		    [V4C_CLB] = 22,
-		    [V4C_DSP48] = 21,
-		    [V4C_BRAM] = 64,
-		    [V4C_BRAM_INT] = 20,
-		    [V4C_PAD] = 2,
-		  },
+		  .frame_count = v4_frame_count,
 		  .col_count = {
 		    [V4_TYPE_CLB] = 121,
 		    [V4_TYPE_BRAM] = 7,

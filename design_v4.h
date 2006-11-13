@@ -142,7 +142,7 @@ typedef enum {
 typedef struct _chip_struct {
   guint32 idcode;
   guint32 framelen;
-  const int frame_count[V4C__NB_CFG];
+  const int *frame_count;
   const unsigned col_count[V4__NB_COL_TYPES];
   const unsigned row_count;
 } chip_struct_t;
