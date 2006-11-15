@@ -168,14 +168,14 @@ type_col_count(const unsigned *col_count,
     return 1;
   case V4C_DSP48:
     return 1;
-  case V4C_PAD:
-    return 2;
   case V4C_CLB:
     return col_count[V4_TYPE_CLB] - 5;
   case V4C_BRAM:
     return col_count[V4_TYPE_BRAM];
   case V4C_BRAM_INT:
     return col_count[V4_TYPE_BRAM_INT];
+  case V4C_PAD:
+    return V4__NB_COL_TYPES;
   case V4C__NB_CFG:
     /* return the total ? */
   default:
@@ -201,9 +201,13 @@ const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
   const unsigned framecount = chip_struct->frame_count[type];
   const unsigned *col_count = chip_struct->col_count;
   g_assert(type < V4C__NB_CFG);
-  g_assert(index < type_col_count(col_count, type));
+  //  g_assert(index < type_col_count(col_count, type));
+  if ( index >= type_col_count(col_count, type))
+    g_warning("problem in index %i >= %i for type %i", index, type_col_count(col_count, type), type);
   g_assert(row < rowcount);
-  g_assert(frame < framecount);
+  //  g_assert(frame < framecount);
+  if (frame >= framecount)
+    g_warning("problem in frame %i >= %i for type %i", frame, framecount, type);
   (void) col_count;
 
   /* This is a double-lookup method */

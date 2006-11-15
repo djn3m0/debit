@@ -30,8 +30,8 @@ v4_frame_count[V4C__NB_CFG] = {
   [V4C_DSP48] = 21,
   [V4C_BRAM] = 64,
   [V4C_BRAM_INT] = 20,
-  /* the padding frames are seen as a compulsory column
-     of two frames at the end of any row */
+  /* the padding frames are seen as a compulsory column of two frames at
+     the end of any row for all three types of columns */
   [V4C_PAD] = 2,
 };
 
@@ -306,12 +306,36 @@ update_crc(bitstream_parser_t *parser,
  * FAR handling
  */
 
+/*
+static const
+char *type_names[V4C__NB_CFG] = {
+  [V4C_IOB] = "IOB",
+  [V4C_CLB] = "CLB",
+  [V4C_DSP48] = "DSP48",
+  [V4C_GCLK] = "GCLK",
+  [V4C_BRAM] = "BRAM",
+  [V4C_BRAM_INT] = "BRAM_INT",
+  [V4C_PAD] = "PAD",
+};
+
+void
+typed_frame_name(char *buf, unsigned buf_len,
+		 const guint type,
+		 const guint row,
+		 const guint top,
+		 const guint index,
+		 const guint frame) {
+  snprintf(buf, buf_len, "frame_%s_%01x_%02x_%02x_%02x",
+	   type_names[type], top, row, index, frame);
+}
+*/
+
 static inline void
 print_far(bitstream_parser_t *parser) {
   const guint32 far = register_read(parser, FAR);
   gchar far_name[32];
   snprintf_far_v4(far_name, sizeof(far_name), far);
-  debit_log(L_BITSTREAM, "FAR is [%i], %s", far, far_name);
+  debit_log(L_BITSTREAM, "FAR is [%08x], %s", far, far_name);
 }
 
 static inline void
@@ -363,7 +387,8 @@ _far_increment_col(bitstream_parser_t *bitstream,
   col = addr->col;
   col += 1;
 
-  /* There are two pad columns */
+  /* There is one pad column at the end, once this is skipped then we
+     resume the normal flow */
   if (col == col_count[type] + 1) {
     col = 0;
     _far_increment_row(bitstream, addr);
@@ -381,6 +406,7 @@ _far_is_pad(const bitstream_parser_t *bitstream,
   const v4_col_type_t type = addr->type;
   unsigned col = addr->col;
 
+  /* There are pad frames for all three types of data frames */
   if (col >= col_count[type])
     return TRUE;
   return FALSE;
@@ -389,12 +415,15 @@ _far_is_pad(const bitstream_parser_t *bitstream,
 /* Type is a bit strange -- it watches the type from the far and the col
    count, so as to get a mixed type which depends on both these
    parameters. */
+#define DSP_V4_OF_END(x) ((x) > 50 ? 12 : 9)
 
 static inline v4_design_col_t
-_type_of_far(bitstream_parser_t *bitstream, const sw_far_v4_t *addr) {
+_type_of_far(const bitstream_parser_t *bitstream,
+	     const sw_far_v4_t *addr) {
   const id_t chiptype = bitstream->type;
   const v4_col_type_t type = addr->type;
 
+  /* unlikely */
   if (_far_is_pad(bitstream, addr))
     return V4C_PAD;
 
@@ -404,7 +433,7 @@ _type_of_far(bitstream_parser_t *bitstream, const sw_far_v4_t *addr) {
       const int col = addr->col;
       const unsigned end = bitdescr[chiptype].col_count[V4_TYPE_CLB] - 1;
       const unsigned middle = end >> 1;
-      const unsigned dsp = end > 50 ? 9 : 12;
+      const unsigned dsp = DSP_V4_OF_END(end);
       /* Let's be more intelligent.
 	 Middle, extremities: IO.
 	 DSP is at fixed position and the rest is CLB */
@@ -496,6 +525,61 @@ default_register_write(bitstream_parser_t *parser,
 
 }
 
+static inline unsigned
+_typed_col_of_far(const bitstream_parser_t *bitstream,
+		  const sw_far_v4_t *addr) {
+  const id_t chiptype = bitstream->type;
+  const v4_col_type_t type = addr->type;
+  const unsigned col = addr->col;
+
+  /* unlikely, move this out of main exec flow */
+  if (_far_is_pad(bitstream, addr))
+    return type;
+
+  switch (type) {
+  case V4_TYPE_CLB:
+    {
+      const int col = addr->col;
+      const unsigned end = bitdescr[chiptype].col_count[V4_TYPE_CLB] - 1;
+      const unsigned middle = end >> 1;
+      const unsigned dsp = DSP_V4_OF_END(end);
+
+      if (col == 0)
+	return 0;
+      if (col == dsp)
+	return 0;
+      if (col == middle)
+	return 1;
+      if (col == end)
+	return 2;
+      if (col == (middle + 1))
+	return 0;
+      if (col < dsp)
+	return col-1;
+      if (col < middle)
+	return col-2;
+      return col-4;
+    }
+  default:
+    return col;
+  }
+
+  return -1;
+}
+
+static inline const gchar **
+get_frameloc_from_far(const bitstream_parsed_t *parsed,
+		      const bitstream_parser_t *parser,
+		      const guint32 myfar) {
+  sw_far_v4_t far;
+  v4_design_col_t type;
+  unsigned typed_col;
+  fill_swfar_v4(&far, myfar);
+  type = _type_of_far(parser, &far);
+  typed_col = _typed_col_of_far(parser, &far);
+  return get_frame_loc(parsed, type, far.row, far.tb, typed_col, far.mna);
+}
+
 static inline
 void record_frame(bitstream_parsed_t *parsed,
 		  bitstream_parser_t *bitstream,
@@ -507,6 +591,14 @@ void record_frame(bitstream_parsed_t *parsed,
   framerec.frame = dataframe;
   /* record the framerec */
   g_array_append_val(parsed->frame_array, framerec);
+
+  /* record in the flat descriptor */
+  {
+    const gchar **framepos = get_frameloc_from_far(parsed, bitstream, myfar);
+    if (*framepos)
+      g_warning("Replacing frame already present for far [%08x]", myfar);
+    *framepos = dataframe;
+  }
 }
 
 /* Bitstream frame indexing */
