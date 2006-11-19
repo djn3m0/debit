@@ -8,16 +8,18 @@
 #include "debitlog.h"
 #include "bitstream.h"
 #include "bitstream_header.h"
+#include "crc-ccitt.h"
 
 typedef enum option_code {
   NEUTRAL = 0,
   BUILDTOOL = 1,
   CHIPTYPE = 2,
   NAME = 3,
-  CRC = 8,
+  CRC16 = 8,
   BITSTREAM = 17,
   PACKAGE = 18,
   UNKNOWN = 19,
+  RAM = 21,
 } option_code_t;
 
 #define PACKED __attribute__((packed))
@@ -31,9 +33,16 @@ typedef struct _bitstream_option {
   char data[];
 } PACKED bitstream_option_t;
 
+/* Depending on alignment issues on specific processors, this could be
+   replaced by a more complex function, on ARM for instance */
 static inline
 uint32_t get_32(const char *data) {
   return *((uint32_t *)data);
+}
+
+static inline
+uint16_t get_16(const char *data) {
+  return *((uint16_t *)data);
 }
 
 static inline const bitstream_option_t *
@@ -44,41 +53,45 @@ parse_option(altera_bitstream_t *altera,
   guint32 length = GUINT32_FROM_LE(opt->length);
   const char *data = opt->data;
 
-  debit_log(L_BITSTREAM, "option code %i, length %i\n", code, length);
+  debit_log(L_BITSTREAM, "option code %i, length %i", code, length);
 
   switch(code) {
   case BUILDTOOL:
-    debit_log(L_BITSTREAM, "This bitstream build courtesy of %.*s. We love you !\n", length, data);
+    debit_log(L_BITSTREAM, "This bitstream build courtesy of %.*s. We love you !", length, data);
     break;
   case CHIPTYPE:
-    debit_log(L_BITSTREAM, "Chip is a %.*s\n", length, data);
+    debit_log(L_BITSTREAM, "Chip is a %.*s", length, data);
     break;
   case NAME:
-    debit_log(L_BITSTREAM, "This bitstream's joyfull nickname is %.*s\n", length, data);
+    debit_log(L_BITSTREAM, "This bitstream's joyfull nickname is %.*s", length, data);
     break;
   case BITSTREAM:
-    debit_log(L_BITSTREAM, "Got the bitstream data. The meat. What you want. (length %i)\n", length);
+    debit_log(L_BITSTREAM, "Got the bitstream data. The meat. What you want. (length %i)", length);
     altera->bitdata = data;
     altera->bitlength = length;
+    break;
+  case RAM:
+    debit_log(L_BITSTREAM, "Got the RAM Data");
     break;
   case PACKAGE:
     {
       guint32 id = GUINT32_FROM_LE(get_32(data));
-      debit_log(L_BITSTREAM, "Something, maybe the package is %04x\n", id);
+      debit_log(L_BITSTREAM, "Something, maybe the package is %04x", id);
       (void) id;
     }
     break;
-  case CRC:
+  case CRC16:
     {
-      guint32 crc = GUINT32_FROM_LE(get_32(data));
-      debit_log(L_BITSTREAM, "CRC for the bitstream is %08x\n", crc);
+      guint16 crc = GUINT16_FROM_LE(get_16(data));
+      debit_log(L_BITSTREAM, "CRC16 for the bitstream is %04x", crc);
       (void) crc;
     }
     break;
   default:
-    debit_log(L_BITSTREAM, "Unknown option code. Cheers ! And do not forget to contact me.\n");
+    debit_log(L_BITSTREAM, "Unknown option code. Cheers ! And do not forget to contact me.");
   }
 
+  /* Writeback computation */
   *rcode = code;
   return (const void *)&data[length];
 }
@@ -99,14 +112,21 @@ parse_bitstream_structure(altera_bitstream_t *bitstream,
     return -1;
   }
 
-  /* seek to the first option past SOF-- I need more bitstream examples to
-     reverse-engeneer the very beginning of the file */
+  /* seek to the first option past SOF -- I need more bitstream examples
+     to reverse-engeneer the very beginning of the file */
 
   read += 3 * sizeof(uint32_t);
   current = (void *)read;
 
   while (current < last_option) {
     current = parse_option(bitstream, &code, current);
+    if (code == CRC16) {
+      uint16_t crc_val = ~crc_ccitt(0xffff, (unsigned char*)buf, buf_len);
+      if (crc_val == 0x0f47)
+	debit_log(L_BITSTREAM, "CRC okay");
+      else
+	g_warning("Wrong CRC, syndrome is %04x", crc_val);
+    }
   }
 
   /* yeah, there can be no error with such rock-solid code */

@@ -5,6 +5,7 @@
 #ifndef _ALTERA_BITSTREAM_H
 #define _ALTERA_BITSTREAM_H
 
+#include <stdint.h>
 #include <glib.h>
 #include "bitarray.h"
 
