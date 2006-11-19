@@ -14,8 +14,13 @@ typedef struct _altera_bitstream_t {
   unsigned *xoffsets;
   unsigned base_offset;
 
+  /* bitstream, pips & al */
   const char *bitdata;
   guint32 bitlength;
+
+  /* M4k ramblocks of the cyclone 2. At least part of it */
+  const char *m4kdata;
+  guint32 m4klength;
 
   GMappedFile *file;
 } altera_bitstream_t;
@@ -30,9 +35,15 @@ parse_bitstream(const gchar *file);
 void
 dump_lut_tables(const altera_bitstream_t *);
 
+/* TODO: factor this into a "dumpoption" thing */
+
 int
 dump_raw_bit(const gchar *odir, const gchar *filename,
 	     const altera_bitstream_t *);
+int
+dump_raw_m4k(const gchar *odir, const gchar *filename,
+	     const altera_bitstream_t *);
+
 void
 zero_lut_tables(const altera_bitstream_t *);
 

@@ -548,6 +548,12 @@ dump_raw_bit(const gchar *odir, const gchar *filename,
   return dump_data(odir, filename, bitstream->bitdata, bitstream->bitlength);
 }
 
+int
+dump_raw_m4k(const gchar *odir, const gchar *filename,
+	     const altera_bitstream_t *bitstream) {
+  return dump_data(odir, filename, bitstream->m4kdata, bitstream->m4klength);
+}
+
 altera_bitstream_t *
 parse_bitstream(const gchar *filename) {
   /* get the bitstream into a bitarray */

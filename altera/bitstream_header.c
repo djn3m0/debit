@@ -19,7 +19,7 @@ typedef enum option_code {
   BITSTREAM = 17,
   PACKAGE = 18,
   UNKNOWN = 19,
-  RAM = 21,
+  RAM_M4K = 21,
 } option_code_t;
 
 #define PACKED __attribute__((packed))
@@ -70,7 +70,9 @@ parse_option(altera_bitstream_t *altera,
     altera->bitdata = data;
     altera->bitlength = length;
     break;
-  case RAM:
+  case RAM_M4K:
+    altera->m4kdata = data;
+    altera->m4klength = length;
     debit_log(L_BITSTREAM, "Got the RAM Data");
     break;
   case PACKAGE:

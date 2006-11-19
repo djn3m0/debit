@@ -52,6 +52,7 @@
 	  <command>altera</command>
 	  <arg><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></arg>
 	  <arg><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></arg>
+	  <arg><option>--m4kdump <replaceable class="option">FILE</replaceable></option></arg>
 	  <arg choice="req"><option>--input <replaceable class="option">BITSTREAM-FILE</replaceable></option></arg>
 	</cmdsynopsis>
 	<cmdsynopsis>
@@ -84,6 +85,13 @@
 	    <term><option>--help</option></term>
 	    <listitem>
 	      <para>Display some basic help.</para>
+	    </listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><option>--m4kdump <replaceable class="option">FILE</replaceable></option></term>
+	    <listitem>
+	      <para>Dump the initialization data for the m4k RAM memory blocks to <replaceable class="option">FILE</replaceable></para>
 	    </listitem>
 	  </varlistentry>
 

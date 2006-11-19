@@ -40,6 +40,7 @@ static gboolean clearlut = FALSE;
 
 static gchar *ifile = NULL;
 static gchar *bitdump = NULL;
+static gchar *m4kdump = NULL;
 static gchar *odir = ".";
 static gchar *datadir = DATADIR;
 
@@ -83,6 +84,12 @@ debit_file(gchar *input_file, gchar *output_dir) {
       goto out_err;
   }
 
+  if (m4kdump) {
+    err = dump_raw_m4k(NULL, m4kdump, altera);
+    if (err)
+      goto out_err;
+  }
+
   if (lutdump)
     dump_lut_tables(altera);
 
@@ -115,6 +122,7 @@ static GOptionEntry entries[] =
   /* some bitstream parameters */
   {"base_offset", 'f', 0, G_OPTION_ARG_INT, &base_off, "Initial offset in the bitfile", NULL},
   {"slice_offset", 's', 0, G_OPTION_ARG_INT, &slice_off, "offset at the smallest change", NULL},
+  {"m4kdump", 'm', 0, G_OPTION_ARG_FILENAME, &m4kdump, "dump the m4k (opt 21 for now) bitstream data to <ofile>", "<ofile>"},
   { NULL }
 };
 
