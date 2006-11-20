@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include "crc.h"
+#include "crc-ccitt.h"
 
 /*
  * This mysterious table is just the CRC of each possible byte. It can be
