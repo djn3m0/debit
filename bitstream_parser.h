@@ -18,7 +18,7 @@ typedef enum _id {
   XC2V4000, XC2V6000,
   XC2V8000,
   XC2__NUM,
-} id_t;
+} v2_id_t;
 
 /* This structure holds the finale results of the parsing phase */
 typedef struct _bitstream_parsed {
@@ -29,7 +29,7 @@ typedef struct _bitstream_parsed {
   gchar *build_time;
 
   /* (virtex-II) chip type info -- from bitstream data */
-  id_t chip;
+  v2_id_t chip;
   const chip_struct_t *chip_struct;
 
   /* frames */

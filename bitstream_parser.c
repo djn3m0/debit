@@ -329,7 +329,7 @@ typedef struct _bitstream_parser {
   xil_register_t registers[__NUM_REGISTERS];
 
   /* detailed view of some registers */
-  id_t type;
+  v2_id_t type;
 
   /* Specific FDRI quirks */
   const void *last_frame;
@@ -433,7 +433,7 @@ _type_of_far(const bitstream_parser_t *bitstream,
   /* See ug002, page 322, 340 */
   switch(ba) {
   case BA_TYPE_CLB: {
-    id_t chiptype = bitstream->type;
+    v2_id_t chiptype = bitstream->type;
     const int *col_count = bitdescr[chiptype].col_count;
     int nclb = col_count[V2C_CLB];
     int mja = addr->mja;
@@ -462,7 +462,7 @@ _type_of_far(const bitstream_parser_t *bitstream,
 static inline int
 _col_of_far(const bitstream_parser_t *bitstream,
 	    const sw_far_t *addr) {
-  id_t chiptype = bitstream->type;
+  v2_id_t chiptype = bitstream->type;
   int nclb = bitdescr[chiptype].col_count[V2C_CLB];
 
   int type = _type_of_far(bitstream, addr);
@@ -502,7 +502,7 @@ _col_of_far(const bitstream_parser_t *bitstream,
 static inline void
 _far_increment_mja(bitstream_parser_t *bitstream,
 		   sw_far_t *addr, int type) {
-  id_t chiptype = bitstream->type;
+  v2_id_t chiptype = bitstream->type;
   const int *col_count = bitdescr[chiptype].col_count;
   guint mja;
 
@@ -519,7 +519,7 @@ _far_increment_mja(bitstream_parser_t *bitstream,
 static inline void
 _far_increment_mna(bitstream_parser_t *bitstream,
 		   sw_far_t *addr) {
-  id_t chiptype = bitstream->type;
+  v2_id_t chiptype = bitstream->type;
   const int *frame_count = bitdescr[chiptype].frame_count;
   int type;
 
@@ -739,7 +739,7 @@ handle_cmd_write(bitstream_parsed_t *parsed,
 }
 
 static inline gint
-flr_check(const bitstream_parser_t *parser, id_t chip) {
+flr_check(const bitstream_parser_t *parser, v2_id_t chip) {
   guint32 flr = register_read(parser, FLR);
   guint32 chipflr = bitdescr[chip].framelen;
 
