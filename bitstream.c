@@ -347,13 +347,9 @@ guint16 bram_offset_to_mask[16] = {
   0x10, 0x800, 0x20, 0x400, 0x40, 0x200, 0x80, 0x100, 0x8, 0x1000, 0x4, 0x2000, 0x2, 0x4000, 0x1, 0x8000,
 };
 
-/* static const */
-/* gchar bram_offset_for_bit[16] = { */
-/*   1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, 1, 1, */
-/* }; */
 static const
-gchar bram_offset_for_bit[16] = {
-  -1, -1, -1, -2, -1, -1, -1, -3, -1, -1, -1, -2, -1, -1, -1,
+guchar bram_offset_for_bit[16] = {
+  1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, 1, 1,
 };
 
 /** \brief Get the bram data bits from a site
@@ -392,7 +388,7 @@ query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
 	  line_data[k] |= bit_to_write;
       }
 
-      guint_offset += bram_offset_for_bit[j];
+      guint_offset -= bram_offset_for_bit[j];
     }
   }
   return bram_data;
