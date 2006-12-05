@@ -80,7 +80,7 @@ fi
 AC_CONFIG_FILES([Makefile data/Makefile tests/Makefile \
 		debian/Makefile rpm/Makefile windows/Makefile \
 		altera/Makefile \
-		utils/Makefile utils/correlation/Makefile \
+		codes/Makefile utils/Makefile utils/correlation/Makefile \
 		xiledit/Makefile \
 		desktop/Makefile desktop/artwork/Makefile
 		doc/Makefile doc/man/Makefile])

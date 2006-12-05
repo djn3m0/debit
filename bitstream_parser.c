@@ -12,6 +12,7 @@
 #include "bitheader.h"
 #include "bitstream_parser.h"
 #include "debitlog.h"
+#include "codes/crc-ibm.h"
 
 /* This is nothing but a key-value file */
 static const
@@ -368,37 +369,21 @@ register_write(bitstream_parser_t *parser,
  * CRC
  ***/
 
-/* Uses the lowest bit of the bit argument */
-
-static inline guint16
-shift_one_crc_bit(guint bit, guint16 bcc) {
-  guint val = ((bcc >> 15) ^ bit) & 1;
-  if (val != 0) {
-    bcc <<= 1;
-    bcc ^= 0x8005;
-  } else {
-    bcc <<= 1;
-  }
-
-  return bcc & 0xffff;
-}
-
 static inline void
 update_crc(bitstream_parser_t *parser,
 	   const register_index_t reg,
 	   const guint32 val) {
-  unsigned i;
   xil_register_t *crcreg = &parser->registers[CRC];
   guint32 bcc = crcreg->value;
 
   /* first go through the value bits */
-  for (i=0; i < 32; i++)
-    bcc = shift_one_crc_bit(val >> i, bcc);
+  bcc = crc_ibm_byte(bcc, val);
+  bcc = crc_ibm_byte(bcc, val >> 8);
+  bcc = crc_ibm_byte(bcc, val >> 16);
+  bcc = crc_ibm_byte(bcc, val >> 24);
 
-  /* possibly 5 bits of address */
-#define V2_REG_ADDR_BITS 5
-  for (i=0; i < V2_REG_ADDR_BITS; i++)
-    bcc = shift_one_crc_bit(reg >> i, bcc);
+  /* the 5 bits of register address */
+  bcc = crc_ibm_addr5(bcc, reg);
 
   /* write the CRC to the CRC register */
   crcreg->value = bcc;

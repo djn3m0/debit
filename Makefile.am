@@ -13,7 +13,8 @@ SHARED_SRC	= bitarray.c bitarray.h \
 		analysis.c analysis.h \
 		sites.c sites.h \
 		connexity.c connexity.h \
-		wiring.c wiring.h
+		wiring.c wiring.h \
+		codes/crc-ibm.c codes/crc-ibm.h
 
 bin_PROGRAMS	= debit
 

@@ -6,7 +6,7 @@ glade_generated = interface.c interface.h support.c support.h
 
 SHARED_SRC	= ../bitarray.c ../bitheader.c ../bitstream_parser.c ../filedump.c \
 		../localpips.c ../bitstream.c ../wiring.c ../keyfile.c \
-		../analysis.c ../connexity.c
+		../analysis.c ../connexity.c ../codes/crc-ibm.c
 #SHARED_COUCOU	= $(addprefix ../,$(SHARED_SRC))
 
 bin_PROGRAMS	=
