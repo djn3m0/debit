@@ -29,7 +29,8 @@ debit_LDADD	= @GLIB_LIBS@
 debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
 			bitstream_v4.c bitstream_v4.h \
 			bitstream_parser_v4.c bitstream_parser.h \
-			config.h design.h debitlog.h
+			config.h design.h debitlog.h \
+			codes/xhamming.c codes/xhamming.h
 debit_v4_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_v4_LDADD	= @GLIB_LIBS@
 

@@ -14,6 +14,8 @@
 #include "bitstream_parser.h"
 #include "debitlog.h"
 
+#include "codes/xhamming.h"
+
 typedef enum _id_v4 {
   XC4VLX15 = 0,
   XC4VLX25, XC4VLX40,
@@ -589,6 +591,10 @@ void record_frame(bitstream_parsed_t *parsed,
   framerec.far = myfar;
   framerec.framelen = 41;
   framerec.frame = dataframe;
+
+  /* Check the frame's Hamming Code */
+  (void) check_hamming_frame(dataframe, myfar);
+
   /* record the framerec */
   g_array_append_val(parsed->frame_array, framerec);
 
