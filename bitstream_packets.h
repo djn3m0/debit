@@ -3,6 +3,9 @@
  * All rights reserved.
  */
 
+#ifndef _BITSTREAM_PACKETS_H
+#define _BITSTREAM_PACKETS_H
+
 /*
  * V1 packet type
  */
@@ -115,3 +118,5 @@ static inline unsigned
 type_of_v2pkt(const uint32_t v2pkt) {
   return (v2pkt & V2_PKT_TYPE_MASK) >> V2_PKT_TYPE_OFFSET;
 }
+
+#endif /* _BITSTREAM_PACKETS_H */

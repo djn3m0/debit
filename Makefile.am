@@ -5,30 +5,39 @@ AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
 
 SHARED_SRC	= bitarray.c bitarray.h \
 		bitheader.c bitheader.h \
-		bitstream_parser.c bitstream_parser.h \
 		filedump.c filedump.h \
 		localpips.c localpips.h \
-		bitstream.c bitstream.h \
 		keyfile.c keyfile.h \
 		analysis.c analysis.h \
 		sites.c sites.h \
 		connexity.c connexity.h \
 		wiring.c wiring.h \
-		codes/crc-ibm.c codes/crc-ibm.h
+		bitstream_parser.h debitlog.h
 
-bin_PROGRAMS	= debit
+SHARED_SRC_V2	= codes/crc-ibm.c codes/crc-ibm.h \
+		bitstream.c bitstream.h \
+		bitstream_parser.c bitstream_parser.h \
+		design.h virtex2_config.h
+
+bin_PROGRAMS	= debit debit_v4
 
 if BUILD_BIT2PDF
   bin_PROGRAMS += bit2pdf
 endif
 
-debit_SOURCES	= $(SHARED_SRC) debit.c \
-		config.h design.h virtex2_config.h debitlog.h
+debit_SOURCES	= $(SHARED_SRC) $(SHARED_SRC_V2) debit.c config.h
 debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_LDADD	= @GLIB_LIBS@
 
-bit2pdf_SOURCES = bit2pdf.c sites_draw.c wiring_draw.c bitdraw.h \
-		$(SHARED_SRC)
+debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
+			bitstream_v4.c bitstream_v4.h \
+			bitstream_parser_v4.c design_v4.h \
+			codes/xhamming.c codes/xhamming.h \
+			config.h
+debit_v4_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
+debit_v4_LDADD	= @GLIB_LIBS@
+
+bit2pdf_SOURCES = $(SHARED_SRC) $(SHARED_SRC_V2) bit2pdf.c sites_draw.c wiring_draw.c bitdraw.h
 bit2pdf_CFLAGS = @GLIB_CFLAGS@ @CAIRO_CFLAGS@
 bit2pdf_LDADD  = @GLIB_LIBS@ @CAIRO_LIBS@
 

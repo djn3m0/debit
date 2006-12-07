@@ -30,6 +30,7 @@
 
 static gboolean framedump = FALSE;
 static gboolean sitedump = FALSE;
+static gboolean unkdump = FALSE;
 static gboolean pipdump = FALSE;
 static gboolean lutdump = FALSE;
 static gboolean bramdump = FALSE;
@@ -56,7 +57,10 @@ debit_file(gchar *input_file, gchar *output_dir) {
 
   /* Have some action */
   if (framedump)
-    design_write_frames(bit,odir);
+    design_write_frames(bit, odir);
+
+  if (unkdump)
+    design_dump_frames(bit, odir);
 
   if (sitedump || pipdump || lutdump || bramdump) {
     bitstream_analyzed_t *analysis = analyze_bitstream(bit, datadir);
@@ -89,8 +93,11 @@ static GOptionEntry entries[] =
 #endif
   {"outdir", 'o', 0, G_OPTION_ARG_FILENAME, &odir, "Write data files in directory <odir>", "<odir>"},
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
+  /* v2 specific */
   {"framedump", 'f', 0, G_OPTION_ARG_NONE, &framedump, "Dump raw data frames", NULL},
   {"sitedump", 's', 0, G_OPTION_ARG_NONE, &sitedump, "Dump raw site data files", NULL},
+  /* v4, v5 specific */
+  {"unkdump", 'u', 0, G_OPTION_ARG_NONE, &unkdump, "Dump raw data frames uninterpreted", NULL},
   {"pipdump", 'p', 0, G_OPTION_ARG_NONE, &pipdump, "Dump pips in the bitstream", NULL},
   {"lutdump", 'l', 0, G_OPTION_ARG_NONE, &lutdump, "Dump lut data from the bitstream", NULL},
   {"bramdump", 'b', 0, G_OPTION_ARG_NONE, &bramdump, "Dump bram data from the bitstream", NULL},

@@ -8,7 +8,6 @@
 #define _BITSTREAM_PARSER_H
 
 #include <glib.h>
-#include "design.h"
 
 typedef enum _id {
   XC2V40 = 0, XC2V80,
@@ -30,10 +29,11 @@ typedef struct _bitstream_parsed {
 
   /* (virtex-II) chip type info -- from bitstream data */
   v2_id_t chip;
-  const chip_struct_t *chip_struct;
+  const void *chip_struct;
 
   /* frames */
   const gchar ***frames;
+  GArray *frame_array;
 
   /* mmapped file information */
   GMappedFile *file;
@@ -52,43 +52,17 @@ typedef void (*frame_iterator_t)(const char *frame,
 void iterate_over_frames(const bitstream_parsed_t *parsed,
 			 frame_iterator_t iter, void *data);
 
-/****
- * Bitstream frame indexing
- ****/
+typedef struct _frame_record {
+  guint32 far;
+  guint32 offset;
+  unsigned framelen;
+  const char *frame;
+} frame_record_t;
 
-/*
- * The frame index is a three-way lookup table. We choose for now to use
- * a two-way lookup table to index the frames internally.
- */
+typedef void (*frame_unk_iterator_t)(const frame_record_t *frame,
+				     void *data);
 
-static inline
-const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
-			    const guint type,
-			    const guint index,
-			    const guint frame) {
-  const chip_struct_t *chip_struct = parsed->chip_struct;
-  const int *col_count = chip_struct->col_count;
-  const int *frame_count = chip_struct->frame_count;
-  g_assert(type < V2C__NB_CFG);
-  g_assert(index < col_count[type]);
-  g_assert(frame < frame_count[type]);
-  (void) col_count;
-
-  /* This is a double-lookup method */
-  return &parsed->frames[type][index * frame_count[type] + frame];
-}
-
-/* FDRI handling. Requires FAR handling.
-   Registers a frame */
-
-static inline
-const gchar *get_frame(const bitstream_parsed_t *parsed,
-		       const guint type,
-		       const guint index,
-		       const guint frame) {
-  const gchar *frameptr = *get_frame_loc(parsed, type, index, frame);
-  g_assert(frameptr != NULL);
-  return frameptr;
-}
+void iterate_over_unk_frames(const bitstream_parsed_t *parsed,
+			     frame_unk_iterator_t iter, void *itdat);
 
 #endif /* _BITSTREAM_PARSER_H */

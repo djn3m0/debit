@@ -236,7 +236,7 @@ init_chip(chip_descr_t *chip, GKeyFile *file) {
 
 /* exported alloc and destroy functions */
 chip_descr_t *
-get_chip(const gchar *dirname, const id_t chipid) {
+get_chip(const gchar *dirname, const v2_id_t chipid) {
   chip_descr_t *chip = g_new0(chip_descr_t, 1);
   const gchar *chipname = chipfiles[chipid];
   GKeyFile *keyfile;
