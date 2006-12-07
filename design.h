@@ -109,16 +109,6 @@ get_hwfar(const sw_far_t *sw_far) {
 		(sw_far->ba  << FAR_BA_OFFSET));
 }
 
-/****
- * Bitstream frame indexing
- ****/
-
-void
-typed_frame_name(char *buf, unsigned buf_len,
-		 const unsigned type,
-		 const unsigned index,
-		 const unsigned frameid);
-
 /*
  * The frame index is a three-way lookup table. We choose for now to use
  * a two-way lookup table to index the frames internally.

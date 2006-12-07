@@ -116,20 +116,6 @@ get_hwfar_v4(const sw_far_v4_t *sw_far) {
 	  (sw_far->tb << FAR_V4_TB_OFFSET));
 }
 
-#include <stdio.h>
-
-static inline int
-snprintf_far_v4(char *buf, const size_t buf_len,
-		const uint32_t hwfar) {
-  return snprintf(buf, buf_len,
-		  "%i_%i_%i_%i_%i",
-		  v4_tb_of_far(hwfar),
-		  v4_type_of_far(hwfar),
-		  v4_row_of_far(hwfar),
-		  v4_col_of_far(hwfar),
-		  v4_mna_of_far(hwfar));
-}
-
 typedef enum {
   V4C_IOB = 0,
   V4C_CLB,
@@ -141,7 +127,7 @@ typedef enum {
   V4C__NB_CFG,
 } v4_design_col_t;
 
-typedef struct _chip_struct {
+typedef struct _chip_struct_v4 {
   guint32 idcode;
   guint32 framelen;
   const int *frame_count;
@@ -149,12 +135,6 @@ typedef struct _chip_struct {
   const unsigned row_count;
 } chip_struct_t;
 
-static inline void
-typed_frame_name(char *buf, unsigned buf_len,
-		 const unsigned type,
-		 const unsigned index,
-		 const unsigned frameid) {
-}
 
 /**** Frame fast indexing ****/
 

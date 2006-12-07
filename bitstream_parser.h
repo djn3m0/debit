@@ -7,6 +7,7 @@
 #ifndef _BITSTREAM_PARSER_H
 #define _BITSTREAM_PARSER_H
 
+#include <stdint.h>
 #include <glib.h>
 
 typedef enum _id {
@@ -49,6 +50,10 @@ typedef void (*frame_iterator_t)(const char *frame,
 				 guint frameidx,
 				 void *data);
 
+/****
+ * Bitstream frame indexing
+ ****/
+
 void iterate_over_frames(const bitstream_parsed_t *parsed,
 			 frame_iterator_t iter, void *data);
 
@@ -64,5 +69,17 @@ typedef void (*frame_unk_iterator_t)(const frame_record_t *frame,
 
 void iterate_over_unk_frames(const bitstream_parsed_t *parsed,
 			     frame_unk_iterator_t iter, void *itdat);
+
+/* for v2 */
+void
+typed_frame_name(char *buf, unsigned buf_len,
+		 const unsigned type,
+		 const unsigned index,
+		 const unsigned frameid);
+
+/* for v4 */
+int
+snprintf_far(char *buf, const size_t buf_len,
+	     const uint32_t hwfar);
 
 #endif /* _BITSTREAM_PARSER_H */

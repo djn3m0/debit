@@ -4,8 +4,10 @@
  * Virtex4 bitstream parser.
  */
 
-#include <glib.h>
 #include <string.h>
+#include <stdio.h>
+
+#include <glib.h>
 
 #include "bitarray.h"
 #include "bitstream_packets.h"
@@ -301,42 +303,33 @@ update_crc(bitstream_parser_t *parser,
 }
 
 /***
- * FAR -- no far decoding thus far.
- ***/
-
-/***
  * FAR handling
  */
 
-/*
-static const
-char *type_names[V4C__NB_CFG] = {
-  [V4C_IOB] = "IOB",
-  [V4C_CLB] = "CLB",
-  [V4C_DSP48] = "DSP48",
-  [V4C_GCLK] = "GCLK",
-  [V4C_BRAM] = "BRAM",
-  [V4C_BRAM_INT] = "BRAM_INT",
-  [V4C_PAD] = "PAD",
-};
+int
+snprintf_far(char *buf, const size_t buf_len,
+	     const uint32_t hwfar) {
+  return snprintf(buf, buf_len,
+		  "%i_%i_%i_%i_%i",
+		  v4_tb_of_far(hwfar),
+		  v4_type_of_far(hwfar),
+		  v4_row_of_far(hwfar),
+		  v4_col_of_far(hwfar),
+		  v4_mna_of_far(hwfar));
+}
 
 void
 typed_frame_name(char *buf, unsigned buf_len,
-		 const guint type,
-		 const guint row,
-		 const guint top,
-		 const guint index,
-		 const guint frame) {
-  snprintf(buf, buf_len, "frame_%s_%01x_%02x_%02x_%02x",
-	   type_names[type], top, row, index, frame);
+		 const unsigned type,
+		 const unsigned index,
+		 const unsigned frameid) {
 }
-*/
 
 static inline void
 print_far(bitstream_parser_t *parser) {
   const guint32 far = register_read(parser, FAR);
   gchar far_name[32];
-  snprintf_far_v4(far_name, sizeof(far_name), far);
+  snprintf_far(far_name, sizeof(far_name), far);
   debit_log(L_BITSTREAM, "FAR is [%08x], %s", far, far_name);
 }
 
@@ -514,7 +507,7 @@ default_register_write(bitstream_parser_t *parser,
       break;
     case LOUT: {
       gchar far_name[32];
-      snprintf_far_v4(far_name, sizeof(far_name), val);
+      snprintf_far(far_name, sizeof(far_name), val);
       g_print("LOUT: %08x ", val);
       g_print("LOUT as FAR is [%i], %s\n", val, far_name);
       /* Fall through */

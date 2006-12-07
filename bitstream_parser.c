@@ -419,6 +419,12 @@ typed_frame_name(char *buf, unsigned buf_len,
 	   type_names[type], index, frameid);
 }
 
+int
+snprintf_far(char *buf, const size_t buf_len,
+	     const uint32_t hwfar) {
+  return 0;
+}
+
 static inline void
 print_far(sw_far_t *far) {
   debit_log(L_BITSTREAM, "FAR is [ba %i, mja %i, mna %i, bn %i]",

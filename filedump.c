@@ -3,14 +3,17 @@
  * All rights reserved.
  */
 
-#include <glib.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdint.h>
+
+#include <glib.h>
 
 #include "bitstream_parser.h"
-//#include "design.h"
-#include "design_v4.h"
+
+/* XXX This is currently needed but should be removed */
+#include "design.h"
 
 typedef void (*dump_hook_t)(FILE *out, const void *_data, const unsigned num);
 static void dump_bin_rev(FILE *out, const void *_data, const unsigned num);
@@ -75,7 +78,7 @@ open_unk_frame_file(const frame_record_t *frame) {
   FILE *f;
   char fn[64];
   char farname[64];
-  snprintf_far_v4(farname, sizeof(farname), frame->far);
+  snprintf_far(farname, sizeof(farname), frame->far);
   snprintf(fn, sizeof(fn), "frame_%s.bin", farname);
   f = fopen(fn, "w");
   return f;
