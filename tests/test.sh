@@ -1,17 +1,7 @@
 #! /bin/bash
 
-MAKEFILE=$srcdir/testmake.mk
-
 function get_dirs() {
     DIRS=`find $1 -mindepth 1 -maxdepth 1 -type d`
-}
-
-function test_all() {
-    get_dirs $srcdir
-    for family in $DIRS; do
-	#echo "Descending in family $family"
-	test_family || exit 1
-    done
 }
 
 function test_family() {
@@ -42,10 +32,15 @@ function check_suffix() {
     local suffix=$2;
 
     echo -n " $suffix"
-    make -s --no-print-directory -f $MAKEFILE $design.$suffix && \
-    make -s --no-print-directory -f $MAKEFILE ${design}_u.$suffix && \
-    diff -q $design.$suffix ${design}_u.$suffix || exit 1
-    diff -q $design.$suffix $design.$suffix.golden || exit 1
+
+    if [ -e $design.$suffix.golden ]; then
+	make -s --no-print-directory -f $MAKEFILE $design.$suffix && \
+	make -s --no-print-directory -f $MAKEFILE ${design}_u.$suffix && \
+	diff -q $design.$suffix ${design}_u.$suffix || exit 1
+	diff -q $design.$suffix $design.$suffix.golden || exit 1
+    else
+	echo -n " (no ref)"
+    fi
 }
 
 function test_design() {
@@ -65,5 +60,3 @@ function test_design() {
     check_suffix ${DESIGN_NAME} pip
     echo "."
 }
-
-test_all
