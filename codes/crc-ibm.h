@@ -1,12 +1,12 @@
 /*
  * Copyright (C) 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
  *
- * Fast implementation IBM CRC implementation, inspired by the kernel
- * CRC-CCITT implementation and litterature.
+ * Fast IBM CRC16 implementation, inspired by the kernel CRC-CCITT
+ * implementation and litterature.
  *
  * This computation could be accelerated even more, but at the cost of a
  * different strange computation at the beginning of the computation,
- * which is very hard to fit in the parser.
+ * which is very hard to fit into the parser.
  */
 
 #ifndef _CRC_IBM_H

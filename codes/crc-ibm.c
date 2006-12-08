@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
  *
- * Fast implementation IBM CRC implementation, inspired by the kernel
- * CRC-IBM implementation and litterature.
+ * Fast IBM CRC16 implementation, inspired by the kernel CRC-CCITT
+ * implementation and litterature.
  */
 
 #include <stdint.h>
