@@ -19,7 +19,7 @@ SHARED_SRC_V2	= codes/crc-ibm.c codes/crc-ibm.h \
 		bitstream_parser.c bitstream_parser.h \
 		design.h virtex2_config.h
 
-bin_PROGRAMS	= debit debit_v4
+bin_PROGRAMS	= debit debit_v4 debit_v5
 
 if BUILD_BIT2PDF
   bin_PROGRAMS += bit2pdf
@@ -37,6 +37,15 @@ debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
 			config.h
 debit_v4_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
 debit_v4_LDADD	= @GLIB_LIBS@
+
+debit_v5_SOURCES	= $(SHARED_SRC)	debit.c \
+			bitstream_parser_v5.c design_v5.h \
+			codes/crc32-c.c codes/crc32-c.h \
+			bitstream.c bitstream.h \
+			codes/xhamming.c codes/xhamming.h \
+			config.h
+debit_v5_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
+debit_v5_LDADD	= @GLIB_LIBS@
 
 bit2pdf_SOURCES = $(SHARED_SRC) $(SHARED_SRC_V2) bit2pdf.c sites_draw.c wiring_draw.c bitdraw.h
 bit2pdf_CFLAGS = @GLIB_CFLAGS@ @CAIRO_CFLAGS@

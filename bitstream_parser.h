@@ -77,7 +77,7 @@ typed_frame_name(char *buf, unsigned buf_len,
 		 const unsigned index,
 		 const unsigned frameid);
 
-/* for v4 */
+/* for v4, v5 */
 int
 snprintf_far(char *buf, const size_t buf_len,
 	     const uint32_t hwfar);
