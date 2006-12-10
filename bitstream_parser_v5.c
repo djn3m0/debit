@@ -542,13 +542,12 @@ void record_frame(bitstream_parsed_t *parsed,
   framerec.frame = dataframe;
 
   /* Check the frame's Hamming Code */
-   (void) check_hamming_frame(dataframe, myfar);
+  /* (void) check_hamming_frame(dataframe, myfar); */
 
-  /* record the framerec, iif the frame is not a pad frame */
-/*   if (far_is_pad(bitstream, myfar) == FALSE) */
-/*     g_array_append_val(parsed->frame_array, framerec); */
-
-  g_array_append_val(parsed->frame_array, framerec);
+  /* record the framerec, iif the frame is not a pad frame, as pad
+     frames are not present in compressed bitstreams, it seems... */
+  if (far_is_pad(bitstream, myfar) == FALSE)
+    g_array_append_val(parsed->frame_array, framerec);
 }
 
 /* Bitstream frame indexing */

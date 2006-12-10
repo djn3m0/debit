@@ -74,13 +74,20 @@ static FILE *open_frame_file(const unsigned type,
 }
 
 static FILE *
-open_unk_frame_file(const frame_record_t *frame) {
+open_unk_frame_file(const frame_record_t *frame,
+		    const gchar *odir) {
   FILE *f;
   char fn[64];
   char farname[64];
+  gchar *filename = NULL;
+
   snprintf_far(farname, sizeof(farname), frame->far);
   snprintf(fn, sizeof(fn), "frame_%s.bin", farname);
-  f = fopen(fn, "w");
+  filename = g_build_filename(odir,fn,NULL);
+  f = fopen(filename, "w");
+  if (!f)
+    g_warning("could not open file %s", filename);
+  g_free(filename);
   return f;
 }
 
@@ -100,7 +107,10 @@ typedef struct _dumping {
   const gchar *dir;
 } dumping_t;
 
-/* XXX Frame length is static */
+/* TODO: merge these two when we switch to a unified frame record model.
+   framelen should be a const in the parsed thing.
+ */
+
 static void
 design_write_frames_iter(const char *frame,
 			 guint type, guint index, guint frameidx,
@@ -110,8 +120,8 @@ design_write_frames_iter(const char *frame,
   naming_hook_t naming = dumping->naming;
   unsigned framelen = dumping->framelen;
   const gchar *odir = dumping->dir;
-  FILE *f;
   gsize frame_len = framelen * sizeof(uint32_t);
+  FILE *f;
 
   f = open_frame_file(type, index, frameidx, odir, naming);
   if (!f) {
@@ -127,7 +137,14 @@ design_write_unk_frames_iter(const frame_record_t *framerec,
 			     void *data) {
   dumping_t *dumping = data;
   dump_hook_t dump = dumping->dump;
-  FILE *f = open_unk_frame_file(framerec);
+  FILE *f;
+
+  f = open_unk_frame_file(framerec, dumping->dir);
+  if (!f) {
+    g_warning("could not open file for frame");
+    return;
+  }
+
   dump(f, framerec->frame, framerec->framelen * sizeof(uint32_t));
   fclose(f);
 }
@@ -161,7 +178,10 @@ void
 design_dump_frames(const bitstream_parsed_t *parsed,
 		   const gchar *outdir) {
   dumping_t data;
+
   data.dump = dump_bin;
+  data.dir  = outdir;
   data.naming = seq_frame_name;
+
   iterate_over_unk_frames(parsed, design_write_unk_frames_iter, &data);
 }

@@ -75,10 +75,10 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		 .frame_count = v4_frame_count,
 		 .col_count = {
 		   [V4_TYPE_CLB] = 57,
-		   [V4_TYPE_BRAM] = 4,
-		   [V4_TYPE_BRAM_INT] = 4,
+		   [V4_TYPE_BRAM] = 5,
+		   [V4_TYPE_BRAM_INT] = 5,
 		 },
-		 .row_count = 5, },
+		 .row_count = 4, },
   [XC4VLX80] = { .idcode = 0x016D8093,
 		 .framelen = 41,
 		 .frame_count = v4_frame_count,
@@ -392,10 +392,17 @@ _far_is_pad(const bitstream_parser_t *bitstream,
   return FALSE;
 }
 
+static inline gboolean
+far_is_pad(bitstream_parser_t *bitstream, guint32 myfar) {
+  sw_far_v4_t far;
+  fill_swfar_v4(&far, myfar);
+  return _far_is_pad(bitstream, &far);
+}
+
 /* Type is a bit strange -- it watches the type from the far and the col
    count, so as to get a mixed type which depends on both these
    parameters. */
-#define DSP_V4_OF_END(x) ((x) > 50 ? 12 : 9)
+#define DSP_V4_OF_END(x) ((x) > 50 ? 13 : 9)
 
 static inline v4_design_col_t
 _type_of_far(const bitstream_parser_t *bitstream,
@@ -571,10 +578,11 @@ void record_frame(bitstream_parsed_t *parsed,
   framerec.frame = dataframe;
 
   /* Check the frame's Hamming Code */
-  (void) check_hamming_frame(dataframe, myfar);
+  /* (void) check_hamming_frame(dataframe, myfar); */
 
   /* record the framerec */
-  g_array_append_val(parsed->frame_array, framerec);
+  if (far_is_pad(bitstream, myfar) == FALSE)
+    g_array_append_val(parsed->frame_array, framerec);
 
   /* record in the flat descriptor */
   {

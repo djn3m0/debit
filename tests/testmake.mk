@@ -1,10 +1,11 @@
 DEBIT		?= $(top_builddir)/debit
+DUMPARG		?= --fakearg
 DATADIR		?= $(top_srcdir)/data
 DEBITDBG	?= -g 0xffff
 DEBIT_CMD	=$(VALGRIND) $(DEBIT) $(DEBITDBG) --datadir=$(DATADIR)
 
 %.frames: %.bit
-	mkdir -p $@ && $(DEBIT_CMD) --framedump --outdir $@ --input $< 2> $@.log
+	mkdir -p $@ && $(DEBIT_CMD) $(DUMPARG) --outdir $@ --input $< 2> $@.log
 
 %.bram: %.bit
 	$(DEBIT_CMD) --bramdump --input $< > $@ 2> $@.log
