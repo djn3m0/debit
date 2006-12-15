@@ -44,6 +44,7 @@ typedef struct _color {
   double b;
 } color_t;
 
+static const
 color_t wire_colors[NR_WIRE_TYPE] = {
   [DOUBLE] = {0.55,1,0.6},
   [HEX] = {0.2,0.6,0.2},
@@ -58,7 +59,7 @@ _draw_wire(const drawing_context_t *ctx,
 	   const wire_atom_t wire) {
   cairo_t *cr = ctx->cr;
   wire_t *cwire = get_wire(wdb, wire);
-  color_t *color = &wire_colors[cwire->type];
+  const color_t *color = &wire_colors[cwire->type];
   double x = 0.0, y=0.0;
 
   compute_wire_pos(&x, &y, wdb->dblen, wire);

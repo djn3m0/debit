@@ -61,7 +61,6 @@ typedef enum _wire_type {
 
 
 /* and then the wire num, a simple uint16_t */
-#define WIRE_NUM_NEUTRAL 32
 
 typedef struct _wire {
   wire_type_t type;
