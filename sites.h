@@ -8,6 +8,7 @@
 
 #include <glib.h>
 #include "bitstream_parser.h"
+#include "sites_v2.h"
 
 /* This is the coordinates of the site in its
    local typed grid */
@@ -16,21 +17,6 @@ typedef struct _coord {
   gint16 x;
   gint16 y;
 } site_t;
-
-typedef enum _site_type {
-  CLB = 0,
-  TTERM, LTERM, BTERM, RTERM,
-  TLTERM = 5, LTTERM, LBTERM, BLTERM, BRTERM, RBTERM, RTTERM, TRTERM,
-  TTERMBRAM = 13, BTERMBRAM,
-  TIOI = 15, LIOI, BIOI, RIOI,
-  TIOIBRAM = 19, BIOIBRAM,
-  BRAM = 21, BM,
-  TL = 23, BL, BR, TR,
-  M = 27,
-  CLKT = 28, CLKB, GCLKC, GCLKH, GCLKHBRAM,
-  SITE_TYPE_NEUTRAL,
-  NR_SITE_TYPE,
-} __attribute__((packed)) site_type_t;
 
 /* more compact vision of the data */
 typedef struct _site_descr {
