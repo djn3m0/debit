@@ -13,13 +13,20 @@ V2CHIPDB=$(addsuffix /chip_control, $(V2CHIPDIRS)) $(addsuffix /chip_data, $(V2C
 V2GENSCRIPT=generate_vII_chip.pl
 
 WIRES_DB=wires.db
+V2DBGENSCRIPT=wires_to_db.pl
 
 ALLDATA=$(DATCONTROL) $(DATDATA) $(WIRES_DB) $(V2CHIPDB)
 
 $(V2CHIPDB): $(V2GENSCRIPT)
-	./$<
+	$(srcdir)/$<
 
-dist_noinst_SCRIPTS=$(V2GENSCRIPT)
+$(WIRES_DB): $(DATDATA) $(V2DBGENSCRIPT)
+	cat $(DATDATA) \
+	| sed -e 's/\[\(.*\)\]/\1/' \
+	| sed -e 's/\([^=]*\)=.*$$/\1/' \
+	| sort -n | uniq | $(srcdir)/$(V2DBGENSCRIPT) > $@
+
+dist_noinst_SCRIPTS=$(V2GENSCRIPT) $(V2DBGENSCRIPT)
 nobase_dist_pkgdata_DATA=$(ALLDATA)
 
 #Allow me to cleanup the mess
