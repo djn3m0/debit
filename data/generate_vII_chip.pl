@@ -13,6 +13,7 @@ my $y_offset = 2;
 my $x_offset = 2;
 
 my %C_enum = (
+	      SITE_TYPE_NEUTRAL => $i++,
 	      CLB => $i++,
 	      TTERM => $i++,
 	      LTERM => $i++,
@@ -46,7 +47,6 @@ my %C_enum = (
 	      GCLKC => $i++,
 	      GCLKH => $i++,
 	      GCLKHBRAM => $i++,
-	      SITE_TYPE_NEUTRAL => $i++,
 	      NR_SITE_TYPE => $i++
 	      );
 

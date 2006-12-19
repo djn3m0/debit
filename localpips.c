@@ -37,7 +37,7 @@ static int build_datatree_from_keyfiles(GKeyFile *data, GKeyFile *control,
 					wire_db_t *wires, GNode *head);
 static void destroy_datatree(GNode *head);
 
-static const gchar *basedbnames[SITE_TYPE_NEUTRAL] = {
+static const gchar *basedbnames[NR_SITE_TYPE] = {
   [CLB] = "clb",
   [TTERM] = "tterm",
   [BTERM] = "bterm",
@@ -73,7 +73,7 @@ read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
   GKeyFile *control = NULL, *data = NULL;
   guint i;
 
-  for (i = 0; i < SITE_TYPE_NEUTRAL; i++) {
+  for (i = 0; i < NR_SITE_TYPE; i++) {
     const gchar *base = basedbnames[i];
 
     if (!base)
@@ -155,7 +155,7 @@ free_pipdb(pip_db_t *pipdb) {
   if (pipdb->wiredb)
     free_wiredb(pipdb->wiredb);
 
-  for(i = 0; i < SITE_TYPE_NEUTRAL; i++) {
+  for(i = 0; i < NR_SITE_TYPE; i++) {
     GNode *tree = pipdb->memorydb[i];
     if (tree)
       destroy_datatree(tree);

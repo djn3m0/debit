@@ -47,7 +47,7 @@ typedef struct _type_bits {
   guint row_count;
 } type_bits_t;
 
-const type_bits_t type_bits[SITE_TYPE_NEUTRAL] = {
+const type_bits_t type_bits[NR_SITE_TYPE] = {
   /* CLB Group */
   [CLB] = {
     .col_type = V2C_CLB,

@@ -169,20 +169,6 @@ iterate_over_typed_sites(const chip_descr_t *chip, site_type_t type,
     }
 }
 
-static void
-init_site_default(unsigned site_x, unsigned site_y,
-		  csite_descr_t *site, gpointer dat) {
-  (void) dat;
-  (void) site_x;
-  (void) site_y;
-  site->type = SITE_TYPE_NEUTRAL;
-}
-
-static inline void
-init_default_values(chip_descr_t *chip) {
-  iterate_over_sites(chip, init_site_default, NULL);
-}
-
 typedef struct _local_counter {
   gint x;
   gint y;
@@ -229,7 +215,6 @@ init_local_coordinates(chip_descr_t *chip) {
 static void
 init_chip(chip_descr_t *chip, GKeyFile *file) {
   /* for each of the types, call the init functions */
-  init_default_values(chip);
   iterate_over_groups(file, init_group_chip_type, chip);
   init_local_coordinates(chip);
 }
