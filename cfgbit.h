@@ -55,12 +55,17 @@ unsigned assemble_cfgbit(const unsigned x,
 
 /* Temporary conversion function for the database. To get rid of once
    the database is moved to the new format */
+static inline
+unsigned bitpos_invert(const unsigned bitpos, const unsigned width) {
+  return ((width - 1) - bitpos) << 3;
+}
 
 static inline
 unsigned bitpos_to_cfgbit(const unsigned bitpos, const unsigned width) {
   const unsigned xoff = bitpos / (8*width);
   const unsigned yoff = bitpos % (8*width);
-  return assemble_cfgbit(xoff,yoff);
+  const unsigned nyoff = bitpos_invert(yoff>>3, width) | (yoff & 7);
+  return assemble_cfgbit(xoff,nyoff);
 }
 
 typedef struct _type_bits {

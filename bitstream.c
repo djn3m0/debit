@@ -179,7 +179,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const guint xoff = byte_x(cfgbit);
   const guint yoff = byte_y(cfgbit);
   /* The database could be changed to have only one add here */
-  const gsize frame_offset = site_off + (y_width - 1) - yoff;
+  const gsize frame_offset = site_off + yoff;
 
   const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
 				 x+type_bits[site_type].x_type_off, xoff);
@@ -298,9 +298,9 @@ query_bitstream_luts(const bitstream_parsed_t *bitstream,
 
   /* query four luts. Bits are MSB first, but in reverse order */
   for (i=0; i < 4; i++) {
-    unsigned byte_lut_offset = 2 * i + ((i & 2) >> 1);
-    guint first_byte = assemble_cfgbit(1, byte_lut_offset << 3);
-    guint cfgbytes[2] = { first_byte, first_byte+8 };
+    unsigned byte_lut_offset = bitpos_invert(2 * i + ((i & 2) >> 1), sizeof(site_descr_t));
+    guint first_byte = assemble_cfgbit(1, byte_lut_offset);
+    guint cfgbytes[2] = { first_byte, first_byte-8 };
     guint32 result;
 
     result = query_bitstream_site_bytes(bitstream, site, cfgbytes, 2);
