@@ -22,23 +22,24 @@ typedef enum _site_type {
 } __attribute__((packed)) site_type_t;
 
 typedef enum _wire_direction {
-  N = 0, WN, NW,
+  WIRE_DIRECTION_NEUTRAL = 0,
+  N, WN, NW,
   W, WS, SW,
   S, SE, ES,
   E, EN, NE,
   DN, UP, // global clock
-  WIRE_DIRECTION_NEUTRAL,
   NR_WIRE_DIRECTION,
 } __attribute__((packed)) wire_direction_t;
 
 typedef enum _wire_situation {
-  BEG = 0, A, B, MID, C, D, END,
-  WIRE_SITUATION_NEUTRAL,
+  WIRE_SITUATION_NEUTRAL = 0,
+  BEG, A, B, MID, C, D, END,
   NR_WIRE_SITUATION,
 } __attribute__((packed)) wire_situation_t;
 
 typedef enum _wire_type {
-  DOUBLE = 0, HEX,
+  WIRE_TYPE_NEUTRAL = 0,
+  DOUBLE, HEX,
   OMUX,
   BX, BY,
   BX_PINWIRE, BY_PINWIRE,
@@ -65,7 +66,6 @@ typedef enum _wire_type {
   WG1_PINWIRE, WG2_PINWIRE, WG3_PINWIRE, WG4_PINWIRE,
   X, XB, XQ,
   Y, YB, YQ,
-  WIRE_TYPE_NEUTRAL,
   NR_WIRE_TYPE,
 } __attribute__((packed)) wire_type_t;
 

@@ -24,14 +24,15 @@ my @wires;
 
 #define WIRE_NUM_NEUTRAL 32
 
-my @det_dir = ( "N",  "WN",  "NW",  "W",  "WS",   "SW",  "S",   "SE",
-		"ES",  "E",   "EN",   "NE",  "DN",   "UP",
-		"WIRE_DIRECTION_NEUTRAL" );
+my @det_dir = ( "WIRE_DIRECTION_NEUTRAL",
+		"N",  "WN",  "NW",  "W",  "WS",   "SW",  "S",   "SE",
+		"ES",  "E",   "EN",   "NE",  "DN",   "UP" );
 
-my @det_sit = ( "BEG", "A", "B", "MID", "C", "D", "END",
-		"WIRE_SITUATION_NEUTRAL" );
+my @det_sit = ( "WIRE_SITUATION_NEUTRAL",
+		"BEG", "A", "B", "MID", "C", "D", "END" );
 
-my @det_type = ( "DOUBLE", "HEX",    "OMUX",    "BX", "BY",
+my @det_type = ( "WIRE_TYPE_NEUTRAL",
+		 "DOUBLE", "HEX",    "OMUX",    "BX", "BY",
 		 "BX_PINWIRE", "BY_PINWIRE",    "CE", "CIN",    "CLK",
 		 "COUT",    "DX", "DY",    "F1", "F2", "F3", "F4",
 		 "F1_PINWIRE", "F2_PINWIRE", "F3_PINWIRE", "F4_PINWIRE",
@@ -45,7 +46,7 @@ my @det_type = ( "DOUBLE", "HEX",    "OMUX",    "BX", "BY",
 		 "WF2_PINWIRE", "WF3_PINWIRE", "WF4_PINWIRE",
 		 "WG1_PINWIRE", "WG2_PINWIRE", "WG3_PINWIRE",
 		 "WG4_PINWIRE",    "X", "XB", "XQ",    "Y", "YB", "YQ",
-		 "WIRE_TYPE_NEUTRAL",    "NR_WIRE_TYPE");
+		 "NR_WIRE_TYPE");
 
 my %type_h;
 my %dir_h;
