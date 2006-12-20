@@ -6,6 +6,9 @@
 #include <glib.h>
 #include "bitstream.h"
 #include "design.h"
+#include "cfgbit.h"
+#include "bitstream_parser.h"
+#include "virtex2_config.h"
 
 /** \file
  *
@@ -24,28 +27,9 @@
  * bytes, or one guint32).
  */
 
-#include <glib/gprintf.h>
-
-#include "design.h"
-#include "virtex2_config.h"
-#include "bitstream_parser.h"
-
-#define BITSIZE(x) (sizeof(x)*8)
-
-/** Describe the layout of the configuration bits of a site in the bitstream.
- *
+/**
+ * Describes the layout of the configuration bits of a site in the bitstream.
  */
-
-typedef struct _type_bits {
-  /** Column type */
-  guint col_type;
-  /** Frames to skip at the beginning of the type array */
-  guint x_type_off;
-  /** Bytes to skip at the beginning of the type array */
-  gint y_offset;
-  guint y_width;
-  guint row_count;
-} type_bits_t;
 
 const type_bits_t type_bits[NR_SITE_TYPE] = {
   /* CLB Group */
@@ -178,7 +162,7 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
 static guchar
 query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 			  const csite_descr_t *site,
-			  const int cfgbyte) {
+			  const unsigned cfgbit) {
   const chip_struct_t *chip_struct = bitstream->chip_struct;
   const guint site_type = site->type;
   const guint x = site->type_coord.x;
@@ -192,8 +176,9 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const off_t site_off = y * y_width + y_type_offset;
 
   /* offset in-site. only this really needs to be computed locally */
-  const guint xoff = cfgbyte / y_width;
-  const guint yoff = cfgbyte % y_width;
+  const guint xoff = byte_x(cfgbit);
+  const guint yoff = byte_y(cfgbit);
+  /* The database could be changed to have only one add here */
   const gsize frame_offset = site_off + (y_width - 1) - yoff;
 
   const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
@@ -239,8 +224,8 @@ static inline gboolean
 query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
 			 const csite_descr_t *site,
 			 const guint cfgbit) {
-  const guchar cfgbyte_dat = query_bitstream_site_byte(bitstream, site, cfgbit >> 3);
-  const guint  cfgbyte_off = cfgbit & 7;
+  const guchar cfgbyte_dat = query_bitstream_site_byte(bitstream, site, cfgbit);
+  const guint  cfgbyte_off = bit_offset(cfgbit);
 
   if ((cfgbyte_dat >> cfgbyte_off) & 1)
     return TRUE;
@@ -313,8 +298,9 @@ query_bitstream_luts(const bitstream_parsed_t *bitstream,
 
   /* query four luts. Bits are MSB first, but in reverse order */
   for (i=0; i < 4; i++) {
-    guint first_byte = sizeof(site_descr_t) + 2 * i + ((i & 2) >> 1);
-    guint cfgbytes[2] = { first_byte, first_byte+1 };
+    unsigned byte_lut_offset = 2 * i + ((i & 2) >> 1);
+    guint first_byte = assemble_cfgbit(1, byte_lut_offset << 3);
+    guint cfgbytes[2] = { first_byte, first_byte+8 };
     guint32 result;
 
     result = query_bitstream_site_bytes(bitstream, site, cfgbytes, 2);

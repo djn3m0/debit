@@ -27,6 +27,8 @@
 #include "localpips.h"
 #include "wiring.h"
 
+#include "cfgbit.h"
+
 #define STRINGCHUNK_DEFAULT_SIZE 16
 
 /*
@@ -34,7 +36,8 @@
  */
 
 static int build_datatree_from_keyfiles(GKeyFile *data, GKeyFile *control,
-					wire_db_t *wires, GNode *head);
+					wire_db_t *wires, GNode *head,
+					const site_type_t type);
 static void destroy_datatree(GNode *head);
 
 static const gchar *basedbnames[NR_SITE_TYPE] = {
@@ -94,7 +97,7 @@ read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
     pipdb->memorydb[i] = g_node_new(NULL);
     err = build_datatree_from_keyfiles(data, control,
 				       pipdb->wiredb,
-				       pipdb->memorydb[i]);
+				       pipdb->memorydb[i], i);
     if (err)
       goto out_err_free;
 
@@ -285,11 +288,13 @@ typedef struct _build_groupnode {
   GKeyFile *ctrldb;
   wire_db_t *wires;
   GNode *head;
+  const site_type_t type;
 } build_groupnode_t;
 
 static inline gint *get_pip_structure_from_file(GKeyFile *keyfile,
 						const gchar *end,
-						gsize *length);
+						gsize *length,
+						const site_type_t type);
 
 static void build_groupnode(GKeyFile *datadb, const gchar* endp,
 			    gpointer data) {
@@ -305,7 +310,7 @@ static void build_groupnode(GKeyFile *datadb, const gchar* endp,
     return;
   }
 
-  dat->data = (guint *)get_pip_structure_from_file(exam->ctrldb, endp, &dat->size);
+  dat->data = (guint *)get_pip_structure_from_file(exam->ctrldb, endp, &dat->size, exam->type);
 
   groupnode = g_node_new(dat);
   g_node_append(exam->head, groupnode);
@@ -321,11 +326,13 @@ static void build_groupnode(GKeyFile *datadb, const gchar* endp,
  */
 static int
 build_datatree_from_keyfiles(GKeyFile *data, GKeyFile *control,
-			     wire_db_t *wires, GNode *head) {
+			     wire_db_t *wires, GNode *head,
+			     const site_type_t i) {
   build_groupnode_t arg = {
     .ctrldb = control,
     .head = head,
     .wires = wires,
+    .type = i,
   };
 
   iterate_over_groups(data, build_groupnode, &arg);
@@ -418,10 +425,17 @@ static guint32 get_pip_data_from_file(GKeyFile *keyfile,
  *
  */
 
+/* XXX Do the transform at database-generation time */
+
 static inline gint *get_pip_structure_from_file(GKeyFile *keyfile,
 						const gchar *end,
-						gsize *length) {
-  return g_key_file_get_integer_list(keyfile, end, "BITLIST", length, NULL);
+						gsize *length, const site_type_t type) {
+  gint *array = g_key_file_get_integer_list(keyfile, end, "BITLIST", length, NULL);
+  const guint width = type_bits[type].y_width;
+  gsize i;
+  for (i = 0; i < *length; i++)
+    array[i] = bitpos_to_cfgbit(array[i], width);
+  return array;
 }
 
 typedef struct _examine_data_memory {
