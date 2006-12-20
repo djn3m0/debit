@@ -68,12 +68,12 @@ AC_CHECK_FUNCS([memset munmap regcomp strdup strerror strtoul])
 # Enable non-debug mode
 AC_ARG_ENABLE(asserts, [  --disable-asserts    remove assertions in the code], enable_asserts=$enableval, enable_asserts=yes)
 if test "x$enable_asserts" = "xno"; then
-   CPPFLAGS="-DG_DISABLE_CHECKS -DG_DISABLE_ASSERT"
+   CPPFLAGS+="-DG_DISABLE_CHECKS -DG_DISABLE_ASSERT "
 fi
 
 AC_ARG_ENABLE(debug, [  --disable-debug    disable debug print functions], enable_debug=$enableval, enable_debug=yes)
 if test "x$enable_debug" = "xno"; then
-   CPPFLAGS="-DDEBIT_DEBUG=0"
+   CPPFLAGS+="-DDEBIT_DEBUG=0 "
 fi
 
 

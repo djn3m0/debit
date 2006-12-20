@@ -26,7 +26,7 @@ if BUILD_BIT2PDF
 endif
 
 debit_SOURCES	= $(SHARED_SRC) $(SHARED_SRC_V2) debit.c config.h
-debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
+debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@
 debit_LDADD	= @GLIB_LIBS@
 
 debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
