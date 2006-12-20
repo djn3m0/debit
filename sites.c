@@ -278,59 +278,75 @@ release_chip(chip_descr_t *chip) {
  * Utility function
  */
 
+/*
+ * This is the compact form of the site printing function.  We could
+ * also do only one call with the "%0.0i" trick, and doing some tricky
+ * initialization. This other solution is, however, a bit more
+ * complicated, so we'll leave this as-is for now.
+ */
+
+typedef enum _site_print_type {
+  PRINT_BOTH = 0,
+  PRINT_X,
+  PRINT_Y,
+} site_print_t;
+
+static const site_print_t print_type[NR_SITE_TYPE] = {
+  [TIOI] = PRINT_X,
+  [BIOI] = PRINT_X,
+  [LIOI] = PRINT_Y,
+  [RIOI] = PRINT_Y,
+  [RTERM] = PRINT_Y,
+  [LTERM] = PRINT_Y,
+  [TTERM] = PRINT_X,
+  [BTERM] = PRINT_X,
+  [TTERMBRAM] = PRINT_X,
+  [BTERMBRAM] = PRINT_X,
+  [TIOIBRAM] = PRINT_X,
+  [BIOIBRAM] = PRINT_X,
+};
+
+static const char *print_str[NR_SITE_TYPE] = {
+  [SITE_TYPE_NEUTRAL] = "GLOBALR%iC%i",
+  [CLB] = "R%iC%i",
+  [RTERM] = "RTERMR%i",
+  [LTERM] = "LTERMR%i",
+  [TTERM] = "TTERMC%i",
+  [BTERM] = "BTERMC%i",
+  [TIOI] = "TIOIC%i",
+  [BIOI] = "BIOIC%i",
+  [LIOI] = "LIOIR%i",
+  [RIOI] = "RIOIR%i",
+  [TTERMBRAM] = "TTERMBRAMC%i",
+  [BTERMBRAM] = "BTERMBRAMC%i",
+  [TIOIBRAM] = "TIOIBRAMC%i",
+  [BIOIBRAM] = "BIOIBRAMC%i",
+  [BRAM] = "BRAMR%iC%i",
+};
+
 void
 sprint_csite(gchar *data, const csite_descr_t *site) {
   /* Use a string chunk ? */
+  const char *str = print_str[site->type];
+  const site_print_t strtype = print_type[site->type];
   const guint x = site->type_coord.x + 1;
   const guint y = site->type_coord.y + 1;
 
-  switch (site->type) {
-  case CLB:
-    sprintf(data, "R%iC%i", y, x);
-    break;
-  case RTERM:
-    sprintf(data, "RTERMR%i", y);
-    break;
-  case LTERM:
-    sprintf(data, "LTERMR%i", y);
-    break;
-  case TTERM:
-    sprintf(data, "TTERMC%i", x);
-    break;
-  case BTERM:
-    sprintf(data, "BTERMC%i", x);
-    break;
-  case TIOI:
-    sprintf(data, "TIOIC%i", x);
-    break;
-  case BIOI:
-    sprintf(data, "BIOIC%i", x);
-    break;
-  case LIOI:
-    sprintf(data, "LIOIR%i", y);
-    break;
-  case RIOI:
-    sprintf(data, "RIOIR%i", y);
-    break;
-  case TTERMBRAM:
-    sprintf(data, "TTERMBRAMC%i", x);
-    break;
-  case BTERMBRAM:
-    sprintf(data, "BTERMBRAMC%i", x);
-    break;
-  case TIOIBRAM:
-    sprintf(data, "TIOIBRAMC%i", x);
-    break;
-  case BIOIBRAM:
-    sprintf(data, "BIOIBRAMC%i", x);
-    break;
-  case BRAM:
-    sprintf(data, "BRAMR%iC%i", y, x);
-    break;
-  default:
-    sprintf(data, "GLOBALR%iC%i", y, x);
-    break;
+  if (!str)
+    str = print_str[SITE_TYPE_NEUTRAL];
+
+  switch (strtype) {
+    case PRINT_BOTH:
+      sprintf(data, str, y, x);
+      break;
+    case PRINT_X:
+      sprintf(data, str, x);
+      break;
+    case PRINT_Y:
+      sprintf(data, str, y);
+      break;
   }
+
 }
 
 static void
