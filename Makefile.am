@@ -30,7 +30,7 @@ debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@
 debit_LDADD	= @GLIB_LIBS@
 
 debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
-			bitstream_v4.c bitstream_v4.h \
+			bitstream_v4.c \
 			bitstream_parser_v4.c design_v4.h \
 			codes/crc32-c.c codes/crc32-c.h \
 			codes/xhamming.c codes/xhamming.h \
