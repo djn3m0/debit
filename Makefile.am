@@ -15,7 +15,7 @@ SHARED_SRC	= bitarray.c bitarray.h \
 		bitstream_parser.h debitlog.h
 
 SHARED_SRC_V2	= codes/crc-ibm.c codes/crc-ibm.h \
-		bitstream.c bitstream.h \
+		bitstream.c bitstream.h sites_v2.h \
 		bitstream_parser.c bitstream_parser.h \
 		design.h virtex2_config.h
 
