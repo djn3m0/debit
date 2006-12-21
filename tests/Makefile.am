@@ -1,4 +1,4 @@
-check_SCRIPTS=test.sh testmake.mk
+check_SCRIPTS=testmake.mk test.sh test_v2.sh test_v4.sh test_v5.sh
 EXTRA_DIST=$(check_SCRIPTS)
 
 TESTS_ENVIRONMENT = top_srcdir=$(top_srcdir) \
