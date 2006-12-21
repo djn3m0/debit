@@ -250,7 +250,7 @@ typedef struct _bitstream_parser {
   xil_register_t registers[__V5_NUM_REGISTERS];
 
   /* detailed view of some registers */
-  id_t type;
+  id_v5vlx_t type;
 
   /* Specific FDRI quirks */
   const void *last_frame;
@@ -382,7 +382,7 @@ _far_increment_tb(sw_far_v5_t *addr) {
 static inline void
 _far_increment_row(bitstream_parser_t *bitstream,
 		   sw_far_v5_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v5vlx_t chiptype = bitstream->type;
   const unsigned row_count = bitdescr[chiptype].row_count;
   unsigned row = addr->row;
 
@@ -398,7 +398,7 @@ _far_increment_row(bitstream_parser_t *bitstream,
 static inline void
 _far_increment_col(bitstream_parser_t *bitstream,
 		   sw_far_v5_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v5vlx_t chiptype = bitstream->type;
   const unsigned *col_count = bitdescr[chiptype].col_count;
   const v5_col_type_t type = addr->type;
   guint col;
@@ -419,7 +419,7 @@ _far_increment_col(bitstream_parser_t *bitstream,
 static inline gboolean
 _far_is_pad(const bitstream_parser_t *bitstream,
 	    const sw_far_v5_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v5vlx_t chiptype = bitstream->type;
   const unsigned *col_count = bitdescr[chiptype].col_count;
   const v5_col_type_t type = addr->type;
   unsigned col = addr->col;
@@ -442,7 +442,7 @@ far_is_pad(bitstream_parser_t *bitstream, guint32 myfar) {
 
 static inline v5_design_col_t
 _type_of_far(bitstream_parser_t *bitstream, const sw_far_v5_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v5vlx_t chiptype = bitstream->type;
   const v5_col_type_t type = addr->type;
 
   if (_far_is_pad(bitstream, addr))
@@ -467,7 +467,7 @@ _type_of_far(bitstream_parser_t *bitstream, const sw_far_v5_t *addr) {
 static inline void
 _far_increment_mna(bitstream_parser_t *bitstream,
 		   sw_far_v5_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v5vlx_t chiptype = bitstream->type;
   const unsigned *frame_count = bitdescr[chiptype].frame_count;
   const v5_design_col_t col_type = _type_of_far(bitstream, addr);
   unsigned mna = addr->mna;

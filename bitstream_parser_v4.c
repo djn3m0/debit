@@ -215,7 +215,7 @@ typedef struct _bitstream_parser {
   xil_register_t registers[__V4_NUM_REGISTERS];
 
   /* detailed view of some registers */
-  id_t type;
+  id_v4vlx_t type;
 
   /* Specific FDRI quirks */
 /*   gboolean fdri_direct_mode; */
@@ -343,7 +343,7 @@ _far_increment_tb(sw_far_v4_t *addr) {
 static inline void
 _far_increment_row(bitstream_parser_t *bitstream,
 		   sw_far_v4_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v4vlx_t chiptype = bitstream->type;
   const unsigned row_count = bitdescr[chiptype].row_count;
   unsigned row = addr->row;
 
@@ -359,7 +359,7 @@ _far_increment_row(bitstream_parser_t *bitstream,
 static inline void
 _far_increment_col(bitstream_parser_t *bitstream,
 		   sw_far_v4_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v4vlx_t chiptype = bitstream->type;
   const unsigned *col_count = bitdescr[chiptype].col_count;
   const v4_col_type_t type = addr->type;
   guint col;
@@ -381,7 +381,7 @@ _far_increment_col(bitstream_parser_t *bitstream,
 static inline gboolean
 _far_is_pad(const bitstream_parser_t *bitstream,
 	    const sw_far_v4_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v4vlx_t chiptype = bitstream->type;
   const unsigned *col_count = bitdescr[chiptype].col_count;
   const v4_col_type_t type = addr->type;
   unsigned col = addr->col;
@@ -407,7 +407,7 @@ far_is_pad(bitstream_parser_t *bitstream, guint32 myfar) {
 static inline v4_design_col_t
 _type_of_far(const bitstream_parser_t *bitstream,
 	     const sw_far_v4_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v4vlx_t chiptype = bitstream->type;
   const v4_col_type_t type = addr->type;
 
   /* unlikely */
@@ -449,7 +449,7 @@ _type_of_far(const bitstream_parser_t *bitstream,
 static inline void
 _far_increment_mna(bitstream_parser_t *bitstream,
 		   sw_far_v4_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v4vlx_t chiptype = bitstream->type;
   const int *frame_count = bitdescr[chiptype].frame_count;
   const v4_design_col_t col_type = _type_of_far(bitstream, addr);
   unsigned mna = addr->mna;
@@ -515,7 +515,7 @@ default_register_write(bitstream_parser_t *parser,
 static inline unsigned
 _typed_col_of_far(const bitstream_parser_t *bitstream,
 		  const sw_far_v4_t *addr) {
-  const id_t chiptype = bitstream->type;
+  const id_v4vlx_t chiptype = bitstream->type;
   const v4_col_type_t type = addr->type;
   const unsigned col = addr->col;
 
