@@ -41,6 +41,8 @@ static gchar *datadir = DATADIR;
 
 #if DEBIT_DEBUG > 0
 unsigned int debit_debug = 0;
+#else
+static unsigned debit_local_debug;
 #endif
 
 static int
@@ -90,6 +92,8 @@ static GOptionEntry entries[] =
   {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Read bitstream <ifile>", "<ifile>"},
 #if DEBIT_DEBUG > 0
   {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
+#else
+  {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_local_debug, "Debug verbosity", NULL},
 #endif
   {"outdir", 'o', 0, G_OPTION_ARG_FILENAME, &odir, "Write data files in directory <odir>", "<odir>"},
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},

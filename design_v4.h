@@ -161,6 +161,7 @@ type_col_count(const unsigned *col_count,
   default:
     g_assert_not_reached();
   }
+  return 0;
 }
 
 /*
