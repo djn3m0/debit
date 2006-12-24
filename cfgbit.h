@@ -48,6 +48,11 @@ unsigned byte_x(const unsigned cfgbit) {
 }
 
 static inline
+unsigned byte_addr(const unsigned cfgbit) {
+  return (cfgbit | CFGBIT_BYTE_OFFSET_MASK);
+}
+
+static inline
 unsigned assemble_cfgbit(const unsigned x,
 			 const unsigned y) {
   return (y | (x << CFGBIT_Y_LENGTH));

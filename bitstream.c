@@ -253,13 +253,26 @@ query_bitstream_site_bits(const bitstream_parsed_t * bitstream,
   /* unsigned char *data = bitstream->bincols[pip_type]; */
   /* The data has already been sliced according to its type. It is not
      obvious that this is what we should do */
+  unsigned last_byte = -1;
+  uint32_t last_byte_val = 0;
   guint32 result = 0;
-  gsize i;
+  unsigned i;
 
-  for(i = 0; i < nbits; i++)
-    /* XXX move this to non-conditional */
-    if (query_bitstream_site_bit(bitstream, site, cfgbits[i]))
-      result |= 1 << i;
+  /* XXX This mechanism could, should be pushed down to the database
+     format */
+  for(i = 0; i < nbits; i++) {
+    unsigned cfgbit = cfgbits[i];
+    unsigned byteaddr = byte_addr(cfgbit);
+    unsigned byteoff  = bit_offset(cfgbit);
+
+    /* Get the new byte if necessary */
+    if (last_byte != byteaddr)
+      last_byte_val = query_bitstream_site_byte(bitstream, site, byteaddr);
+
+    /* Then do the rest of the query */
+    last_byte = byteaddr;
+    result |= (((last_byte_val >> byteoff) & 1)) << i;
+  }
 
   return result;
 }
