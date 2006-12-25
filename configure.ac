@@ -77,7 +77,8 @@ if test "x$enable_debug" = "xno"; then
 fi
 
 
-AC_CONFIG_FILES([Makefile data/Makefile tests/Makefile \
+AC_CONFIG_FILES([Makefile tests/Makefile \
+		data/Makefile data/virtex2/Makefile data/virtex4/Makefile \
 		debian/Makefile rpm/Makefile windows/Makefile \
 		altera/Makefile \
 		codes/Makefile utils/Makefile utils/correlation/Makefile \

@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include "bitstream_parser.h"
 
+#define CHIP "virtex4"
+
 typedef enum _id_v4 {
   XC4VLX15 = 0,
   XC4VLX25, XC4VLX40,

@@ -26,6 +26,7 @@
 #include "bitstream.h"
 #include "localpips.h"
 #include "wiring.h"
+#include "design.h"
 
 #include "cfgbit.h"
 
@@ -62,11 +63,11 @@ static const gchar *basedbnames[NR_SITE_TYPE] = {
 
 static const gchar *basedbnames[NR_SITE_TYPE] = {
   [SITE_TYPE_NEUTRAL] = "int",
-  [IOB] = "iob",
-  [CLB] = "clb",
-  [DSP48] = "dsp48",
-  [GCLKC] = "gclk",
-  [BRAM] = "bram",
+/*   [IOB] = "iob", */
+/*   [CLB] = "clb", */
+/*   [DSP48] = "dsp48", */
+/*   [GCLKC] = "gclk", */
+/*   [BRAM] = "bram", */
 };
 
 #endif
@@ -97,13 +98,13 @@ read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
     if (!base)
       continue;
 
-    filename = g_build_filename(datadir,base,"control.db",NULL);
+    filename = g_build_filename(datadir,CHIP,base,"control.db",NULL);
     err = read_keyfile(&control,filename);
     g_free(filename);
     if (err)
       goto out_err_free;
 
-    filename = g_build_filename(datadir,base,"data.db",NULL);
+    filename = g_build_filename(datadir,CHIP,base,"data.db",NULL);
     err = read_keyfile(&data,filename);
     g_free(filename);
     if (err)

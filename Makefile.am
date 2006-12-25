@@ -13,12 +13,12 @@ SHARED_SRC	= bitarray.c bitarray.h \
 		connexity.c connexity.h \
 		wiring.c wiring.h \
 		bitstream_parser.h bitstream_packets.h \
-		debitlog.h
+		debitlog.h design.h
 
 SHARED_SRC_V2	= codes/crc-ibm.c codes/crc-ibm.h \
 		bitstream.c bitstream.h sites_v2.h \
 		bitstream_parser.c bitstream_parser.h \
-		design.h virtex2_config.h cfgbit.h
+		design_v2.h virtex2_config.h cfgbit.h
 
 bin_PROGRAMS	= debit debit_v4 debit_v5
 
@@ -31,7 +31,7 @@ debit_CFLAGS	= $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@
 debit_LDADD	= @GLIB_LIBS@
 
 debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
-			bitstream_v4.c \
+			bitstream_v4.c sites_v4.h \
 			bitstream_parser_v4.c design_v4.h \
 			codes/crc32-c.c codes/crc32-c.h \
 			codes/xhamming.c codes/xhamming.h \

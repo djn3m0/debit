@@ -247,7 +247,7 @@ get_chip(const gchar *dirname, const unsigned chipid) {
   gchar *filename;
   int err;
 
-  filename = g_build_filename(dirname, chipname, "chip_control", NULL);
+  filename = g_build_filename(dirname, CHIP, chipname, "chip_control", NULL);
   err = read_keyfile(&keyfile,filename);
   g_free(filename);
   if (err)
@@ -265,7 +265,7 @@ get_chip(const gchar *dirname, const unsigned chipid) {
   alloc_chip(chip);
   g_key_file_free(keyfile);
 
-  filename = g_build_filename(dirname, chipname, "chip_data", NULL);
+  filename = g_build_filename(dirname, CHIP, chipname, "chip_data", NULL);
   err = read_keyfile(&keyfile,filename);
   g_free(filename);
   if (err)

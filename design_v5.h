@@ -8,6 +8,8 @@
 
 #include <stdint.h>
 
+#define CHIP "virtex5"
+
 typedef enum _id_v5 {
   XC5VLX30 = 0,
   XC5VLX50, XC5VLX85,

@@ -11,6 +11,8 @@
 #include "bitarray.h"
 #include "bitstream_parser.h"
 
+#define CHIP "virtex2"
+
 typedef enum _id_v2 {
   XC2V40 = 0, XC2V80,
   XC2V250, XC2V500,

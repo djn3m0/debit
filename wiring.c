@@ -13,6 +13,7 @@
 #include "debitlog.h"
 
 #include "wiring.h"
+#include "design.h"
 
 #define STRINGCHUNK_DEFAULT_SIZE 16
 
@@ -140,7 +141,7 @@ wire_db_t *get_wiredb(const gchar *datadir) {
   gchar *dbname;
   gint err;
 
-  dbname = g_build_filename(datadir,"wires.db",NULL);
+  dbname = g_build_filename(datadir,CHIP,"wires.db",NULL);
 
   err = read_wiredb(&db, dbname);
   g_free(dbname);
