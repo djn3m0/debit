@@ -27,7 +27,7 @@ typedef enum _id_v4 {
   XC4VLX200, XC4VLX__NUM,
 } id_v4vlx_t;
 
-static const int
+static const unsigned
 v4_frame_count[V4C__NB_CFG] = {
   [V4C_IOB] = 30,
   [V4C_GCLK] = 3,
@@ -450,7 +450,7 @@ static inline void
 _far_increment_mna(bitstream_parser_t *bitstream,
 		   sw_far_v4_t *addr) {
   const id_v4vlx_t chiptype = bitstream->type;
-  const int *frame_count = bitdescr[chiptype].frame_count;
+  const unsigned *frame_count = bitdescr[chiptype].frame_count;
   const v4_design_col_t col_type = _type_of_far(bitstream, addr);
   unsigned mna = addr->mna;
 
