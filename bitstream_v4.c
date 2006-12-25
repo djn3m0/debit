@@ -4,8 +4,14 @@
  */
 
 #include <glib.h>
+#include <glib/gprintf.h>
+
+#include "bitstream_parser.h"
+#include "sites.h"
 #include "bitstream.h"
-#include "design.h"
+#include "design_v4.h"
+
+#include "cfgbit.h"
 
 /** \file
  *
@@ -23,143 +29,6 @@
  * We should probably go from a bit query to a byte query (of up to 4
  * bytes, or one guint32).
  */
-
-#include <glib/gprintf.h>
-
-#include "design.h"
-#include "virtex2_config.h"
-#include "bitstream_parser.h"
-
-#define BITSIZE(x) (sizeof(x)*8)
-
-/** Describe the layout of the configuration bits of a site in the bitstream.
- *
- */
-
-typedef struct _type_bits {
-  /** Column type */
-  guint col_type;
-  /** Frames to skip at the beginning of the type array */
-  guint x_type_off;
-  /** Bytes to skip at the beginning of the type array */
-  gint y_offset;
-  guint y_width;
-  guint row_count;
-} type_bits_t;
-
-const type_bits_t type_bits[NR_SITE_TYPE] = {
-  /* CLB Group */
-  [CLB] = {
-    .col_type = V2C_CLB,
-    .x_type_off = 0,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
-  },
-  [LTERM] = {
-    .col_type = V2C_IOB,
-    .x_type_off = 0,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
-  },
-  [RTERM] = {
-    .col_type = V2C_IOB,
-    .x_type_off = 1,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
-  },
-  [LIOI] = {
-    .col_type = V2C_IOI,
-    .x_type_off = 0,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
-  },
-  [RIOI] = {
-    .col_type = V2C_IOI,
-    .x_type_off = 1,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
-  },
-  [TTERM] = {
-    .col_type = V2C_CLB,
-    .x_type_off = 0,
-    .y_offset = 0,
-    .y_width = 2,
-    .row_count = 1,
-  },
-  [BTERM] = {
-    .col_type = V2C_CLB,
-    .x_type_off = 0,
-    .y_offset = -2,
-    .y_width = 2,
-    .row_count = 1,
-  },
-  [TIOI] = {
-    .col_type = V2C_CLB,
-    .x_type_off = 0,
-    .y_offset = 2,
-    .y_width = sizeof(site_descr_t),
-    .row_count = 1,
-  },
-  [BIOI] = {
-    .col_type = V2C_CLB,
-    .x_type_off = 0,
-    .y_offset = - ((int)sizeof(site_descr_t) + 2),
-    .y_width = sizeof(site_descr_t),
-    .row_count = 1,
-  },
-  /* BRAM Group */
-  [BRAM] = {
-    .col_type = V2C_BRAM_INT,
-    .x_type_off = 0,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
-  },
-  [TTERMBRAM] = {
-    .col_type = V2C_BRAM_INT,
-    .x_type_off = 0,
-    .y_offset = 0,
-    .y_width = 2,
-    .row_count = 1,
-  },
-  [BTERMBRAM] = {
-    .col_type = V2C_BRAM_INT,
-    .x_type_off = 0,
-    .y_offset = -2,
-    .y_width = 2,
-    .row_count = 1,
-  },
-  [TIOIBRAM] = {
-    .col_type = V2C_BRAM_INT,
-    .x_type_off = 0,
-    .y_offset = 2,
-    .y_width = sizeof(site_descr_t),
-    .row_count = 1,
-  },
-  [BIOIBRAM] = {
-    .col_type = V2C_BRAM_INT,
-    .x_type_off = 0,
-    .y_offset = - ((int)sizeof(site_descr_t) + 2),
-    .y_width = sizeof(site_descr_t),
-    .row_count = 1,
-  },
-  /* Still todo:
-     these nothing:
-       TLTERM, LTTERM, LBTERM, BLTERM, BRTERM, RBTERM, RTTERM, TRTERM,
-     this one nothing:
-       BM,
-     these unknown:
-       TL, BL, BR, TR,
-       M,
-     these shitty, will need something specific:
-       CLKT, CLKB, GCLKC, GCLKH, GCLKHBRAM,
-  */
-};
 
 /*
  * Untyped query functions
@@ -180,26 +49,26 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 			  const csite_descr_t *site,
 			  const int cfgbyte) {
   const chip_struct_t *chip_struct = bitstream->chip_struct;
-  const guint site_type = site->type;
-  const guint x = site->type_coord.x;
-  const guint y = site->type_coord.y;
-  const guint y_width = type_bits[site_type].y_width;
-  const guint flen = chip_struct->framelen * sizeof(uint32_t);
-  const gint y_offset = type_bits[site_type].y_offset;
+  const site_type_t site_type = site->type;
+  const unsigned x = site->type_coord.x;
+  const unsigned y = site->type_coord.y;
+  const unsigned ymid = chip_struct->row_count;
+  unsigned row = (y >> 4);
+  /* a bittest should be sufficient for top, but is hard to compute
+     (depends on bitlength of the value, which is costly to compute) */
+  const unsigned top = (row > ymid) ? 1 : 0;
+  const unsigned row_local = y & 0xF;
+  const unsigned row_second_half = (y >> 1) & 0x4;
 
-  /* site offset in the y axis -- inverted. Should not be done here maybe */
-  const guint y_type_offset = (y_offset >= 0) ? y_offset : (flen + y_offset);
-  const off_t site_off = y * y_width + y_type_offset;
+  const guint frame_x = byte_x(cfgbyte);
+  /* Middle word contains SECDED and clk information, so we skip it sometimes */
+  const guint frame_y = row_local * 10 + row_second_half + byte_y(cfgbyte);
+  const gchar *frame;
 
-  /* offset in-site. only this really needs to be computed locally */
-  const guint xoff = cfgbyte / y_width;
-  const guint yoff = cfgbyte % y_width;
-  const gsize frame_offset = site_off + (y_width - 1) - yoff;
+  row = top ? row >> 1 : row;
 
-  const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
-				 x+type_bits[site_type].x_type_off, xoff);
-
-  return frame[frame_offset];
+  frame = get_frame(bitstream, site_type, row, top, x, frame_x);
+  return frame[frame_y];
 }
 
 /** \brief Get some (up to 4) config bytes from a site
@@ -312,14 +181,8 @@ query_bitstream_luts(const bitstream_parsed_t *bitstream,
   guint i;
 
   /* query four luts. Bits are MSB first, but in reverse order */
-  for (i=0; i < 4; i++) {
-    guint first_byte = sizeof(site_descr_t) + 2 * i + ((i & 2) >> 1);
-    guint cfgbytes[2] = { first_byte, first_byte+1 };
-    guint32 result;
-
-    result = query_bitstream_site_bytes(bitstream, site, cfgbytes, 2);
-    result = ~result;
-    luts[i] = reverse_bits(result);
+  for (i=0; i<4; i++) {
+    luts[i] = 0;
   }
 
   return;
@@ -338,25 +201,6 @@ query_bistream_config(const bitstream_parsed_t *bitstream,
   return 0;
 }
 
-static const
-guchar bram_bit_to_word[16] = {
-  6, 4, 2, 0, 8, 10, 12, 14, 15, 13, 11, 9, 1, 3, 5, 7,
-};
-
-static const
-guint16 bram_offset_to_mask[16] = {
-  0x10, 0x800, 0x20, 0x400, 0x40, 0x200, 0x80, 0x100, 0x8, 0x1000, 0x4, 0x2000, 0x2, 0x4000, 0x1, 0x8000,
-};
-
-/* static const */
-/* gchar bram_offset_for_bit[16] = { */
-/*   1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, 1, 1, */
-/* }; */
-static const
-gchar bram_offset_for_bit[16] = {
-  -1, -1, -1, -2, -1, -1, -1, -3, -1, -1, -1, -2, -1, -1, -1,
-};
-
 /** \brief Get the bram data bits from a site
  *
  * @param bitstream the bitstream data
@@ -368,34 +212,7 @@ guint16 *
 query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
 			  const csite_descr_t *site) {
   /* Actually this is only bit reordering */
-  /* for now exctract the data from the bram coordinates ? */
-  const guint x = site->type_coord.x;
-  /* the bram spans 4 sites in height */
-  const guint y = site->type_coord.y >> 2;
-  const unsigned bram_width = 4 * sizeof(site_descr_t);
-  const unsigned site_offset = 2 + sizeof(site_descr_t) + y * bram_width + (bram_width - 2);
-
   guint16 *bram_data = g_new0(guint16,64*16);
-  guint i,j,k;
-
-  /* iterate over BRAM columns (config line) */
-  for (i = 0; i < 64; i++) {
-    guint16 *line_data = &bram_data[16*i];
-    unsigned guint_offset = site_offset / 2;
-    const guint16 *frame = (const guint16 *) get_frame(bitstream, V2C_BRAM, x, i);
-
-    for (j = 0; j < 16; j++) {
-      guint16 data = GUINT16_FROM_BE(frame[guint_offset]);
-      guint16 bit_to_write = (1 << j);
-
-      for (k = 0; k < 16; k++) {
-	if (bram_offset_to_mask[k] & data)
-	  line_data[k] |= bit_to_write;
-      }
-
-      guint_offset += bram_offset_for_bit[j];
-    }
-  }
   return bram_data;
 }
 
@@ -423,9 +240,9 @@ gsize
 query_bitstream_type_size(const bitstream_parsed_t *parsed,
 			  const site_type_t type) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
-  const int *frame_count = chip_struct->frame_count;
-  const type_bits_t *type_bit = &type_bits[type];
-  return frame_count[type_bit->col_type] * type_bit->y_width;
+  const unsigned *col_count = chip_struct->col_count;
+  /* per site, 80 bits on one column, or 10 bytes */
+  return type_col_count(col_count, type) * 10;
 }
 
 /** \brief Get all configuration bits from a site

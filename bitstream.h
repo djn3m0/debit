@@ -8,7 +8,6 @@
 #define _BITSTREAM_H
 
 #include "bitstream_parser.h"
-#include "wiring.h"
 #include "sites.h"
 
 /** \file

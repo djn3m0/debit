@@ -644,6 +644,10 @@ alloc_indexer(bitstream_parsed_t *parsed) {
 static inline void
 free_indexer(bitstream_parsed_t *parsed) {
   GArray *frames = parsed->frame_array;
+  void *type_lut = parsed->frames;
+
+  if (type_lut)
+    g_free(type_lut);
   if (frames)
     g_array_free(frames, TRUE);
 }
