@@ -8,7 +8,12 @@
 
 #include <glib.h>
 #include "bitstream_parser.h"
+
+#if defined(VIRTEX2)
 #include "sites_v2.h"
+#elif defined(VIRTEX4)
+#include "sites_v4.h"
+#endif
 
 /* This is the coordinates of the site in its
    local typed grid */
@@ -88,7 +93,7 @@ void iterate_over_typed_sites(const chip_descr_t *chip, site_type_t type,
 			      site_iterator_t fun, gpointer data);
 
 void release_chip(chip_descr_t *chip);
-chip_descr_t *get_chip(const gchar *datadir, const v2_id_t chipid);
+chip_descr_t *get_chip(const gchar *datadir, const unsigned chipid);
 
 void print_chip(chip_descr_t *chip);
 

@@ -19,14 +19,6 @@
 #include "codes/crc32-c.h"
 #include "codes/xhamming.h"
 
-typedef enum _id_v4 {
-  XC4VLX15 = 0,
-  XC4VLX25, XC4VLX40,
-  XC4VLX60, XC4VLX80,
-  XC4VLX100, XC4VLX160,
-  XC4VLX200, XC4VLX__NUM,
-} id_v4vlx_t;
-
 static const unsigned
 v4_frame_count[V4C__NB_CFG] = {
   [V4C_IOB] = 30,
@@ -751,7 +743,6 @@ idcode_write(bitstream_parsed_t *parsed,
   for (i = 0; i < XC4VLX__NUM; i++)
     if (bitdescr[i].idcode == idcode) {
       parser->type = i;
-      parsed->chip = i;
       parsed->chip_struct = &bitdescr[i];
       /* Allocate control structures */
       alloc_indexer(parsed);

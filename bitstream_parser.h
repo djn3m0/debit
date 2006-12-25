@@ -10,16 +10,6 @@
 #include <stdint.h>
 #include <glib.h>
 
-typedef enum _id {
-  XC2V40 = 0, XC2V80,
-  XC2V250, XC2V500,
-  XC2V1000, XC2V1500,
-  XC2V2000, XC2V3000,
-  XC2V4000, XC2V6000,
-  XC2V8000,
-  XC2__NUM,
-} v2_id_t;
-
 /* This structure holds the finale results of the parsing phase */
 typedef struct _bitstream_parsed {
   /* First header informations */
@@ -29,7 +19,6 @@ typedef struct _bitstream_parsed {
   gchar *build_time;
 
   /* (virtex-II) chip type info -- from bitstream data */
-  v2_id_t chip;
   const void *chip_struct;
 
   /* frames */

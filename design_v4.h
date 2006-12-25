@@ -9,6 +9,14 @@
 #include <stdint.h>
 #include "bitstream_parser.h"
 
+typedef enum _id_v4 {
+  XC4VLX15 = 0,
+  XC4VLX25, XC4VLX40,
+  XC4VLX60, XC4VLX80,
+  XC4VLX100, XC4VLX160,
+  XC4VLX200, XC4VLX__NUM,
+} id_v4vlx_t;
+
 /*
  * FAR Register implementation
  */
@@ -128,6 +136,7 @@ typedef enum {
 } v4_design_col_t;
 
 typedef struct _chip_struct_v4 {
+  id_v4vlx_t chip;
   guint32 idcode;
   guint32 framelen;
   const unsigned *frame_count;

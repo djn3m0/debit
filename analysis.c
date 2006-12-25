@@ -11,6 +11,7 @@
 #include "bitstream.h"
 #include "connexity.h"
 #include "analysis.h"
+#include "design.h"
 
 /*
  * This file centralizes the work on bitstream analysis. It gets the
@@ -177,7 +178,17 @@ dump_site_iter(unsigned site_x, unsigned site_y,
 
 void dump_sites(const bitstream_analyzed_t *nlz, const gchar *odir) {
   dump_site_t dump = { .parsed = nlz->bitstream, .odir = odir };
-  site_type_t types[] = { CLB, TTERM, LTERM, BTERM, RTERM, TTERMBRAM, BTERMBRAM, TIOI, LIOI, BIOI, RIOI, TIOIBRAM, BIOIBRAM, BRAM };
+#if defined(VIRTEX2)
+  site_type_t types[] =
+	  { CLB,
+	    TTERM, LTERM, BTERM, RTERM,
+	    TTERMBRAM, BTERMBRAM,
+	    TIOI, LIOI, BIOI, RIOI,
+	    TIOIBRAM, BIOIBRAM, BRAM };
+#elif defined(VIRTEX4)
+  site_type_t types[] = { IOB, CLB, DSP48, GCLKC, BRAM };
+#endif
+
   unsigned index;
 
   for (index = 0; index < G_N_ELEMENTS(types); index++) {
@@ -220,6 +231,7 @@ fill_analysis(bitstream_analyzed_t *anal,
   pip_db_t *pipdb;
   chip_descr_t *chip;
   pip_parsed_dense_t *pipdat;
+  const chip_struct_t *chip_struct = bitstream->chip_struct;
 
   anal->bitstream = bitstream;
   /* then fetch the databases */
@@ -228,7 +240,7 @@ fill_analysis(bitstream_analyzed_t *anal,
     goto err_out;
   anal->pipdb = pipdb;
 
-  chip = get_chip(datadir, bitstream->chip);
+  chip = get_chip(datadir, chip_struct->chip);
   if (!chip)
     goto err_out;
   anal->chip = chip;

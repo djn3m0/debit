@@ -27,7 +27,7 @@ if BUILD_BIT2PDF
 endif
 
 debit_SOURCES	= $(SHARED_SRC) $(SHARED_SRC_V2) debit.c config.h
-debit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@
+debit_CFLAGS	= $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@
 debit_LDADD	= @GLIB_LIBS@
 
 debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
@@ -36,7 +36,7 @@ debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
 			codes/crc32-c.c codes/crc32-c.h \
 			codes/xhamming.c codes/xhamming.h \
 			config.h
-debit_v4_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
+debit_v4_CFLAGS	= $(AM_CFLAGS) -DVIRTEX4 @GLIB_CFLAGS@
 debit_v4_LDADD	= @GLIB_LIBS@
 
 debit_v5_SOURCES	= $(SHARED_SRC)	debit.c \
@@ -46,11 +46,11 @@ debit_v5_SOURCES	= $(SHARED_SRC)	debit.c \
 			bitstream.c bitstream.h \
 			codes/xhamming.c codes/xhamming.h \
 			config.h
-debit_v5_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ #-DG_DISABLE_ASSERT -DDEBIT_DEBUG=0
+debit_v5_CFLAGS	= $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@
 debit_v5_LDADD	= @GLIB_LIBS@
 
 bit2pdf_SOURCES = $(SHARED_SRC) $(SHARED_SRC_V2) bit2pdf.c sites_draw.c wiring_draw.c bitdraw.h
-bit2pdf_CFLAGS = @GLIB_CFLAGS@ @CAIRO_CFLAGS@
+bit2pdf_CFLAGS = $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@ @CAIRO_CFLAGS@
 bit2pdf_LDADD  = @GLIB_LIBS@ @CAIRO_LIBS@
 
 #Distribution hook so that the tarballs are tagged with the git tree

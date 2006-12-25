@@ -3,13 +3,23 @@
  * All rights reserved.
  */
 
-#ifndef _DESIGN_H
-#define _DESIGN_H
+#ifndef _DESIGN_V2_H
+#define _DESIGN_V2_H
 
 #include <stdint.h>
 #include <glib.h>
 #include "bitarray.h"
 #include "bitstream_parser.h"
+
+typedef enum _id_v2 {
+  XC2V40 = 0, XC2V80,
+  XC2V250, XC2V500,
+  XC2V1000, XC2V1500,
+  XC2V2000, XC2V3000,
+  XC2V4000, XC2V6000,
+  XC2V8000,
+  XC2__NUM,
+} v2_id_t;
 
 /* family specific */
 typedef enum {
@@ -23,6 +33,7 @@ typedef enum {
 } v2_design_col_t;
 
 typedef struct _chip_struct {
+  v2_id_t chip;
   guint32 idcode;
   guint32 framelen;
   const int col_count[V2C__NB_CFG];
@@ -144,4 +155,4 @@ const gchar *get_frame(const bitstream_parsed_t *parsed,
   return frameptr;
 }
 
-#endif /* design.h */
+#endif /* _DESIGN_V2_H */

@@ -8,6 +8,13 @@
 
 #include <stdint.h>
 
+typedef enum _id_v5 {
+  XC5VLX30 = 0,
+  XC5VLX50, XC5VLX85,
+  XC5VLX110, XC5VLX220,
+  XC5VLX330, XC5VLX__NUM,
+} id_v5vlx_t;
+
 /*
  * FAR Register implementation
  */
@@ -124,6 +131,7 @@ typedef enum {
 } v5_design_col_t;
 
 typedef struct _chip_struct {
+  id_v5vlx_t chip;
   guint32 idcode;
   guint32 framelen;
   const unsigned frame_count[V5C__NB_CFG];

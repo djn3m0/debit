@@ -21,11 +21,11 @@ endif
 
 xiledit_SOURCES	= xiledit.c xildraw.c xildraw.h callbacks.c callbacks.h \
 		  ../sites.c ../sites_draw.c ../wiring_draw.c $(SHARED_SRC) $(glade_generated)
-xiledit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ @GTK_CFLAGS@
+xiledit_CFLAGS	= $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@ @GTK_CFLAGS@
 xiledit_LDADD	= @GLIB_LIBS@ @GTK_LIBS@
 
 xiledit_direct_SOURCES	= $(xiledit_SOURCES)
-xiledit_direct_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ @GTK_DIRECTFB_CFLAGS@
+xiledit_direct_CFLAGS	= $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@ @GTK_DIRECTFB_CFLAGS@
 xiledit_direct_LDADD	= @GLIB_LIBS@ @GTK_DIRECTFB_LIBS@
 
 BUILT_SOURCES	= $(glade_generated)

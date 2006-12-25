@@ -20,13 +20,6 @@
 #include "codes/crc32-c.h"
 #include "codes/xhamming.h"
 
-typedef enum _id_v5 {
-  XC5VLX30 = 0,
-  XC5VLX50, XC5VLX85,
-  XC5VLX110, XC5VLX220,
-  XC5VLX330, XC5VLX__NUM,
-} id_v5vlx_t;
-
 static const
 chip_struct_t bitdescr[XC5VLX__NUM] = {
   /* FLR is always 41 for virtex-5 */
@@ -665,7 +658,6 @@ idcode_write(bitstream_parsed_t *parsed,
   for (i = 0; i < XC5VLX__NUM; i++)
     if (bitdescr[i].idcode == idcode) {
       parser->type = i;
-      parsed->chip = i;
       parsed->chip_struct = &bitdescr[i];
       /* Allocate control structures */
       alloc_indexer(parsed);

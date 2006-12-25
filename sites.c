@@ -10,7 +10,7 @@
 #include "keyfile.h"
 
 #include "sites.h"
-#include "bitstream_parser.h"
+#include "design.h"
 
 /*
  * File site control description is of form
@@ -27,6 +27,8 @@
  * we don't have to repeat sitename several times
  */
 
+#if defined(VIRTEX2)
+
 static const gchar *
 chipfiles[XC2__NUM] = {
   [XC2V40] = "xc2v40",
@@ -41,6 +43,22 @@ chipfiles[XC2__NUM] = {
   [XC2V6000] = "xc2v6000",
   [XC2V8000] = "xc2v8000",
 };
+
+#elif defined(VIRTEX4)
+
+static const gchar *
+chipfiles[XC4VLX__NUM] = {
+  [XC4VLX15] = "xc4vlx15",
+  [XC4VLX25] = "xc4vlx25",
+  [XC4VLX40] = "xc4vlx40",
+  [XC4VLX60] = "xc4vlx60",
+  [XC4VLX80] = "xc4vlx80",
+  [XC4VLX100] = "xc4vlx100",
+  [XC4VLX160] = "xc4vlx160",
+  [XC4VLX200] = "xc4vlx200",
+};
+
+#endif
 
 /* iterate over intervals */
 typedef void (* interval_iterator_t)(unsigned i, void *dat);
@@ -221,7 +239,7 @@ init_chip(chip_descr_t *chip, GKeyFile *file) {
 
 /* exported alloc and destroy functions */
 chip_descr_t *
-get_chip(const gchar *dirname, const v2_id_t chipid) {
+get_chip(const gchar *dirname, const unsigned chipid) {
   chip_descr_t *chip = g_new0(chip_descr_t, 1);
   const gchar *chipname = chipfiles[chipid];
   GKeyFile *keyfile;
@@ -291,6 +309,8 @@ typedef enum _site_print_type {
   PRINT_Y,
 } site_print_t;
 
+#if defined(VIRTEX2)
+
 static const site_print_t print_type[NR_SITE_TYPE] = {
   [TIOI] = PRINT_X,
   [BIOI] = PRINT_X,
@@ -323,6 +343,21 @@ static const char *print_str[NR_SITE_TYPE] = {
   [BIOIBRAM] = "BIOIBRAMC%i",
   [BRAM] = "BRAMR%iC%i",
 };
+
+#elif defined(VIRTEX4)
+
+static const site_print_t print_type[NR_SITE_TYPE];
+
+static const char *print_str[NR_SITE_TYPE] = {
+  [SITE_TYPE_NEUTRAL] = "INTR%iC%i",
+  [IOB] = "IOBR%iC%i",
+  [CLB] = "CLBR%iC%i",
+  [DSP48] = "DSP48R%iC%i",
+  [GCLKC] = "GCLKCR%iC%i",
+  [BRAM] = "BRAMR%iC%i",
+};
+
+#endif
 
 void
 sprint_csite(gchar *data, const csite_descr_t *site) {

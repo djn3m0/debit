@@ -20,6 +20,7 @@
 static const
 chip_struct_t bitdescr[XC2__NUM] = {
   [XC2V40] = {
+    .chip = XC2V40,
     .idcode = 0x01008093U,
     .framelen = 26,
     .col_count = {
@@ -40,6 +41,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
     },
   },
   [XC2V80] = {
+    .chip = XC2V80,
     .idcode = 0x01010093U,
     .framelen = 46,
     .col_count = {
@@ -60,6 +62,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
     },
   },
   [XC2V250] = {
+    .chip = XC2V250,
     .idcode = 0x01018093U,
     .framelen = 66,
     .col_count = {
@@ -80,6 +83,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
     },
   },
   [XC2V500] = {
+    .chip = XC2V500,
     .idcode = 0x01020093U,
     .framelen = 86,
     .col_count = {
@@ -100,6 +104,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
     },
   },
   [XC2V1000] = {
+    .chip = XC2V1000,
     .idcode = 0x01028093U,
     .framelen = 106,
     .col_count = {
@@ -120,6 +125,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
     },
   },
   [XC2V1500] = {
+    .chip = XC2V1500,
     .idcode = 0x01030093U,
     .framelen = 126,
     .col_count = {
@@ -140,6 +146,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
     },
   },
   [XC2V2000] = {
+    .chip = XC2V2000,
     .idcode = 0x01038093U,
     .framelen = 146,
     .col_count = {
@@ -160,6 +167,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
     },
   },
   [XC2V3000] = {
+    .chip = XC2V3000,
     .idcode = 0x01040093U,
     .framelen = 166,
     .col_count = {
@@ -180,6 +188,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
     },
   },
   [XC2V4000] = {
+    .chip = XC2V4000,
     .idcode = 0x01050093U,
     .framelen = 206,
     .col_count = {
@@ -200,6 +209,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
     },
   },
   [XC2V6000] = {
+    .chip = XC2V6000,
     .idcode = 0x01060093U,
     .framelen = 246,
     .col_count = {
@@ -220,6 +230,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
     },
   },
   [XC2V8000] = {
+    .chip = XC2V8000,
     .idcode = 0x01070093U,
     .framelen = 286,
     .col_count = {
@@ -778,7 +789,6 @@ idcode_write(bitstream_parsed_t *parsed,
   for (i = 0; i < XC2__NUM; i++)
     if (bitdescr[i].idcode == idcode) {
       parser->type = i;
-      parsed->chip = i;
       parsed->chip_struct = &bitdescr[i];
       /* Allocate control structures */
       alloc_indexer(parsed);

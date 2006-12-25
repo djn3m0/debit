@@ -40,6 +40,8 @@ static int build_datatree_from_keyfiles(GKeyFile *data, GKeyFile *control,
 					const site_type_t type);
 static void destroy_datatree(GNode *head);
 
+#if defined(VIRTEX2)
+
 static const gchar *basedbnames[NR_SITE_TYPE] = {
   [CLB] = "clb",
   [TTERM] = "tterm",
@@ -55,6 +57,19 @@ static const gchar *basedbnames[NR_SITE_TYPE] = {
   [BIOIBRAM] = "bioibram",
   [TIOIBRAM] = "tioibram",
 };
+
+#elif defined(VIRTEX4)
+
+static const gchar *basedbnames[NR_SITE_TYPE] = {
+  [SITE_TYPE_NEUTRAL] = "int",
+  [IOB] = "iob",
+  [CLB] = "clb",
+  [DSP48] = "dsp48",
+  [GCLKC] = "gclk",
+  [BRAM] = "bram",
+};
+
+#endif
 
 /** \brief Read a database from files
  *
