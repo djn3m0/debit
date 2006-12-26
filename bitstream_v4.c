@@ -31,6 +31,31 @@
  */
 
 /*
+ * XXX To be removed once the databases conform to the new way of doing things
+ */
+#define STDWIDTH 10
+const type_bits_t type_bits[NR_SITE_TYPE] = {
+  [SITE_TYPE_NEUTRAL] = {
+    .y_width = STDWIDTH,
+  },
+  [IOB] = {
+    .y_width = STDWIDTH,
+  },
+  [CLB] = {
+    .y_width = STDWIDTH,
+  },
+  [DSP48] = {
+    .y_width = STDWIDTH,
+  },
+  [GCLKC] = {
+    .y_width = STDWIDTH,
+  },
+  [BRAM] = {
+    .y_width = STDWIDTH,
+  },
+};
+
+/*
  * Untyped query functions
  */
 

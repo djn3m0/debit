@@ -349,12 +349,12 @@ static const char *print_str[NR_SITE_TYPE] = {
 static const site_print_t print_type[NR_SITE_TYPE];
 
 static const char *print_str[NR_SITE_TYPE] = {
-  [SITE_TYPE_NEUTRAL] = "INTR%iC%i",
-  [IOB] = "IOBR%iC%i",
-  [CLB] = "CLBR%iC%i",
-  [DSP48] = "DSP48R%iC%i",
-  [GCLKC] = "GCLKCR%iC%i",
-  [BRAM] = "BRAMR%iC%i",
+  [SITE_TYPE_NEUTRAL] = "INT_R%iC%i",
+  [IOB] = "IOB_R%iC%i",
+  [CLB] = "CLB_R%iC%i",
+  [DSP48] = "DSP48_R%iC%i",
+  [GCLKC] = "GCLKC_R%iC%i",
+  [BRAM] = "BRAM_R%iC%i",
 };
 
 #endif

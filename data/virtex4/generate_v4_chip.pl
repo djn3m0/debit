@@ -12,14 +12,13 @@ my $i = 0;
 my $y_offset = 0;
 my $x_offset = 0;
 
-my %C_enum = (
-	      SITE_TYPE_NEUTRAL => $i++,
+my %C_enum = (SITE_TYPE_NEUTRAL => $i++,
 	      IOB => $i++,
 	      CLB => $i++,
 	      DSP48 => $i++,
 	      GCLK => $i++,
 	      BRAM => $i++,
-#	      PAD => $i++,
+	      PAD => $i++,
 	      NR_SITE_TYPE => $i++
 	      );
 
@@ -87,11 +86,13 @@ for $chip (keys %clbwidth) {
     # The CLBs are interleaved with other things
     my $type;
     for $type (keys %C_enum) {
-
 	if ($type =~ /^NR_SITE_TYPE$/) {
 	    next;
 	}
 	if ($type =~ /^SITE_TYPE_NEUTRAL$/) {
+	    next;
+	}
+	if ($type =~ /^PAD$/) {
 	    next;
 	}
 
@@ -118,8 +119,8 @@ for $chip (keys %clbwidth) {
 	    print_bram_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
 	    print_clb_height($clbheight{$chip},\*DESCR);
 	}
+	print DESCR "type=$C_enum{$type}\n";
     }
-
     close(DESCR);
 }
 
