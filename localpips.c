@@ -554,7 +554,7 @@ __pips_of_site_append(const pip_db_t *pipdb,
     .wiredb = pipdb->wiredb,
   };
 
-  if (!pipdb->memorydb[site->type])
+  if (!head)
     return;
 
   iterate_over_groups_memory(head, examine_groupnode, &exam_arg);
