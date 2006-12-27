@@ -196,6 +196,8 @@ const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
   //  g_assert(index < type_col_count(col_count, type));
   if ( index >= type_col_count(col_count, type))
     g_warning("problem in index %i >= %i for type %i", index, type_col_count(col_count, type), type);
+  if ( row >= rowcount )
+    g_warning("problem in row %i >= %i for type %i", row, rowcount, type);
   g_assert(row < rowcount);
   //  g_assert(frame < framecount);
   if (frame >= framecount)

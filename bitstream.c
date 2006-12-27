@@ -439,10 +439,13 @@ int
 query_bitstream_site_data(gchar *data, const gsize nbytes,
 	                  const bitstream_parsed_t *parsed,
 			  const csite_descr_t *site) {
+  const unsigned width = type_bits[site->type].y_width;
   gsize i;
 
-  for (i = 0; i < nbytes; i++)
-    data[i] = query_bitstream_site_byte(parsed, site, i);
+  for (i = 0; i < nbytes; i++) {
+    unsigned pos = bitpos_to_cfgbit(i, width);
+    data[i] = query_bitstream_site_byte(parsed, site, pos);
+  }
 
   return 0;
 }

@@ -39,18 +39,23 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
     .y_width = STDWIDTH,
   },
   [IOB] = {
+    .col_type = V4C_IOB,
     .y_width = STDWIDTH,
   },
   [CLB] = {
+    .col_type = V4C_CLB,
     .y_width = STDWIDTH,
   },
   [DSP48] = {
+    .col_type = V4C_DSP48,
     .y_width = STDWIDTH,
   },
   [GCLKC] = {
+    .col_type = V4C_GCLK,
     .y_width = STDWIDTH,
   },
   [BRAM] = {
+    .col_type = V4C_BRAM_INT,
     .y_width = STDWIDTH,
   },
 };
@@ -77,7 +82,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const site_type_t site_type = site->type;
   const unsigned x = site->type_coord.x;
   const unsigned y = site->type_coord.y;
-  const unsigned ymid = chip_struct->row_count;
+  const unsigned ymid = chip_struct->row_count - 1;
   unsigned row = (y >> 4);
   /* a bittest should be sufficient for top, but is hard to compute
      (depends on bitlength of the value, which is costly to compute) */
@@ -90,9 +95,11 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const guint frame_y = row_local * 10 + row_second_half + byte_y(cfgbyte);
   const gchar *frame;
 
+  g_print("row is %i for (%i,%i), mid is %i\n", row, x, y, ymid);
+
   row = top ? row >> 1 : row;
 
-  frame = get_frame(bitstream, site_type, row, top, x, frame_x);
+  frame = get_frame(bitstream, type_bits[site_type].col_type, row, top, x, frame_x);
   return frame[frame_y];
 }
 
@@ -286,10 +293,13 @@ int
 query_bitstream_site_data(gchar *data, const gsize nbytes,
 	                  const bitstream_parsed_t *parsed,
 			  const csite_descr_t *site) {
+  const unsigned width = type_bits[site->type].y_width;
   gsize i;
 
-  for (i = 0; i < nbytes; i++)
-    data[i] = query_bitstream_site_byte(parsed, site, i);
+  for (i = 0; i < nbytes; i++) {
+    unsigned pos = bitpos_to_cfgbit(i, width);
+    data[i] = query_bitstream_site_byte(parsed, site, pos);
+  }
 
   return 0;
 }
