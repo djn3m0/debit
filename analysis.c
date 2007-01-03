@@ -6,6 +6,8 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
+#include "debitlog.h"
+
 #include "wiring.h"
 #include "localpips.h"
 #include "bitstream.h"
@@ -98,7 +100,7 @@ print_bram_iter(unsigned site_x, unsigned site_y,
     return;
   bram = query_bitstream_bram_data(bitstream, site);
   print_bram_data(site,bram);
-  g_warning("Did BRAM %i x %i", site_x, site_y);
+  debit_log(L_SITES, "Did BRAM %i x %i", site_x, site_y);
   g_free(bram);
 }
 
