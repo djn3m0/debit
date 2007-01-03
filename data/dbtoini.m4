@@ -1,0 +1,9 @@
+define(_WIRE_ENTRY,
+[$1]
+ID=$2
+DX=$3
+DY=$4
+EP=$5
+TYPE=$6
+DIR=$7
+SIT=$8)

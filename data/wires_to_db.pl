@@ -279,22 +279,35 @@ sub array_to_hash() {
 #TODO: add some information there, about the min bit, the max bit,
 #the red/black coloring, what else -- maybe in C.
 
+#Change: we use the C preprocessor to format the file. So, don't try to
+#be formatting-clever here, dump the data wrapped in a macro, and let
+#CPP handle the rest
+
 sub dump_ini {
     my $output;
     for $output (@wires) {
-	print "[$output]\n";
-	print "ID=$nums{$output}\n";
-	print "DX=$dx{$output}\n";
-	print "DY=$dy{$output}\n";
+	print "_WIRE_ENTRY($output, $nums{$output}, $dx{$output}, $dy{$output}, ";
 	if (defined $nums{$otherend{$output}}) {
-	    print "EP=$nums{$otherend{$output}}\n";
+	    print "$nums{$otherend{$output}}, ";
 	}
 	else {
-#	    print "EP=unknown_$otherend{$output}\n";
-	    print "EP=$nums{$output}\n";
+	    print "$nums{$output}, ";
 	}
-	print "TYPE=$type{$output}\n";
-	print "DIR=$dir{$output}\n";
-	print "SIT=$sit{$output}\n";
+	print "$type{$output}, $dir{$output}, $sit{$output})\n";
+
+# 	print "[$output]\n";
+# 	print "ID=$nums{$output}\n";
+# 	print "DX=$dx{$output}\n";
+# 	print "DY=$dy{$output}\n";
+# 	if (defined $nums{$otherend{$output}}) {
+# 	    print "EP=$nums{$otherend{$output}}\n";
+# 	}
+# 	else {
+# #	    print "EP=unknown_$otherend{$output}\n";
+# 	    print "EP=$nums{$output}\n";
+# 	}
+# 	print "TYPE=$type{$output}\n";
+# 	print "DIR=$dir{$output}\n";
+# 	print "SIT=$sit{$output}\n";
     }
 }
