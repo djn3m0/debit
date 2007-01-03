@@ -25,6 +25,9 @@ win_artwork = ulogic_icon.ico \
 	      ulogic_banner.bmp ulogic_splash.bmp \
               ulogic_installer.ico ulogic_uninstaller.ico
 
+website_trac_banner.png: website_trac_banner.svg
+	inkscape -z -f $< -e $@ -D -w319 -h73 -bwhite -y0.0
+
 # These are the dimentions that are expected by NSIS
 %_banner.png: %_banner.svg
 	inkscape -z -f $< -e $@ -D -w150 -h57
