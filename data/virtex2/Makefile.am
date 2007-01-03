@@ -15,7 +15,7 @@ V2GENSCRIPT=generate_vII_chip.pl
 WIRES_DB=wires.db
 DBGENSCRIPT=$(srcdir)/../wires_to_db.pl
 
-ALLDATA=$(DATCONTROL) $(DATDATA) $(WIRES_DB)
+ALLDATA=$(DATCONTROL) $(DATDATA) $(WIRES_DB) $(V2CHIPDB)
 
 $(V2CHIPDB): $(V2GENSCRIPT)
 	$(srcdir)/$<
