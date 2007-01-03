@@ -7,6 +7,11 @@ TESTS_ENVIRONMENT = top_srcdir=$(top_srcdir) \
 
 TESTS=test_v2.sh test_v4.sh test_v5.sh
 
+FULL_ENVIRONMENT = srcdir=$(srcdir) $(TESTS_ENVIRONMENT)
+
+perfs.txt:
+	$(FULL_ENVIRONMENT) speed.sh
+
 mostlyclean-local:
 	-for dir in `find $(builddir) -mindepth 3 -maxdepth 3`; \
 		 do $(MAKE) -f $(srcdir)/testmake.mk CLEANDIR=$$dir clean; \

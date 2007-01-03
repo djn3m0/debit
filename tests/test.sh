@@ -22,8 +22,7 @@ function test_chip() {
 
 function test_designs {
     for design in `ls $designs/*.xdl`; do
-	test_design ${design%.xdl} || exit 1;
-	make -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
+	${CALLED_FUN} ${design%.xdl} || exit 1;
     done
 }
 
@@ -58,5 +57,9 @@ function test_design() {
     check_suffix ${DESIGN_NAME} bram
     check_suffix ${DESIGN_NAME} lut
     check_suffix ${DESIGN_NAME} pip
-    echo "."
+    echo " OK, cleaning up."
+
+    make -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
 }
+
+CALLED_FUN=test_design
