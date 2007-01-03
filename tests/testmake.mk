@@ -4,23 +4,30 @@ DATADIR		?= $(top_srcdir)/data
 DEBITDBG	?= -g 0xffff
 DEBIT_CMD	=$(VALGRIND) $(DEBIT) $(DEBITDBG) --datadir=$(DATADIR)
 
-%.frames: %.bit
-	mkdir -p $@ && $(DEBIT_CMD) $(DUMPARG) --outdir $@ --input $< 2> $@.log
+############################
+### XDL/Debit comparison ###
+############################
 
-%.bram: %.bit
+%.frames: %.bit $(DEBIT)
+	mkdir -p $*.dir && \
+	$(DEBIT_CMD) $(DUMPARG) --outdir $*.dir --input $< 2> $@.log && \
+	echo $*.dir/* | xargs md5sum | sed -e 's/_u//' > $@ && \
+	rm -Rf $*.dir
+
+%.bram: %.bit $(DEBIT)
 	$(DEBIT_CMD) --bramdump --input $< > $@ 2> $@.log
 
-%.lut: %.bit
+%.lut: %.bit $(DEBIT)
 	$(DEBIT_CMD) --lutdump --input $< > $@ 2> $@.log
 
-%.pip: %.bit
+%.pip: %.bit $(DEBIT)
 	$(DEBIT_CMD) --pipdump --input $< > $@ 2> $@.log
 
 ############################
 ### XDL/Debit comparison ###
 ############################
 
-%.pipdebit: %.bit
+%.pipdebit: %.bit $(DEBIT)
 	$(DEBIT_CMD) --lutdump --input $< > $@ 2> $@.log
 
 #extract some information from the xdl
@@ -36,10 +43,11 @@ DEBIT_CMD	=$(VALGRIND) $(DEBIT) $(DEBITDBG) --datadir=$(DATADIR)
 # 	mv $< $@
 
 clean:
-	- rm -Rf $(CLEANDIR)*.frames
-	- rm -f $(CLEANDIR)*.bram
-	- rm -f $(CLEANDIR)*.lut
-	- rm -f $(CLEANDIR)*.pip
-	- rm -f $(CLEANDIR)*.log
+	- rm -rf $(CLEANDIR)/*.dir
+	- rm -rf $(CLEANDIR)/*.frames
+	- rm -f $(CLEANDIR)/*.bram
+	- rm -f $(CLEANDIR)/*.lut
+	- rm -f $(CLEANDIR)/*.pip
+	- rm -f $(CLEANDIR)/*.log
 
 .PHONY: examples clean

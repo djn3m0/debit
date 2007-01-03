@@ -6,3 +6,8 @@ TESTS_ENVIRONMENT = top_srcdir=$(top_srcdir) \
 		    $(SHELL)
 
 TESTS=test_v2.sh test_v4.sh test_v5.sh
+
+mostlyclean-local:
+	-for dir in `find $(builddir) -mindepth 3 -maxdepth 3`; \
+		 do $(MAKE) -f $(srcdir)/testmake.mk CLEANDIR=$$dir clean; \
+	 done

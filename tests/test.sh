@@ -23,7 +23,7 @@ function test_chip() {
 function test_designs {
     for design in `ls $designs/*.xdl`; do
 	test_design ${design%.xdl} || exit 1;
-	make -s --no-print-directory CLEANDIR=$designs/ -f $MAKEFILE clean
+	make -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
     done
 }
 

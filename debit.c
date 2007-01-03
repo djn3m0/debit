@@ -69,7 +69,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
     if (analysis == NULL)
       goto out_free;
 
-    print_chip(analysis->chip);
+/*     print_chip(analysis->chip); */
 
     if (sitedump)
       dump_sites(analysis, odir);
