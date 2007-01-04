@@ -17,7 +17,6 @@ typedef struct _wire {
   wire_type_t type;
   wire_direction_t direction;
   wire_situation_t situation;
-  uint16_t num;
 } __attribute__((packed)) wire_t;
 
 /*
@@ -30,7 +29,7 @@ typedef struct _wire_simple {
   gint8 dx;
   gint8 dy;
   wire_atom_t ep;
-} wire_simple_t;
+} __attribute__((packed)) wire_simple_t;
 
 typedef struct _sited_wire {
   site_ref_t site;
