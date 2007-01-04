@@ -39,9 +39,9 @@ typedef struct _sited_wire {
 typedef struct _wire_db {
   gsize dblen;
   /* series of arrays */
-  wire_simple_t *wires;
+  const wire_simple_t *wires;
   const gchar **names;
-  wire_t *details;
+  const wire_t *details;
   /* Merge with the localpips gstringchunk here */
   GStringChunk *wirenames;
 } wire_db_t;
@@ -52,12 +52,12 @@ const gchar *wire_name(const wire_db_t *db, const wire_atom_t wire) {
 }
 
 static inline
-wire_simple_t *wire_val(const wire_db_t *db, const wire_atom_t wire) {
+const wire_simple_t *wire_val(const wire_db_t *db, const wire_atom_t wire) {
   return (&db->wires[wire]);
 }
 
 static inline
-wire_t *get_wire(const wire_db_t *db, const wire_atom_t wire) {
+const wire_t *get_wire(const wire_db_t *db, const wire_atom_t wire) {
   return (&db->details[wire]);
 }
 
