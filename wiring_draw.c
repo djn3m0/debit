@@ -31,7 +31,7 @@ compute_wire_endpoint(double *x, double *y,
 		      const wire_db_t *wdb,
 		      wire_atom_t wire) {
   /* get the wire simple */
-  wire_simple_t *simple = wire_val(wdb, wire);
+  const wire_simple_t *simple = wire_val(wdb, wire);
   compute_wire_pos(x, y, wdb->dblen, simple->ep);
   /* translate to reach the endpoint */
   *x += -simple->dx * SITE_HEIGHT;
@@ -58,7 +58,7 @@ _draw_wire(const drawing_context_t *ctx,
 	   const wire_db_t *wdb,
 	   const wire_atom_t wire) {
   cairo_t *cr = ctx->cr;
-  wire_t *cwire = get_wire(wdb, wire);
+  const wire_t *cwire = get_wire(wdb, wire);
   const color_t *color = &wire_colors[cwire->type];
   double x = 0.0, y=0.0;
 

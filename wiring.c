@@ -55,8 +55,8 @@ load_wire_atom(const wire_db_t *db, GKeyFile *keyfile,
 {
   GError *err = NULL;
   gint id = g_key_file_get_integer(keyfile, wirename, "ID", &err);
-  wire_simple_t *wire = &db->wires[id];
-  wire_t *detail = &db->details[id];
+  wire_simple_t *wire = (void *) &db->wires[id];
+  wire_t *detail = (void *) &db->details[id];
 
   if (err)
     goto out_err;
@@ -172,9 +172,9 @@ void free_wiredb(wire_db_t *wires) {
   GStringChunk *wirenames = wires->wirenames;
   if (wirenames)
     g_string_chunk_free(wirenames);
-  g_free(wires->details);
+  g_free((void *)wires->details);
   g_free(wires->names);
-  g_free(wires->wires);
+  g_free((void *)wires->wires);
   g_free(wires);
 }
 
