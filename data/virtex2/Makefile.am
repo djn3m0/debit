@@ -13,10 +13,12 @@ V2CHIPDB=$(addsuffix /chip_control, $(V2CHIPDIRS)) $(addsuffix /chip_data, $(V2C
 V2GENSCRIPT=generate_vII_chip.pl
 
 WIRES_RAW_DB=wires.m4
+WIRES_H_DB=wires.h
 WIRES_DB=wires.db
 
 DBGENSCRIPT=$(srcdir)/../wires_to_db.pl
 WIRES_M4_SCRIPT=$(srcdir)/../dbtoini.m4
+WIRES_H_M4_SCRIPT=$(srcdir)/../dbtoh.m4
 
 ALLDATA=$(DATCONTROL) $(DATDATA) $(WIRES_DB) $(V2CHIPDB)
 
@@ -32,7 +34,11 @@ $(WIRES_RAW_DB): $(DATDATA) $(DBGENSCRIPT)
 $(WIRES_DB): $(WIRES_M4_SCRIPT) $(WIRES_RAW_DB)
 	m4 $^ > $@
 
-dist_noinst_SCRIPTS=$(V2GENSCRIPT) $(WIRES_RAW_DB)
+$(WIRES_H_DB): $(WIRES_H_M4_SCRIPT) $(WIRES_RAW_DB)
+	m4 $^ > $@
+
+dist_noinst_SCRIPTS=$(V2GENSCRIPT)
+dist_noinst_DATA=$(WIRES_RAW_DB) $(WIRES_DB) $(WIRES_H_DB)
 virtex2_pkgdatadir=$(pkgdatadir)/virtex2
 nobase_dist_virtex2_pkgdata_DATA=$(ALLDATA)
 

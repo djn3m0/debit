@@ -6,4 +6,4 @@ DY=$4
 EP=$5
 TYPE=$6
 DIR=$7
-SIT=$8)
+SIT=$8)dnl
