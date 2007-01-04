@@ -15,6 +15,36 @@
 #include "wiring.h"
 #include "design.h"
 
+#ifdef __COMPILED_WIREDB
+
+/*
+ * Using a compiled DB is really a breeze.
+ */
+
+#if defined(VIRTEX2)
+#define WIREDB "data/virtex2/wires.m4"
+#elif defined(VIRTEX4)
+#define WIREDB "data/virtex4/wires.m4"
+#endif
+
+#include "data/wiring_compiled.h"
+
+wire_db_t *get_wiredb(const gchar *datadir) {
+  wire_db_t *wiredb = g_new0(wire_db_t, 1);
+  wiredb->details = details;
+  wiredb->wires = wires;
+  wiredb->wirenames = wirestr.str;
+  wiredb->wireidx = wireidx;
+  wiredb->dblen = G_N_ELEMENTS(wires);
+  return wiredb;
+}
+
+void free_wiredb(wire_db_t *wires) {
+  g_free(wires);
+}
+
+#else /* __COMPILED_WIREDB */
+
 #define STRINGCHUNK_DEFAULT_SIZE 16
 
 static gint
@@ -178,6 +208,8 @@ void free_wiredb(wire_db_t *wires) {
   g_free(wires);
 }
 
+#endif /* __COMPILED_WIREDB */
+
 /*
  * Interface functions needed by wiring.h
  */
@@ -192,13 +224,12 @@ static inline gint cmp(const gchar *s1, const gchar *s2) {
 gint parse_wire_simple(const wire_db_t *db, wire_atom_t* res,
 		       const gchar *wire) {
   guint low = 0, high = db->dblen-1;
-  const gchar **names = db->names;
-
   //  g_assert(high <= db->dblen);
 
   do {
     guint middle = (high + low) / 2;
-    gint comp = cmp(wire,names[middle]);
+    const gchar *middlename = wire_name(db, middle);
+    gint comp = cmp(wire,middlename);
     if (!comp) {
       *res = middle;
       return 0;

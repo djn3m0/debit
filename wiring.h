@@ -40,16 +40,31 @@ typedef struct _wire_db {
   gsize dblen;
   /* series of arrays */
   const wire_simple_t *wires;
-  const gchar **names;
   const wire_t *details;
-  /* Merge with the localpips gstringchunk here */
+#ifdef __COMPILED_WIREDB
+  const unsigned int *wireidx;
+  const gchar *wirenames;
+#else
+  const gchar **names;
   GStringChunk *wirenames;
+#endif
 } wire_db_t;
+
+#ifdef __COMPILED_WIREDB
+
+static inline
+const char *wire_name(const wire_db_t *db, const wire_atom_t wire) {
+  return db->wirenames + db->wireidx[wire];
+}
+
+#else
 
 static inline
 const gchar *wire_name(const wire_db_t *db, const wire_atom_t wire) {
   return (db->names[wire]);
 }
+
+#endif
 
 static inline
 const wire_simple_t *wire_val(const wire_db_t *db, const wire_atom_t wire) {

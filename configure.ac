@@ -76,6 +76,10 @@ if test "x$enable_debug" = "xno"; then
    CPPFLAGS+="-DDEBIT_DEBUG=0 "
 fi
 
+AC_ARG_ENABLE(wiredb, [  --enable-wiredb    enable built-in wire database], enable_wiredb=$enableval, enable_wiredb=no)
+if test "x$enable_wiredb" = "xyes"; then
+   CPPFLAGS+="-D__COMPILED_WIREDB "
+fi
 
 AC_CONFIG_FILES([Makefile tests/Makefile \
 		data/Makefile data/virtex2/Makefile data/virtex4/Makefile \
