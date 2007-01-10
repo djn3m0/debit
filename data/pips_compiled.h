@@ -10,66 +10,63 @@
  */
 
 /*
- * Describing the fundamental structures...
- */
-
-/*
  * The input PIPDB file is formatted as thus
- * _PIP_WHOLE_ENTRY(
- * ndata,
- * _PIP_CTRL_ENTRY(endwire, ncfgbits, cfgbits...),
- * _PIP_CTRL_ENTRY(wire, cfgbitmask), ...
+ *_PIP_WHOLE_ENTRY(
+ * _PIP_CTRL_ENTRY(S6BEG4,7,_PIP_CTRL_LIST(1473,1475,1553,1555,1635,1712,1714)),
+ * 12,
+ * _PIP_DATA_LIST(
+ * _PIP_DATA_ENTRY(OMUX_WS1,18),
+ * ...)
  * )
- * ...
- *
- * the file wires.h must be included, so that we get a proper
- * translation of wire names to wire indexes.
+ * )
  */
 
-#include <stddef.h>
-#include <stdint.h>
-
-#include "virtex2/wires.h"
-
-typedef uint16_t wire_atom_t;
-
-typedef struct _pip_control_t {
-  wire_atom_t endwire;
-  unsigned char size;
-  uint32_t data[];
-} pip_control_t;
-
-typedef struct _pip_data_t {
-  wire_atom_t startwire;
-  uint32_t cfgdata;
-} pip_data_t;
-
-typedef struct _pip_data_array_t {
-  unsigned char size;
-  pip_data_t data[];
-} pip_data_array_t;
+#include "pips_compiled_common.h"
 
 /* This is the string array & string lookup table generation */
 
-#define PIPDB "demo.db"
-
+#define STRUCTNAME(a, x) a ## x ## _t
 #define CTRLFIELD(line) FIELD1(line)
 #define DATAFIELD(line) FIELD2(line)
 #define FIELD1(line) ctrl##line
 #define FIELD2(line) data##line
 
-#define CTRL_STRUCT(name, len) struct { wire_atom_t endwire;  unsigned char size;  uint32_t data[len]; } name
-#define CTRL_STRUCT_FILL(vendwire, vsize_ctrl, vsize_data, list...) { .endwire = vendwire, .size = vsize_ctrl, .data = { list } }
+#define PACK __attribute__((packed))
 
-#define DATA_STRUCT(name, len) struct { unsigned char size;  pip_data_t data[len]; } name
-#define DATA_STRUCT_FILL(vstartwire, vcfgdata) { .startwire = vstartwire, .cfgdata = vcfgdata }
+/* First structures, the arrays
+   for the variable-length data */
 
-static const struct pips_t {
-#define _PIP_WHOLE_ENTRY(ctrl, k, data) CTRL_STRUCT(CTRLFIELD(__LINE__), ctrl); DATA_STRUCT(DATAFIELD(__LINE__), k);
+/* First structure: control data */
+
+#define CONTROLSTRUCTNAME(x) STRUCTNAME(pips_control_, x)
+#define CTRL_STRUCT(name, len) uint32_t name[len]
+#define CTRL_STRUCT_FILL(list...) { list }
+
+static const union CONTROLSTRUCTNAME(DBNAME) {
+  struct {
 #define _PIP_CTRL_ENTRY(s, n, ctrllist) n
 #define _PIP_CTRL_LIST(...)
 #define _PIP_DATA_LIST(...)
 #define _PIP_DATA_ENTRY(wire, cfgbit)
+
+#define _PIP_WHOLE_ENTRY(ctrl, k, data) CTRL_STRUCT(CTRLFIELD(__LINE__), ctrl);
+
+#include PIPDB
+
+#undef _PIP_CTRL_ENTRY
+#undef _PIP_DATA_ENTRY
+#undef _PIP_WHOLE_ENTRY
+#undef _PIP_CTRL_LIST
+#undef _PIP_DATA_LIST
+  };
+  uint32_t control_tab[0];
+} PACK DBNAME1 = { {
+#define _PIP_CTRL_ENTRY(s, n, ctrllist...) CTRL_STRUCT_FILL(ctrllist)
+#define _PIP_CTRL_LIST(...) __VA_ARGS__
+#define _PIP_DATA_LIST(...)
+#define _PIP_DATA_ENTRY(s, n)
+
+#define _PIP_WHOLE_ENTRY(ctrl, vsize, vdata) ctrl,
 
 #include PIPDB
 
@@ -79,12 +76,61 @@ static const struct pips_t {
 #undef _PIP_CTRL_LIST
 #undef _PIP_DATA_LIST
 
-} pipdb = {
-#define _PIP_WHOLE_ENTRY(ctrl, vsize, vdata) ctrl, { .size = vsize, .data = { vdata } },
-#define _PIP_CTRL_ENTRY(s, n, ctrllist...) CTRL_STRUCT_FILL(s, n, k, ctrllist)
-#define _PIP_CTRL_LIST(...) __VA_ARGS__
+} };
+
+/* Second structure: pip actual data */
+
+#define DATASTRUCTNAME(x) STRUCTNAME(pips_data_, x)
+#define DATA_STRUCT(name, len) pip_data_t name[len]
+#define DATA_STRUCT_FILL(vstartwire, vcfgdata) { .startwire = vstartwire, .cfgdata = vcfgdata }
+
+static const union DATASTRUCTNAME(DBNAME) {
+  struct {
+#define _PIP_CTRL_ENTRY(s, n, ctrllist...)
+#define _PIP_CTRL_LIST(...)
+#define _PIP_DATA_LIST(...) __VA_ARGS__
+#define _PIP_DATA_ENTRY(wire, cfgbit)
+#define _PIP_WHOLE_ENTRY(ctrl, k, data) DATA_STRUCT(CTRLFIELD(__LINE__), k);
+
+#include PIPDB
+
+#undef _PIP_CTRL_ENTRY
+#undef _PIP_DATA_ENTRY
+#undef _PIP_WHOLE_ENTRY
+#undef _PIP_CTRL_LIST
+#undef _PIP_DATA_LIST
+  };
+  pip_data_t data_tab[0];
+} PACK DBNAME2 = { {
+#define _PIP_CTRL_ENTRY(s, n, ctrllist...)
+#define _PIP_CTRL_LIST(...)
 #define _PIP_DATA_LIST(...) __VA_ARGS__
 #define _PIP_DATA_ENTRY(s, n) DATA_STRUCT_FILL(s, n)
+#define _PIP_WHOLE_ENTRY(ctrl, vsize, vdata) { vdata },
+
+#include PIPDB
+
+#undef _PIP_CTRL_ENTRY
+#undef _PIP_DATA_ENTRY
+#undef _PIP_WHOLE_ENTRY
+#undef _PIP_CTRL_LIST
+#undef _PIP_DATA_LIST
+} };
+
+/* Last but not least: simple array with references */
+
+static const pip_control_t DBNAME3[] = {
+#define _PIP_CTRL_ENTRY(s, n, ctrllist...) s
+#define _PIP_CTRL_LIST(...)
+#define _PIP_DATA_LIST(...)
+#define _PIP_DATA_ENTRY(s, n)
+#define _PIP_WHOLE_ENTRY(vendwire, vsize, vdata) \
+{ .endwire = vendwire, \
+  .ctrloffset = offsetof(union CONTROLSTRUCTNAME(DBNAME), CTRLFIELD(__LINE__)), \
+  .ctrlsize = N_ELEMS(DBNAME1.CTRLFIELD(__LINE__)), \
+  .dataoffset = offsetof(union DATASTRUCTNAME(DBNAME), CTRLFIELD(__LINE__)), \
+  .datasize = N_ELEMS(DBNAME2.CTRLFIELD(__LINE__)) \
+},
 
 #include PIPDB
 
@@ -96,4 +142,4 @@ static const struct pips_t {
 
 };
 
-/* Then the iterators */
+/* Then the iterators... */
