@@ -9,9 +9,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define _CTRL_ENTRY(a) CFGBIT(a, SITE_WIDTH)
 #define N_ELEMS(a) (unsigned)(sizeof(a) / sizeof(a[0]))
 
-typedef uint16_t wire_atom_t;
+#define CONTROLSTRUCTTYPE uint32_t
+#define DATASTRUCTTYPE pip_data_t
 
 /* This is a simple array */
 typedef struct _pip_control_t {
@@ -30,5 +32,40 @@ typedef struct _pip_data_t {
   wire_atom_t startwire;
   uint32_t cfgdata;
 } pip_data_t;
+
+typedef struct _pipdb_control_t {
+  const pip_control_t *pipctrl;
+  unsigned pipctrl_len;
+  const uint32_t *pipctrldata;
+  const pip_data_t *pipdatadata;
+} pipdb_control_t;
+
+/* Utility macros */
+
+/* #define STRUCTNAME(a, x) a ## x ## _t */
+/* #define INSTANCENAME(a, x) a ## x */
+/* #define CTRLFIELD(line) FIELD1(line) */
+/* #define DATAFIELD(line) FIELD2(line) */
+/* #define FIELD1(line) ctrl##line */
+/* #define FIELD2(line) data##line */
+
+/* #define PACK __attribute__((packed)) */
+
+/* /\* First structure: control data *\/ */
+
+/* #define CONTROLSTRUCTNAME(x) STRUCTNAME(pips_control_, x) */
+/* #define CONTROLSTRUCTINSTANCE(x) INSTANCENAME(ctrl_, x) */
+/* #define CTRL_STRUCT(name, len) uint32_t name[len] */
+/* #define CTRL_STRUCT_FILL(list...) { list } */
+
+/* /\* Second structure: pip actual data *\/ */
+
+/* #define DATASTRUCTNAME(x) STRUCTNAME(pips_data_, x) */
+/* #define DATASTRUCTINSTANCE(x) INSTANCENAME(data_, x) */
+/* #define DATA_STRUCT(name, len) pip_data_t name[len] */
+/* #define DATA_STRUCT_FILL(vstartwire, vcfgdata) { .startwire = vstartwire, .cfgdata = vcfgdata } */
+
+/* /\* Last but not least: simple array with references *\/ */
+/* #define ARRAYINSTANCE(x) INSTANCENAME(array_, x) */
 
 #endif /* _HAS_PIPS_COMPILED_COMMON_H */

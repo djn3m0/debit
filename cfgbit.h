@@ -73,6 +73,14 @@ unsigned bitpos_to_cfgbit(const unsigned bitpos, const unsigned width) {
   return assemble_cfgbit(xoff,nyoff);
 }
 
+/* Unrolled macro version of the above */
+#define BITPOS_INVERT(val, width) (((width - 1) - (val)) << 3)
+#define XOFF(val, width) ((val) / (8*width))
+#define YOFF(val, width) ((val) % (8*width))
+#define NYOFF(val, width) (BITPOS_INVERT(YOFF(val, width) >> 3, width) | (YOFF(val, width) & 7))
+#define CFG_ASSEMBLE(x, y) ((y) | (x) << CFGBIT_Y_LENGTH)
+#define CFGBIT(bitpos, width) CFG_ASSEMBLE(XOFF(bitpos, width), NYOFF(bitpos, width))
+
 typedef struct _type_bits {
   /** Column type */
   guint col_type;

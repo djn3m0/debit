@@ -81,6 +81,11 @@ if test "x$enable_wiredb" = "xyes"; then
    CPPFLAGS+="-D__COMPILED_WIREDB "
 fi
 
+AC_ARG_ENABLE(pipsdb, [  --enable-pipsdb    enable built-in pips database], enable_pipsdb=$enableval, enable_pipsdb=no)
+if test "x$enable_pipsdb" = "xyes"; then
+   CPPFLAGS+="-D__COMPILED_PIPSDB "
+fi
+
 AC_CONFIG_FILES([Makefile tests/Makefile \
 		data/Makefile data/virtex2/Makefile data/virtex4/Makefile \
 		debian/Makefile rpm/Makefile windows/Makefile \

@@ -26,6 +26,7 @@
 /* This is the string array & string lookup table generation */
 
 #define STRUCTNAME(a, x) a ## x ## _t
+#define INSTANCENAME(a, x) a ## x
 #define CTRLFIELD(line) FIELD1(line)
 #define DATAFIELD(line) FIELD2(line)
 #define FIELD1(line) ctrl##line
@@ -39,8 +40,12 @@
 /* First structure: control data */
 
 #define CONTROLSTRUCTNAME(x) STRUCTNAME(pips_control_, x)
-#define CTRL_STRUCT(name, len) uint32_t name[len]
+#define CONTROLSTRUCTINSTANCE(x) INSTANCENAME(ctrl_, x)
+#define CTRL_STRUCT(name, len) CONTROLSTRUCTTYPE name[len]
 #define CTRL_STRUCT_FILL(list...) { list }
+
+/* TODO: change this structure to uint16_t elements.
+   This will halve the structure's size */
 
 static const union CONTROLSTRUCTNAME(DBNAME) {
   struct {
@@ -59,8 +64,8 @@ static const union CONTROLSTRUCTNAME(DBNAME) {
 #undef _PIP_CTRL_LIST
 #undef _PIP_DATA_LIST
   };
-  uint32_t control_tab[0];
-} PACK DBNAME1 = { {
+  CONTROLSTRUCTTYPE control_tab[0];
+} PACK CONTROLSTRUCTINSTANCE(DBNAME) = { {
 #define _PIP_CTRL_ENTRY(s, n, ctrllist...) CTRL_STRUCT_FILL(ctrllist)
 #define _PIP_CTRL_LIST(...) __VA_ARGS__
 #define _PIP_DATA_LIST(...)
@@ -78,10 +83,14 @@ static const union CONTROLSTRUCTNAME(DBNAME) {
 
 } };
 
+#undef CTRL_STRUCT
+#undef CTRL_STRUCT_FILL
+
 /* Second structure: pip actual data */
 
 #define DATASTRUCTNAME(x) STRUCTNAME(pips_data_, x)
-#define DATA_STRUCT(name, len) pip_data_t name[len]
+#define DATASTRUCTINSTANCE(x) INSTANCENAME(data_, x)
+#define DATA_STRUCT(name, len) DATASTRUCTTYPE name[len]
 #define DATA_STRUCT_FILL(vstartwire, vcfgdata) { .startwire = vstartwire, .cfgdata = vcfgdata }
 
 static const union DATASTRUCTNAME(DBNAME) {
@@ -100,8 +109,8 @@ static const union DATASTRUCTNAME(DBNAME) {
 #undef _PIP_CTRL_LIST
 #undef _PIP_DATA_LIST
   };
-  pip_data_t data_tab[0];
-} PACK DBNAME2 = { {
+  DATASTRUCTTYPE data_tab[0];
+} PACK DATASTRUCTINSTANCE(DBNAME) = { {
 #define _PIP_CTRL_ENTRY(s, n, ctrllist...)
 #define _PIP_CTRL_LIST(...)
 #define _PIP_DATA_LIST(...) __VA_ARGS__
@@ -117,22 +126,28 @@ static const union DATASTRUCTNAME(DBNAME) {
 #undef _PIP_DATA_LIST
 } };
 
-/* Last but not least: simple array with references */
+#undef DATA_STRUCT
+#undef DATA_STRUCT_FILL
 
-static const pip_control_t DBNAME3[] = {
+/* Last but not least: simple array with references */
+#define ARRAYINSTANCE(x) INSTANCENAME(pipdb_, x)
+
+static const pip_control_t ARRAYINSTANCE(DBNAME)[] = {
 #define _PIP_CTRL_ENTRY(s, n, ctrllist...) s
 #define _PIP_CTRL_LIST(...)
 #define _PIP_DATA_LIST(...)
 #define _PIP_DATA_ENTRY(s, n)
 #define _PIP_WHOLE_ENTRY(vendwire, vsize, vdata) \
 { .endwire = vendwire, \
-  .ctrloffset = offsetof(union CONTROLSTRUCTNAME(DBNAME), CTRLFIELD(__LINE__)), \
-  .ctrlsize = N_ELEMS(DBNAME1.CTRLFIELD(__LINE__)), \
-  .dataoffset = offsetof(union DATASTRUCTNAME(DBNAME), CTRLFIELD(__LINE__)), \
-  .datasize = N_ELEMS(DBNAME2.CTRLFIELD(__LINE__)) \
+  .ctrloffset = offsetof(union CONTROLSTRUCTNAME(DBNAME), CTRLFIELD(__LINE__)) / sizeof(CONTROLSTRUCTTYPE), \
+  .ctrlsize = N_ELEMS(CONTROLSTRUCTINSTANCE(DBNAME).CTRLFIELD(__LINE__)), \
+  .dataoffset = offsetof(union DATASTRUCTNAME(DBNAME), CTRLFIELD(__LINE__)) / sizeof(DATASTRUCTTYPE), \
+  .datasize = N_ELEMS(DATASTRUCTINSTANCE(DBNAME).CTRLFIELD(__LINE__)) \
 },
 
 #include PIPDB
+
+#undef ARRAYINSTANCE
 
 #undef _PIP_CTRL_ENTRY
 #undef _PIP_DATA_ENTRY
@@ -142,4 +157,17 @@ static const pip_control_t DBNAME3[] = {
 
 };
 
-/* Then the iterators... */
+#undef CONTROLSTRUCTNAME
+#undef CONTROLSTRUCTINSTANCE
+
+#undef DATASTRUCTNAME
+#undef DATASTRUCTINSTANCE
+
+#undef STRUCTNAME
+#undef INSTANCENAME
+#undef CTRLFIELD
+#undef DATAFIELD
+#undef FIELD1
+#undef FIELD2
+
+#undef PACK

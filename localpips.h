@@ -23,10 +23,23 @@ typedef enum
  * This is an abstract view of the pip database for a chip.
  */
 
+#ifdef __COMPILED_PIPSDB
+
+#include "data/pips_compiled_common.h"
+
+typedef struct pip_db {
+  const pipdb_control_t *memorydb;
+  wire_db_t *wiredb;
+} pip_db_t;
+
+#else /* __COMPILED_PIPSDB */
+
 typedef struct pip_db {
   GNode *memorydb[NR_SITE_TYPE];
   wire_db_t *wiredb;
 } pip_db_t;
+
+#endif /* __COMPILED_PIPSDB */
 
 typedef struct pip_read {
   gboolean connected;

@@ -30,6 +30,119 @@
 
 #include "cfgbit.h"
 
+#ifdef __COMPILED_PIPSDB
+
+/* The data */
+#if defined(VIRTEX2)
+#include "data/virtex2/pips.h"
+#endif
+
+/* The initialization functions */
+pip_db_t *
+get_pipdb(const gchar *datadir) {
+  pip_db_t *ret = g_new0(pip_db_t, 1);
+
+  ret->wiredb = get_wiredb(datadir);
+  if (!ret->wiredb) {
+    g_free(ret);
+    return NULL;
+  }
+
+#if defined(VIRTEX2)
+  ret->memorydb = &dbrefs[0];
+#else
+  ret->memorydb = 0;
+#endif
+
+  return ret;
+}
+
+void
+free_pipdb(pip_db_t *pipdb) {
+  if (pipdb->wiredb)
+    free_wiredb(pipdb->wiredb);
+  g_free(pipdb);
+}
+
+/* The iterators, rewritten */
+static void
+__pips_of_site_append(const pip_db_t *pipdb,
+		      const bitstream_parsed_t *bitstream,
+		      const csite_descr_t *site,
+		      GArray *pips_array) {
+  const wire_db_t *wiredb = pipdb->wiredb;
+  const pipdb_control_t *memorydb = &pipdb->memorydb[site->type];
+
+  const pip_control_t *head = memorydb->pipctrl;
+  const pip_control_t *head_end = head + memorydb->pipctrl_len;
+
+  const uint32_t *ctrldata_array = memorydb->pipctrldata;
+
+  if (!memorydb)
+    return;
+
+  for (; head < head_end; head++) {
+    const uint32_t bitdata = query_bitstream_site_bits(bitstream, site, &ctrldata_array[head->ctrloffset], head->ctrlsize);
+    const wire_atom_t endwire = head->endwire;
+    const char *end = wire_name(wiredb,endwire);
+
+    /* prepare the next iterator */
+    const pip_data_t *cfgdata_array = &memorydb->pipdatadata[head->dataoffset];
+    unsigned spend = head->datasize;
+    unsigned sp;
+
+    /* state */
+    gboolean found = FALSE;
+    wire_atom_t startwire = 0;
+
+    if (bitdata == 0)
+      continue;
+
+    for (sp = 0; sp < spend; sp++) {
+      const pip_data_t *cfgdata_descr = cfgdata_array + sp;
+      const uint32_t cfgdata = cfgdata_descr->cfgdata;
+      const wire_atom_t new_startwire = cfgdata_descr->startwire;
+      const char *start = wire_name(wiredb,new_startwire);
+
+      /* Please keep these warnings on, they indicate debitting
+	 idiosyncrasies that we don't fully get yet */
+      if ( bitdata == cfgdata ) {
+	if (found) {
+	  debit_log(L_PIPS, "Perfect match replacing %s -> %s, with %s -> %s",
+		    wire_name(wiredb,startwire),end,start,end);
+	}
+	found = TRUE;
+	startwire = new_startwire;
+	break;
+      }
+
+      if ( (cfgdata & bitdata) == cfgdata ) {
+	debit_log(L_PIPS, "Spurious bits for %s -> %s, config %i != bitdata %i",
+		  start,end,cfgdata,bitdata);
+	if (found) {
+	  debit_log(L_PIPS, "Not replacing %s -> %s",
+		    wire_name(wiredb,startwire),end);
+	}
+	else {
+	  found = TRUE;
+	  startwire = new_startwire;
+	}
+      }
+      (void) start;
+    }
+
+    if (found) {
+      pip_t pip = { .source = startwire, .target = endwire };
+      g_array_append_val(pips_array, pip);
+    }
+
+    (void) end;
+  }
+  return;
+}
+
+#else /* __COMPILED_PIPSDB */
+
 #define STRINGCHUNK_DEFAULT_SIZE 16
 
 /*
@@ -326,6 +439,8 @@ static void build_groupnode(GKeyFile *datadb, const gchar* endp,
     return;
   }
 
+  g_warning("Parsing group node for ep %s", wire_name(wires, dat->endwire));
+
   dat->data = (guint *)get_pip_structure_from_file(exam->ctrldb, endp, &dat->size, exam->type);
 
   groupnode = g_node_new(dat);
@@ -523,6 +638,9 @@ examine_groupnode (GNode *node, gpointer data) {
   guint32 bitdata;
 
   /* query the bitstream about the endpoint */
+  char site_name[64];
+  sprint_csite(site_name, exam_arg->site);
+  g_warning("Querying site %s, with size %zd", site_name, ctrldat->size);
   bitdata = query_bitstream_site_bits(exam_arg->bitstream, exam_arg->site,
 				      ctrldat->data, ctrldat->size);
 
@@ -559,6 +677,8 @@ __pips_of_site_append(const pip_db_t *pipdb,
 
   iterate_over_groups_memory(head, examine_groupnode, &exam_arg);
 }
+
+#endif /* __COMPILED_PIPSDB */
 
 /** \brief Query a bitstream for the pips contained in a site, in-memory version
  *

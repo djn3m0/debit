@@ -1,3 +1,4 @@
+define(`_CTRL_ENTRY', $1)dnl
 define(`_PIP_CTRL_ENTRY',$1)dnl
 define(`_PIP_DATA_LIST',`translit(`$@', `,', `
 ')')dnl
