@@ -42,6 +42,19 @@ function check_suffix() {
     fi
 }
 
+function produce_suffix() {
+    local design=$1;
+    local suffix=$2;
+
+    echo -n "$suffix "
+
+    make -s --no-print-directory -f $MAKEFILE $design.$suffix && \
+    make -s --no-print-directory -f $MAKEFILE ${design}_u.$suffix && \
+    diff -q $design.$suffix ${design}_u.$suffix || exit 1
+    mv -f $design.$suffix $design.$suffix.golden || exit 1
+    echo -n "generated\n"
+}
+
 function test_design() {
     local DESIGN_NAME=$1;
     echo "Testing design $DESIGN_NAME"
@@ -60,6 +73,16 @@ function test_design() {
     echo " OK, cleaning up."
 
     make -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
+}
+
+function force_design() {
+    local DESIGN_NAME=$1;
+    echo "Generating cases for design $DESIGN_NAME"
+
+    #Test that the debit output is similar for uncompressed and compressed bitstreams
+    produce_suffix ${DESIGN_NAME} bram
+    produce_suffix ${DESIGN_NAME} lut
+    produce_suffix ${DESIGN_NAME} pip
 }
 
 CALLED_FUN=test_design
