@@ -144,6 +144,7 @@ void dump_luts(bitstream_analyzed_t *bitstream) {
 
 typedef struct _dump_site {
   const gchar *odir;
+  const gchar *suffix;
   const bitstream_parsed_t *parsed;
   gsize buffer_len;
   gchar *buffer;
@@ -155,19 +156,22 @@ dump_site_iter(unsigned site_x, unsigned site_y,
   dump_site_t *dumpsite = dat;
   gchar *buffer = dumpsite->buffer;
   gsize buffer_len = dumpsite->buffer_len;
-  gchar *filename, site_buf[32];
+  gchar *filename, *fullname, site_buf[32];
   gboolean ok;
 
   /* Get the bitstream contents */
   query_bitstream_site_data(buffer, buffer_len, dumpsite->parsed, site);
 
   sprint_csite(site_buf, site);
-  filename = g_build_filename(dumpsite->odir, site_buf, NULL);
+  filename = g_strconcat(site_buf,dumpsite->suffix,NULL);
+  fullname = g_build_filename(dumpsite->odir, filename, NULL);
+  g_free(filename);
 
-  ok = g_file_set_contents(filename, buffer, buffer_len, NULL);
+  ok = g_file_set_contents(fullname, buffer, buffer_len, NULL);
   if (!ok)
     g_warning("Failed to dump %s", filename);
-  g_free(filename);
+
+  g_free(fullname);
 }
 
 /** \brief Test function which dumps the site configuration data in a
@@ -178,8 +182,9 @@ dump_site_iter(unsigned site_x, unsigned site_y,
  *
  */
 
-void dump_sites(const bitstream_analyzed_t *nlz, const gchar *odir) {
-  dump_site_t dump = { .parsed = nlz->bitstream, .odir = odir };
+void dump_sites(const bitstream_analyzed_t *nlz,
+		const gchar *odir, const gchar *suffix) {
+  dump_site_t dump = { .parsed = nlz->bitstream, .odir = odir, .suffix = suffix };
 #if defined(VIRTEX2)
   site_type_t types[] =
 	  { CLB,

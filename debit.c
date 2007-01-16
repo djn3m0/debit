@@ -38,6 +38,7 @@ static gboolean bramdump = FALSE;
 static gchar *ifile = NULL;
 static gchar *odir = "";
 static gchar *datadir = DATADIR;
+static gchar *suffix = "";
 
 #if DEBIT_DEBUG > 0
 unsigned int debit_debug = 0;
@@ -72,7 +73,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
 /*     print_chip(analysis->chip); */
 
     if (sitedump)
-      dump_sites(analysis, odir);
+      dump_sites(analysis, odir, suffix);
     if (pipdump)
       dump_pips(analysis);
     if (lutdump)
@@ -102,6 +103,7 @@ static GOptionEntry entries[] =
   /* v2 specific */
   {"framedump", 'f', 0, G_OPTION_ARG_NONE, &framedump, "Dump raw data frames", NULL},
   {"sitedump", 's', 0, G_OPTION_ARG_NONE, &sitedump, "Dump raw site data files", NULL},
+  {"suffix", 'x', 0, G_OPTION_ARG_STRING, &suffix, "Suffix appended to generated files",NULL},
   /* v4, v5 specific */
   {"unkdump", 'u', 0, G_OPTION_ARG_NONE, &unkdump, "Dump raw data frames uninterpreted", NULL},
   {"pipdump", 'p', 0, G_OPTION_ARG_NONE, &pipdump, "Dump pips in the bitstream", NULL},

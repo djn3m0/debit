@@ -166,8 +166,8 @@ do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
 
   debit_log(L_CORRELATE, "working on pip %s -> %s", start, end);
 
-  /* check if the pip is okay, if it is, isolated it, then
-     or all the bits */
+  /* check if the pip is okay, if it is, isolate it, then OR all the
+     bits, so that we get the bit-set for a given endpoint. */
   for(pip = 0; pip < npips; pip++) {
     const char *pip_start = get_pip_start(pipdb, pip);
     const char *pip_end = get_pip_end(pipdb, pip);
@@ -181,3 +181,10 @@ do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
   }
 //  dump_state(pip, dat, &union_state);
 }
+
+/*
+ * TODO: understand theoretically if the substraction at the end of
+ * individual things brings something to the table in the (negate if
+ * filtered) case.
+ *
+ */

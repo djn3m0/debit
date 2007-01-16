@@ -613,6 +613,9 @@ examine_groupnode (GNode *node, gpointer data) {
   pass_arg.bitstream_data = bitdata;
 
   /* iterate over pips to find out who is okay. This could just be an array. */
+  /* XXX use g_node_traverse (node, G_POST_ORDER, G_TRAVERSE_LEAVES, 2,)
+     to slightly speedup the process.
+  */
   g_node_children_foreach(node,G_TRAVERSE_ALL,examine_node_memory,&pass_arg);
 
   if (pass_arg.found) {
