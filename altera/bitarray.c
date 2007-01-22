@@ -273,7 +273,7 @@ bitarray_is_set (const bitarray_t *a, int bit)
 
 
 void
-bitarray_for_ones (bitarray_t *a, void (*fun)(int, void*), void *dat)
+bitarray_for_ones (const bitarray_t *a, bitarray_hook_t fun, void *dat)
 {
   int i, j;
 

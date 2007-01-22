@@ -35,6 +35,8 @@ typedef struct bitarray {
   int       bits;
 } bitarray_t;
 
+typedef void (*bitarray_hook_t)(const int,void *);
+
 extern bitarray_t *bitarray_create (int bits);
 extern bitarray_t *bitarray_create_data (char *data, int bits);
 extern bitarray_t *bitarray_reverse (bitarray_t *b);
@@ -54,7 +56,7 @@ extern void        bitarray_diffsym (bitarray_t *a, const bitarray_t *b);
 extern int         bitarray_equal (const bitarray_t *a, const bitarray_t *b);
 extern void        bitarray_copy (bitarray_t *to, const bitarray_t *from);
 extern int         bitarray_is_set (const bitarray_t *a, int bit);
-extern void        bitarray_for_ones (bitarray_t *a, void (*fun)(int,void *), void* dat);
+extern void        bitarray_for_ones (const bitarray_t *a, bitarray_hook_t fun, void* dat);
 extern void        bitarray_print (const bitarray_t *a);
 extern void        bitarray_print2D (unsigned width, const bitarray_t *a);
 extern int         bitarray_ones_count (const bitarray_t *a);

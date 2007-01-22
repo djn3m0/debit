@@ -41,7 +41,7 @@ set_pip_bit(const gchar *line, void *data) {
   const pip_db_t *db = arg->pipdb;
   bitarray_t *dat = arg->data;
   unsigned bit = get_pip_index(db, line);
-  debit_log(L_CORRELATE, "bitindex of %s is %i\n", line, bit);
+  //  debit_log(L_CORRELATE, "bitindex of %s is %i", line, bit);
   bitarray_set(dat,bit);
 }
 
@@ -65,8 +65,8 @@ get_file_txtdata(const pip_db_t *db, bitarray_t **data, const gchar *file) {
 }
 
 static int
-fill_state(state_t *s, const gchar *inp,
-	   const pip_db_t *db) {
+fill_state(state_t *s, gsize *udl_ref,
+	   const gchar *inp, const pip_db_t *db) {
   bitarray_t *known, *unknown;
   gsize udl;
   int err;
@@ -82,6 +82,14 @@ fill_state(state_t *s, const gchar *inp,
     g_warning("Error processing bin data for %s, skipping...", inp);
     goto out_free;
   }
+  if (*udl_ref == 0)
+    *udl_ref = udl;
+
+  if (*udl_ref != udl) {
+    g_warning("WARNING: reference size %zd "
+	      "is different from size %zd for dataset %s",
+	      *udl_ref, udl, inp);
+  }
 
   s->known_data = known;
   s->unknown_data = unknown;
@@ -95,12 +103,13 @@ fill_state(state_t *s, const gchar *inp,
 }
 
 static void
-process_data(GArray *data_array, const gchar *inp,
-	     const bitarray_t *ref, const pip_db_t *db) {
+process_data(GArray *data_array, gsize *udl_ref,
+	     const gchar *inp, const bitarray_t *ref,
+	     const pip_db_t *db) {
   state_t s;
   int err;
 
-  err = fill_state(&s, inp, db);
+  err = fill_state(&s, udl_ref, inp, db);
 
   if (!err) {
     unsigned bitcount;
@@ -124,7 +133,7 @@ alldata_t *
 fill_all_data(const pip_db_t *db, const gchar *reffile, const gchar **knw) {
   alldata_t *dat = g_new(alldata_t, 1);
   bitarray_t *ref = NULL;
-  gsize udl_ref;
+  gsize udl_ref = 0;
   unsigned idx = 0;
   GArray *data_array;
 
@@ -133,9 +142,10 @@ fill_all_data(const pip_db_t *db, const gchar *reffile, const gchar **knw) {
   if (reffile)
     get_file_bindata(&ref, &udl_ref, reffile);
 
+  /* What about udl_ref here ??? */
   while (knw[idx] != NULL) {
     const gchar *inp = knw[idx];
-    process_data(data_array, inp, ref, db);
+    process_data(data_array, &udl_ref, inp, ref, db);
     idx++;
   }
 

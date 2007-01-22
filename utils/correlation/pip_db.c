@@ -64,7 +64,7 @@ add_pip_line(const gchar *line, void *data) {
     return;
   value_int = g_hash_table_size(hash);
   value_ptr = GUINT_TO_POINTER(value_int);
-  debit_log(L_CORRELATE, "Adding pip %s with value %u to the hashtable\n", chunk, value_int);
+  debit_log(L_CORRELATE, "Adding pip %s with value %u to the hashtable", chunk, value_int);
   g_hash_table_insert (hash, (gpointer)chunk, value_ptr);
 }
 
@@ -78,6 +78,11 @@ iterate_over_lines(const gchar *filename,
 
   /* XXX handle failure, ungracefully */
   g_file_get_contents(filename, &contents, NULL, NULL);
+  if (!contents) {
+    g_warning("file %s does not exist!", filename);
+    return;
+  }
+
   lines = g_strsplit(contents, "\n", 0);
   g_free(contents);
 
@@ -92,7 +97,7 @@ static void
 add_pip_file(const gchar *file, void *data) {
   pip_db_t *pipdb = data;
   gchar *filename = g_strconcat(file,".dat",NULL);
-  debit_log(L_CORRELATE, "Loading file %s\n", filename);
+  debit_log(L_CORRELATE, "Loading file %s", filename);
   iterate_over_lines(filename, add_pip_line, pipdb);
   g_free(filename);
 }
@@ -154,7 +159,7 @@ typedef struct _both {
   unsigned ulen;
 } both_t;
 
-void do_state(pip_ref_t *ref, void *dat) {
+static void do_state(pip_ref_t *ref, void *dat) {
   both_t *arg = dat;
   unsigned len = arg->len, ulen = arg->ulen;
   state_t *state = &ref->state;
@@ -167,6 +172,7 @@ void
 alloc_pips_state(pip_db_t *pip_db,
 		 const size_t len, const size_t ulen) {
   both_t arg = { .len = len, .ulen = ulen };
+
   iterate_over_pips(pip_db, do_state, &arg);
 }
 

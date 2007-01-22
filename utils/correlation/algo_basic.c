@@ -27,7 +27,13 @@ dump_to_log(const gchar *string) {
   if (result_log)
     fputs(string, result_log);
   else
-    fputs(string, stdout);
+    fputs(string, stderr);
+}
+
+static void
+print_pip(const int bit, void *data) {
+  const pip_db_t *pipdb = data;
+  g_print("%s -> %s\n", get_pip_start(pipdb, bit), get_pip_end(pipdb, bit));
 }
 
 static inline void
@@ -45,6 +51,16 @@ dump_result(alldata_t *dat, const gchar *name, const state_t *state) {
   handler = g_set_print_handler (dump_to_log);
   g_print("%s ", name);
   dump_state(dat, state);
+  (void) g_set_print_handler (handler);
+}
+
+static inline void
+dump_set(alldata_t *dat, const state_t *state,
+	 const pip_db_t *pipdb) {
+  GPrintFunc handler;
+  handler = g_set_print_handler (dump_to_log);
+  g_print("Set of known bits ");
+  bitarray_for_ones (state->known_data, print_pip, (void *)pipdb);
   (void) g_set_print_handler (handler);
 }
 
@@ -85,9 +101,10 @@ static void
 isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   state_t state;
   core_status_t status;
-  size_t len = 8 * dat->known_data_len;
-  size_t ulen = 8 * dat->unknown_data_len;
+  size_t len = dat->known_data_len;
+  size_t ulen = dat->unknown_data_len;
   const gchar *pipname = get_pip_start(pipdb,bit);
+
   /* initial state. The printing should be specific and done outside of
      this pip-agnostic function */
   debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pipname);
@@ -99,7 +116,10 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   switch(status) {
   case STATUS_NOTALONE:
     unisolated++;
-    debit_log(L_CORRELATE, "not alone");
+    debit_log(L_CORRELATE, "not alone, together with:");
+    dump_set(dat, &state, pipdb);
+    debit_log(L_CORRELATE, "set bits are:");
+    dump_result(dat, pipname, &state);
     break;
   case STATUS_NIL:
     nil++;
@@ -158,7 +178,7 @@ do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
   state_t union_state, work_state;
   core_status_t status;
   size_t len = pipdb->pip_num;
-  size_t ulen = 8 * dat->unknown_data_len;
+  size_t ulen = dat->unknown_data_len;
 
   /* allocated and zeroed */
   alloc_state(&union_state, len, ulen);
@@ -180,6 +200,9 @@ do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
     }
   }
 //  dump_state(pip, dat, &union_state);
+
+  release_state(&work_state);
+  release_state(&union_state);
 }
 
 /*
