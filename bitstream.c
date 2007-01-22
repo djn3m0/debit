@@ -443,7 +443,7 @@ query_bitstream_site_data(gchar *data, const gsize nbytes,
   gsize i;
 
   for (i = 0; i < nbytes; i++) {
-    unsigned pos = bitpos_to_cfgbit(i, width);
+    unsigned pos = bitpos_to_cfgbit(i << 3, width);
     data[i] = query_bitstream_site_byte(parsed, site, pos);
   }
 
