@@ -15,6 +15,11 @@ get_pip_state(const pip_db_t *pipdb, const unsigned i) {
 }
 
 const char *
+get_pip_name(const pip_db_t *pipdb, const unsigned i) {
+  return pipdb->pip_array[i].name;
+}
+
+const char *
 get_pip_start(const pip_db_t *pipdb, const unsigned i) {
   return pipdb->pip_array[i].start;
 }
@@ -109,9 +114,19 @@ store_iline(gpointer key,
   guint index = GPOINTER_TO_UINT(value);
   pip_db_t *db = user_data;
   pip_ref_t *ref = &db->pip_array[index];
+  gchar **endpoints = g_strsplit (key, " ", 2);
 
-  ref->start = key;
-  ref->end = key;
+  ref->name = key;
+
+  if (endpoints) {
+    ref->start = endpoints[0];
+    ref->end = endpoints[1];
+  } else {
+    ref->start = NULL;
+    ref->end = NULL;
+  }
+  /* Don't free the strings themselves */
+  g_free(endpoints);
 }
 
 /* build the pip db from a series of txt files */

@@ -77,12 +77,12 @@ isolate_bit_core(const state_t *state,
        for now unknown */
     if (known_bit_is_present(bit,config)) {
       unsigned bitcount = bitarray_ones_count(state->unknown_data);
-      debit_log(L_CORRELATE, "intersecting bit %i (%i bits set) with config %i (%i bits set)",
-		bit, bitcount, i, bitarray_ones_count(config->unknown_data));
+/*       debit_log(L_CORRELATE, "intersecting bit %i (%i bits set) with config %i (%i bits set)", */
+/* 		bit, bitcount, i, bitarray_ones_count(config->unknown_data)); */
       /* Our bit is present in this config, so we and directly */
       and_state(state, config);
       bitcount = bitarray_ones_count(state->unknown_data);
-      debit_log(L_CORRELATE, "Only %i bits remaining", bitcount);
+/*       debit_log(L_CORRELATE, "Only %i bits remaining", bitcount); */
     }
   }
 
@@ -103,7 +103,7 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   core_status_t status;
   size_t len = dat->known_data_len;
   size_t ulen = dat->unknown_data_len;
-  const gchar *pipname = get_pip_start(pipdb,bit);
+  const gchar *pipname = get_pip_name(pipdb,bit);
 
   /* initial state. The printing should be specific and done outside of
      this pip-agnostic function */

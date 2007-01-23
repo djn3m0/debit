@@ -31,6 +31,7 @@ typedef struct alldata {
 
 /* PIP database */
 typedef struct pip_ref {
+  const char *name;
   char *start;
   char *end;
   int isolated;
@@ -66,6 +67,7 @@ void free_pip_db(pip_db_t *);
 void alloc_pips_state(pip_db_t *pipdb, const size_t len, const size_t ulen);
 void free_pips_state(pip_db_t *pipdb);
 
+const char *get_pip_name(const pip_db_t *pipdb, const unsigned i);
 const char *get_pip_start(const pip_db_t *pipdb, const unsigned i);
 const char *get_pip_end(const pip_db_t *pipdb, const unsigned i);
 const state_t *get_pip_state(const pip_db_t *pipdb, const unsigned i);
