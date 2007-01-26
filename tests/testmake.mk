@@ -87,5 +87,8 @@ clean:
 	- rm -f $(CLEANDIR)/*.log
 	- rm -f $(CLEANDIR)/*.allspeed
 	- rm -f $(CLEANDIR)/*.ncd
+	- rm -f $(CLEANDIR)/*.allspeed
+	- rm -f $(CLEANDIR)/*.xilspeed
+	- rm -f $(CLEANDIR)/*.debitspeed
 
 .PHONY: examples clean

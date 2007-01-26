@@ -119,14 +119,14 @@ store_iline(gpointer key,
   ref->name = key;
 
   if (endpoints) {
-    ref->start = endpoints[0];
-    ref->end = endpoints[1];
+    ref->start = g_string_chunk_insert_const (db->chunk, endpoints[0]);
+    ref->end = g_string_chunk_insert_const (db->chunk, endpoints[1]);
   } else {
     ref->start = NULL;
     ref->end = NULL;
   }
-  /* Don't free the strings themselves */
-  g_free(endpoints);
+
+  g_strfreev(endpoints);
 }
 
 /* build the pip db from a series of txt files */
