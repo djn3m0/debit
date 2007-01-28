@@ -8,6 +8,6 @@
 #define _HAS_ALGOS_H
 
 void do_all_pips(const pip_db_t *pipdb, alldata_t *dat);
-void do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat);
+void do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat, int iterate);
 
 #endif /* _HAS_ALGOS_H */

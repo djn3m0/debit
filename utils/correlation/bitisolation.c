@@ -21,8 +21,8 @@
 */
 
 static gboolean allelems = FALSE;
-static gboolean unite = FALSE;
 static gboolean thorough = FALSE;
+static gboolean iterate = FALSE;
 static guint width = 0;
 
 static const char *ref = NULL;
@@ -44,7 +44,7 @@ static GOptionEntry entries[] =
   {"width", 'w', 0, G_OPTION_ARG_INT, &width, "set the width of the data for 2D representation of the data", NULL},
   {"allelems", 'a', 0, G_OPTION_ARG_NONE, &allelems, "isolate by intersection", NULL},
   {"thorough", 't', 0, G_OPTION_ARG_NONE, &thorough, "isolate by intersection and negation-intersection", NULL},
-  {"union", 'u', 0, G_OPTION_ARG_NONE, &unite, "???", NULL},
+  {"iterate", 'i', 0, G_OPTION_ARG_NONE, &iterate, "iterate the algorithm until a fixed point is reached", NULL},
   { NULL }
 };
 
@@ -71,7 +71,7 @@ static int do_real_work() {
 
   /* Intersect and conter-interset pips */
   if (thorough) {
-    do_all_pips_thorough(pipdb, dat);
+    do_all_pips_thorough(pipdb, dat, iterate);
     goto exit;
   }
 

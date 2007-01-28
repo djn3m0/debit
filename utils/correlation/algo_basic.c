@@ -235,11 +235,18 @@ _flag_pip(const state_t *pip) {
   return PIP_ACCOMPANIED;
 }
 
-static inline void
+static inline int
 flag_pip(const pip_db_t *pipdb, unsigned pip) {
   state_t *state = get_pip_state(pipdb, pip);
   pip_ref_t *pipref = get_pip(pipdb, pip);
-  pipref->isolated = _flag_pip(state);
+  const pip_status_t flag = _flag_pip(state);
+
+  if (pipref->isolated != flag) {
+    pipref->isolated = flag;
+    return -1;
+  }
+
+  return 0;
 }
 
 static void
@@ -251,7 +258,7 @@ isolate_bit(const pip_db_t *pipdb,
 
   debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pips->name);
   intersect_same_pips(pipdb, ndb, db, bit);
-  flag_pip(pipdb, bit);
+  (void) flag_pip(pipdb, bit);
 }
 
 void
@@ -275,22 +282,42 @@ isolate_bit_thorough(const pip_db_t *pipdb,
   debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pips->name);
   intersect_same_pips(pipdb, ndb, db, bit);
   _intersect_compatible_pips(pipdb, ndb, db, bit);
-  flag_pip(pipdb, bit);
+}
+
+static int
+flag_pips(const pip_db_t *pipdb) {
+  unsigned npips = pipdb->pip_num;
+  int change = 0;
+  unsigned pip;
+
+  for(pip = 0; pip < npips; pip++)
+    change |= flag_pip(pipdb, pip);
+
+  return change;
 }
 
 void
-do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat) {
+do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat, int iterate) {
   unsigned npips = pipdb->pip_num;
-  unsigned pip;
+  unsigned iteration = 0;
+  int has_changed = -1;
   debit_log(L_CORRELATE, "Trying to isolate %i pips", npips);
 
-  for(pip = 0; pip < npips; pip++)
-    isolate_bit_thorough(pipdb, pip, dat);
+  do {
+    unsigned pip;
+    for(pip = 0; pip < npips; pip++)
+      isolate_bit_thorough(pipdb, pip, dat);
 
-  prune_null_pips(pipdb, dat);
+    has_changed &= flag_pips(pipdb);
+    prune_null_pips(pipdb, dat);
+    has_changed &= flag_pips(pipdb);
 
-  for(pip = 0; pip < npips; pip++)
-    flag_pip(pipdb, pip);
+    iteration++;
+
+  } while (iterate && has_changed);
 
   dump_pips_db(pipdb);
+
+  debit_log(L_CORRELATE, "Isolation ended after %u iterations", iteration);
+
 }
