@@ -12,9 +12,9 @@
 #include "debitlog.h"
 #include "bitisolation_db.h"
 
-const state_t *
+state_t *
 get_pip_state(const pip_db_t *pipdb, const unsigned i) {
-  return &pipdb->pip_array[i].state;
+  return &pipdb->state_array[i];
 }
 
 const char *
@@ -149,6 +149,7 @@ build_pip_db(const gchar **files) {
   pipnum = g_hash_table_size(db->hash);
   db->pip_num = pipnum;
   db->pip_array = g_new(pip_ref_t, pipnum);
+  db->state_array = g_new(state_t, pipnum);
   g_hash_table_foreach (hash, store_iline, db);
   return db;
 }
@@ -157,6 +158,7 @@ void free_pip_db(pip_db_t *db) {
   /* free states */
   g_hash_table_destroy(db->hash);
   g_string_chunk_free(db->chunk);
+  g_free(db->state_array);
   g_free(db->pip_array);
   g_free(db);
 }
@@ -164,16 +166,17 @@ void free_pip_db(pip_db_t *db) {
 void
 iterate_over_pips(const pip_db_t *pipdb, pip_iterator_t iter, void *dat) {
   pip_ref_t *piparray = pipdb->pip_array;
+  state_t *pipstate = pipdb->state_array;
   unsigned npips = pipdb->pip_num;
   unsigned pip;
   for(pip = 0; pip < npips; pip++) {
     pip_ref_t *pipref = &piparray[pip];
-    iter(pipref, dat);
+    state_t *state = &pipstate[pip];
+    iter(pipref, state, dat);
   }
 }
 
-static void do_state(pip_ref_t *ref, void *dat) {
-  state_t *state = &ref->state;
+static void do_state(pip_ref_t *ref, state_t *state, void *dat) {
   alloc_state(state, dat);
   init_state(state);
 }
@@ -184,9 +187,10 @@ alloc_pips_state(pip_db_t *pip_db, const alldata_t *dat) {
   iterate_over_pips(pip_db, do_state, (void *)dat);
 }
 
-static void free_state(pip_ref_t *ref, void *dat) {
+static void free_state(pip_ref_t *ref, state_t *state, void *dat) {
   (void) dat;
-  release_state(&ref->state);
+  (void) ref;
+  release_state(state);
 }
 
 void free_pips_state(pip_db_t *pipdb) {

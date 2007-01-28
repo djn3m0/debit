@@ -78,7 +78,7 @@ typedef struct _print_db_t {
 } print_db_t;
 
 static void
-print_pip_ref(pip_ref_t *ref, void *data) {
+print_pip_ref(pip_ref_t *ref, state_t *state, void *data) {
   print_db_t *dat = data;
   const pip_db_t *pipdb = dat->pipdb;
   fprintf(stderr,"pip %s -> %s:: ", ref->start, ref->end);
@@ -92,14 +92,14 @@ print_pip_ref(pip_ref_t *ref, void *data) {
     dat->stats.unisolated++;
     fprintf(stderr,"not alone\n");
     debit_log(L_CORRELATE, "together with:");
-    dump_set(&ref->state, pipdb);
+    dump_set(state, pipdb);
     debit_log(L_CORRELATE, "set bits:");
-    dump_result(0,&ref->state);
+    dump_result(0, state);
     break;
   case PIP_ISOLATED:
     dat->stats.isolated++;
     fprintf(stderr,"isolated ");
-    dump_result(0,&ref->state);
+    dump_result(0, state);
   }
 }
 
@@ -123,9 +123,10 @@ dump_pips_db(const pip_db_t *pipdb) {
   as result.
 */
 static void
-intersect_same_pips(const state_t *result,
+intersect_same_pips(const pip_db_t *pipdb,
 		    const size_t ndb, const state_t *db,
 		    const unsigned bit) {
+  const state_t *result = get_pip_state(pipdb, bit);
   unsigned i;
   /* loop over all available configuration */
   for(i = 0; i < ndb; i++) {
@@ -167,17 +168,18 @@ shares_startpoint(const pip_db_t *pipdb, const char *ep, const state_t *state) {
 }
 
 static void
-_intersect_compatible_pips(pip_ref_t *result,
-			   const pip_db_t *pipdb,
+_intersect_compatible_pips(const pip_db_t *pipdb,
 			   const size_t ndb, const state_t *db,
 			   const unsigned bit) {
-  unsigned i;
+  const pip_ref_t *result = get_pip(pipdb, bit);
   const char *endp = result->start;
+  state_t *state = get_pip_state(pipdb, bit);
+  unsigned i;
 
   for(i = 0; i < ndb; i++) {
     const state_t *config = &db[i];
     if (!shares_startpoint(pipdb, endp, config))
-      and_neg_state(&result->state, config);
+      and_neg_state(state, config);
   }
 }
 
@@ -234,8 +236,10 @@ _flag_pip(const state_t *pip) {
 }
 
 static inline void
-flag_pip(pip_ref_t *pip) {
-  pip->isolated = _flag_pip(&pip->state);
+flag_pip(const pip_db_t *pipdb, unsigned pip) {
+  state_t *state = get_pip_state(pipdb, pip);
+  pip_ref_t *pipref = get_pip(pipdb, pip);
+  pipref->isolated = _flag_pip(state);
 }
 
 core_status_t
@@ -320,9 +324,9 @@ isolate_bit_thorough(const pip_db_t *pipdb,
   pip_ref_t *pips = get_pip(pipdb, bit);
 
   debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pips->name);
-  intersect_same_pips(&pips->state, ndb, db, bit);
-  _intersect_compatible_pips(pips, pipdb, ndb, db, bit);
-  flag_pip(pips);
+  intersect_same_pips(pipdb, ndb, db, bit);
+  _intersect_compatible_pips(pipdb, ndb, db, bit);
+  flag_pip(pipdb, bit);
 }
 
 void
@@ -332,17 +336,14 @@ do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat) {
   debit_log(L_CORRELATE, "Trying to isolate %i pips", npips);
 
   for(pip = 0; pip < npips; pip++) {
-    pip_ref_t *pipref = get_pip(pipdb, pip);
     isolate_bit_thorough(pipdb, pip, dat);
-    flag_pip(pipref);
+    flag_pip(pipdb, pip);
   }
 
   prune_null_pips(pipdb, dat);
 
-  for(pip = 0; pip < npips; pip++) {
-    pip_ref_t *pipref = get_pip(pipdb, pip);
-    flag_pip(pipref);
-  }
+  for(pip = 0; pip < npips; pip++)
+    flag_pip(pipdb, pip);
 
   /* Then print the db */
   dump_pips_db(pipdb);

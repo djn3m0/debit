@@ -31,8 +31,6 @@ typedef struct pip_ref {
   char *start;
   char *end;
   pip_status_t isolated;
-  /* The bitdata corresponding to the pip */
-  state_t state;
 } pip_ref_t;
 
 typedef struct _pip_db {
@@ -41,6 +39,7 @@ typedef struct _pip_db {
   /* well, no need for these any more now */
   unsigned pip_num;
   pip_ref_t *pip_array;
+  state_t *state_array;
 } pip_db_t;
 
 /* raw data database -- (xdl data, bitstream) site data pairs */
@@ -54,7 +53,7 @@ iterate_over_lines(const gchar *filename,
 		   line_iterator_t iter, void *data);
 
 /* iterator over the db */
-typedef void (*pip_iterator_t)(pip_ref_t *, void *);
+typedef void (*pip_iterator_t)(pip_ref_t *, state_t *, void *);
 void iterate_over_pips(const pip_db_t *, pip_iterator_t, void *);
 
 pip_db_t *build_pip_db(const gchar **);
@@ -66,7 +65,7 @@ void free_pips_state(pip_db_t *pipdb);
 const char *get_pip_name(const pip_db_t *pipdb, const unsigned i);
 const char *get_pip_start(const pip_db_t *pipdb, const unsigned i);
 const char *get_pip_end(const pip_db_t *pipdb, const unsigned i);
-const state_t *get_pip_state(const pip_db_t *pipdb, const unsigned i);
+state_t *get_pip_state(const pip_db_t *pipdb, const unsigned i);
 pip_ref_t  *get_pip(const pip_db_t *pipdb, const unsigned i);
 unsigned get_pip_index(const pip_db_t *pipdb, const gchar *pip);
 void dump_pips_db(const pip_db_t *pipdb);
