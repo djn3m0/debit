@@ -44,9 +44,9 @@ static GOptionEntry entries[] =
 #endif
   {"ref", 'r', 0, G_OPTION_ARG_FILENAME, &ref, "take <zero>.bin as reference bit data (image of zero)", "<zero>"},
   {"width", 'w', 0, G_OPTION_ARG_INT, &width, "set the width of the data for 2D representation of the data", NULL},
-  {"allelems", 'a', 0, G_OPTION_ARG_NONE, &allelems, "try to isolate all elements", NULL},
-  {"thorough", 't', 0, G_OPTION_ARG_NONE, &thorough, "be thorough", NULL},
-  {"union", 'u', 0, G_OPTION_ARG_NONE, &unite, "Unite !", NULL},
+  {"allelems", 'a', 0, G_OPTION_ARG_NONE, &allelems, "isolate by intersection", NULL},
+  {"thorough", 't', 0, G_OPTION_ARG_NONE, &thorough, "isolate by intersection and negation-intersection", NULL},
+  {"union", 'u', 0, G_OPTION_ARG_NONE, &unite, "???", NULL},
   { NULL }
 };
 
@@ -67,25 +67,23 @@ static int do_real_work() {
 		   dat->known_data_len,
 		   dat->unknown_data_len);
 
-  /* real action */
+  /* Dumbest form of isolation, interset only */
+  if (allelems) {
+    do_all_pips(pipdb, dat);
+    goto exit;
+  }
 
-/*   if (thorough) { */
-/*     do_thorough_passes(pipdb, dat); */
-/*     goto exit; */
-/*   } */
+  /* Intersect and conter-interset pips */
+  if (thorough) {
+    do_all_pips_thorough(pipdb, dat);
+    goto exit;
+  }
 
+  /* Can't remember */
   if (unite) {
     do_filtered_pips(pipdb, dat, start, end);
     goto exit;
   }
-
-  /* Not exactly clever, more though for CL argument */
-  if (allelems)
-    do_all_pips(pipdb, dat);
-/*   else { */
-/*     /\* XXX -- allow filtering on start / end *\/ */
-/*     isolate_bit(pip, dat); */
-/*   } */
 
  exit:
   free_pips_state(pipdb);

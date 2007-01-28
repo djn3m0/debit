@@ -4,8 +4,11 @@
  *
  */
 
-#include <glib.h>
 #include <string.h>
+#include <stdio.h>
+
+#include <glib.h>
+
 #include "debitlog.h"
 #include "bitisolation_db.h"
 
@@ -199,3 +202,4 @@ static void free_state(pip_ref_t *ref, void *dat) {
 void free_pips_state(pip_db_t *pipdb) {
   iterate_over_pips(pipdb, free_state, NULL);
 }
+

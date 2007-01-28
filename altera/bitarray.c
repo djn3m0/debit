@@ -280,7 +280,7 @@ bitarray_for_ones (const bitarray_t *a, bitarray_hook_t fun, void *dat)
   if (a == NULL)
     return;
 
-  for (i = 0; i < a->size; i++){
+  for (i = 0; i < a->size; i++) {
     for (j = 0; j < WORD_BITSIZE && WORD_BITSIZE * i + j < a->bits; j++){
       if ((a->array[i] & (1 << j)) != 0)
         fun (WORD_BITSIZE * i + j, dat);
@@ -288,7 +288,26 @@ bitarray_for_ones (const bitarray_t *a, bitarray_hook_t fun, void *dat)
   }
 }
 
+int
+bitarray_iter_ones (const bitarray_t *a, bitarray_iter_t fun, void *dat)
+{
+  int i, j;
 
+  if (a == NULL)
+    return 0;
+
+  for (i = 0; i < a->size; i++) {
+    for (j = 0; j < WORD_BITSIZE && WORD_BITSIZE * i + j < a->bits; j++){
+      if ((a->array[i] & (1 << j)) != 0) {
+	int res = fun (WORD_BITSIZE * i + j, dat);
+	if (res)
+	  return res;
+      }
+    }
+  }
+
+  return 0;
+}
 
 void
 bitarray_print (const bitarray_t *a)

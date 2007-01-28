@@ -29,12 +29,18 @@ typedef struct alldata {
  * Currently-used API
  */
 
+typedef enum _pip_status {
+  PIP_ACCOMPANIED,
+  PIP_VOID,
+  PIP_ISOLATED,
+} pip_status_t;
+
 /* PIP database */
 typedef struct pip_ref {
   const char *name;
   char *start;
   char *end;
-  int isolated;
+  pip_status_t isolated;
   /* The bitdata corresponding to the pip */
   state_t state;
 } pip_ref_t;
@@ -73,5 +79,7 @@ const char *get_pip_end(const pip_db_t *pipdb, const unsigned i);
 const state_t *get_pip_state(const pip_db_t *pipdb, const unsigned i);
 pip_ref_t  *get_pip(const pip_db_t *pipdb, const unsigned i);
 unsigned get_pip_index(const pip_db_t *pipdb, const gchar *pip);
+void dump_pips_db(const pip_db_t *pipdb);
+
 
 #endif /* _HAS_BITISOLATION_DB_H */

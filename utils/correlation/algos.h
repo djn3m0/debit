@@ -19,5 +19,6 @@ isolate_bit_core(const state_t *state, const alldata_t *dat, const unsigned bit)
 void do_all_pips(const pip_db_t *pipdb, alldata_t *dat);
 void do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
 		      const char *start, const char *end);
+void do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat);
 
 #endif /* _HAS_ALGOS_H */

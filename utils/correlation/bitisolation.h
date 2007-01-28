@@ -18,8 +18,8 @@ typedef struct state {
 
 static inline int
 alloc_state(state_t *to, size_t len, size_t ulen) {
-  to->known_data = bitarray_create(8*len);
-  to->unknown_data = bitarray_create(8*ulen);
+  to->known_data = bitarray_create(8 * len);
+  to->unknown_data = bitarray_create(8 * ulen);
   return 0;
 }
 

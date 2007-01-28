@@ -37,8 +37,7 @@ print_pip(const int bit, void *data) {
 }
 
 static inline void
-dump_state(alldata_t *dat, const state_t *state) {
-  unsigned width = dat->width;
+dump_state(unsigned width, const state_t *state) {
   if (width)
     bitarray_print2D (width, state->unknown_data);
   else
@@ -46,22 +45,154 @@ dump_state(alldata_t *dat, const state_t *state) {
 }
 
 static void
-dump_result(alldata_t *dat, const gchar *name, const state_t *state) {
+dump_result(unsigned width, const gchar *name, const state_t *state) {
   GPrintFunc handler;
   handler = g_set_print_handler (dump_to_log);
-  g_print("%s ", name);
-  dump_state(dat, state);
+  g_print("%s::", name);
+  dump_state(width, state);
   (void) g_set_print_handler (handler);
 }
 
 static inline void
-dump_set(alldata_t *dat, const state_t *state,
+dump_set(const state_t *state,
 	 const pip_db_t *pipdb) {
   GPrintFunc handler;
   handler = g_set_print_handler (dump_to_log);
   g_print("Set of known bits ");
   bitarray_for_ones (state->known_data, print_pip, (void *)pipdb);
   (void) g_set_print_handler (handler);
+}
+
+/* Printing function */
+
+static void
+print_pip_ref(pip_ref_t *ref, void *data) {
+  const pip_db_t *pipdb = data;
+  fprintf(stderr,"pip %s -> %s\n", ref->start, ref->end);
+
+  switch (ref->isolated) {
+  case PIP_VOID:
+    debit_log(L_CORRELATE, "nil reached!");
+    break;
+  case PIP_ACCOMPANIED:
+    fprintf(stderr,"pip not isolated\n");
+    debit_log(L_CORRELATE, "not alone, together with:");
+    dump_set(&ref->state, pipdb);
+    debit_log(L_CORRELATE, "set bits:");
+    dump_result(0,ref->name,&ref->state);
+    break;
+  case PIP_ISOLATED:
+    fprintf(stderr,"pip isolated\n");
+    dump_result(0,ref->name,&ref->state);
+  }
+}
+
+void
+dump_pips_db(const pip_db_t *pipdb) {
+  iterate_over_pips(pipdb, print_pip_ref, (void *) pipdb);
+}
+
+/*
+  First pass: do only intersections of state_db elements to get pip_db
+  elements
+
+  This function writes in the results array, which is a pip db, the
+  intersection of all elements in origin which do contain the same pip
+  as result.
+*/
+static void
+intersect_same_pips(const state_t *result,
+		    const size_t ndb, const state_t *db,
+		    const unsigned bit) {
+  unsigned i;
+  /* loop over all available configuration */
+  for(i = 0; i < ndb; i++) {
+    const state_t *config = &db[i];
+    if (known_bit_is_present(bit,config))
+      and_state(result, config);
+  }
+}
+
+/*
+  Second pass: intersect pip_db elements with elements of state_db
+  which are "compatible"
+
+  This function writes in the results array, which is a pip db, the
+  intersections of the negation of all elements in origin which are
+  compatible with the same pip.
+ */
+
+/* typedef int  (*bitarray_iter_t)(const int,void *); */
+typedef struct _ep_cmp {
+  const pip_db_t *pipdb;
+  const gchar *ep;
+} ep_cmp_t;
+
+static int
+has_endpoint(const int pip, void *dat) {
+  ep_cmp_t *epcmp = dat;
+  /* We can compare-equal thanks to the stringchunk */
+  return (get_pip_end(epcmp->pipdb, pip) == epcmp->ep);
+}
+
+static int
+shares_endpoint(const pip_db_t *pipdb, const char *ep, const state_t *state) {
+  /* For all pips present in the state, check whether
+     the pip has the same endpoint or not */
+  ep_cmp_t arg = { .pipdb = pipdb, .ep = ep };
+  int ret = bitarray_iter_ones (state->known_data, has_endpoint, &arg);
+  return ret;
+}
+
+void
+_intersect_compatible_pips(pip_ref_t *result,
+			   const pip_db_t *pipdb,
+			   const size_t ndb, const state_t *db,
+			   const unsigned bit) {
+  unsigned i;
+  const char *endp = result->end;
+
+  for(i = 0; i < ndb; i++) {
+    const state_t *config = &db[i];
+    if (!shares_endpoint(pipdb, endp, config))
+      and_neg_state(&result->state, config);
+  }
+}
+
+void
+gather_null_pips(state_t *result,
+		 const pip_db_t *pipdb,
+		 const alldata_t *dat) {
+  /* Remove the null pips from the set of known data */
+  size_t len = dat->known_data_len;
+  size_t ulen = dat->unknown_data_len;
+  unsigned i;
+
+  init_state(result, len, ulen);
+
+  for (i = 0; i < pipdb->pip_num; i++) {
+    const pip_ref_t *pip = get_pip(pipdb, i);
+    if (pip->isolated == PIP_VOID)
+      bitarray_unset(result->known_data, i);
+  }
+}
+
+/* Compute the status of a pip */
+static pip_status_t
+_flag_pip(const state_t *pip) {
+  /* XXX count ones, and then... */
+  if (unk_data_nil(pip))
+    return PIP_VOID;
+
+  if (is_isolated(pip))
+    return PIP_ISOLATED;
+
+  return PIP_ACCOMPANIED;
+}
+
+static inline void
+flag_pip(pip_ref_t *pip) {
+  pip->isolated = _flag_pip(&pip->state);
 }
 
 core_status_t
@@ -117,9 +248,9 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   case STATUS_NOTALONE:
     unisolated++;
     debit_log(L_CORRELATE, "not alone, together with:");
-    dump_set(dat, &state, pipdb);
+    dump_set(&state, pipdb);
     debit_log(L_CORRELATE, "set bits are:");
-    dump_result(dat, pipname, &state);
+    dump_result(dat->width, pipname, &state);
     break;
   case STATUS_NIL:
     nil++;
@@ -128,38 +259,11 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   default:
     debit_log(L_CORRELATE, "isolated");
     isolated++;
-    dump_result(dat,pipname,&state);
+    dump_result(dat->width,pipname,&state);
   }
-
-  /* check for and report collisions */
-  /* check_collision(bit, &state, dat); */
 
   release_state(&state);
 }
-
-/* static void __attribute__((unused)) */
-/* check_collision(const unsigned bit, const state_t *s, alldata_t *dat) { */
-/*   int i; */
-/*   size_t len, ulen; */
-/*   unsigned bitleft; */
-/*   state_t *configs = dat->states; */
-
-/*   len = dat->known_data_len; */
-/*   ulen = dat->unknown_data_len; */
-
-/*   /\* loop over all isolated bits *\/ */
-/*   for(bitleft = 0; bitleft < n_pips; bitleft++) */
-/*     if (bit_is_present(bitleft, s)) */
-/*       /\* see in states, which are also present in the unknown data *\/ */
-/*       for(i = 0; i < dat->nstates; i++) */
-/* 	if (!known_bit_is_present(bit, &configs[i]) && */
-/* 	    bit_is_present(bitleft, &configs[i])) { */
-/* /\* 	  fprintf(stderr, "bit %i is also present in state %i, ", *\/ */
-/* /\* 		  bitleft, i); *\/ */
-/* /\* 	  print_file(stderr, i); *\/ */
-/* /\* 	  fprintf(stderr, "\n"); *\/ */
-/* 	} */
-/* } */
 
 void
 do_all_pips(const pip_db_t *pipdb, alldata_t *dat) {
@@ -170,6 +274,35 @@ do_all_pips(const pip_db_t *pipdb, alldata_t *dat) {
     isolate_bit(pipdb, pip, dat);
 }
 
+static void
+isolate_bit_thorough(const pip_db_t *pipdb,
+		     const unsigned bit, alldata_t *dat) {
+  state_t *db = dat->states;
+  unsigned ndb = dat->nstates;
+  pip_ref_t *pips = get_pip(pipdb, bit);
+
+  debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pips->name);
+  intersect_same_pips(&pips->state, ndb, db, bit);
+  _intersect_compatible_pips(pips, pipdb, ndb, db, bit);
+  flag_pip(pips);
+}
+
+void
+do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat) {
+  unsigned npips = pipdb->pip_num;
+  unsigned pip;
+  debit_log(L_CORRELATE, "Trying to isolate %i pips", npips);
+
+  for(pip = 0; pip < npips; pip++) {
+    pip_ref_t *pipref = get_pip(pipdb, pip);
+    isolate_bit_thorough(pipdb, pip, dat);
+    flag_pip(pipref);
+  }
+
+  /* Then print the db */
+  dump_pips_db(pipdb);
+}
+
 void
 do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
 		 const char *start, const char *end) {
@@ -177,7 +310,7 @@ do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
   unsigned pip;
   state_t union_state, work_state;
   core_status_t status;
-  size_t len = pipdb->pip_num;
+  size_t len = dat->known_data_len;
   size_t ulen = dat->unknown_data_len;
 
   /* allocated and zeroed */
