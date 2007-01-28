@@ -13,10 +13,6 @@
 #include "bitisolation.h"
 #include "algos.h"
 
-static unsigned isolated = 0;
-static unsigned unisolated = 0;
-static unsigned nil = 0;
-
 /*
  * Dump of results in a log file
  */
@@ -65,16 +61,36 @@ dump_set(const state_t *state,
 
 /* Printing function */
 
+typedef struct _db_stats_t {
+  unsigned isolated;
+  unsigned unisolated;
+  unsigned nil;
+} db_stats_t;
+
+static void
+print_stats(db_stats_t *stats, FILE *out) {
+  fprintf(out, "DB has %u nil, %u isolated and %u unisolated pips",
+	  stats->nil, stats->isolated, stats->unisolated);
+}
+
+typedef struct _print_db_t {
+  const pip_db_t *pipdb;
+  db_stats_t stats;
+} print_db_t;
+
 static void
 print_pip_ref(pip_ref_t *ref, void *data) {
-  const pip_db_t *pipdb = data;
+  print_db_t *dat = data;
+  const pip_db_t *pipdb = dat->pipdb;
   fprintf(stderr,"pip %s -> %s\n", ref->start, ref->end);
 
   switch (ref->isolated) {
   case PIP_VOID:
+    dat->stats.nil++;
     debit_log(L_CORRELATE, "nil reached!");
     break;
   case PIP_ACCOMPANIED:
+    dat->stats.unisolated++;
     fprintf(stderr,"pip not isolated\n");
     debit_log(L_CORRELATE, "not alone, together with:");
     dump_set(&ref->state, pipdb);
@@ -82,6 +98,7 @@ print_pip_ref(pip_ref_t *ref, void *data) {
     dump_result(0,ref->name,&ref->state);
     break;
   case PIP_ISOLATED:
+    dat->stats.isolated++;
     fprintf(stderr,"pip isolated\n");
     dump_result(0,ref->name,&ref->state);
   }
@@ -89,7 +106,13 @@ print_pip_ref(pip_ref_t *ref, void *data) {
 
 void
 dump_pips_db(const pip_db_t *pipdb) {
-  iterate_over_pips(pipdb, print_pip_ref, (void *) pipdb);
+  print_db_t arg =
+    {
+      .pipdb = pipdb,
+      .stats = {.isolated = 0, .unisolated = 0, .nil = 0 },
+    };
+  iterate_over_pips(pipdb, print_pip_ref, &arg);
+  print_stats(&arg.stats, stderr);
 }
 
 /*
@@ -144,7 +167,7 @@ shares_endpoint(const pip_db_t *pipdb, const char *ep, const state_t *state) {
   return ret;
 }
 
-void
+static void
 _intersect_compatible_pips(pip_ref_t *result,
 			   const pip_db_t *pipdb,
 			   const size_t ndb, const state_t *db,
@@ -244,19 +267,16 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   status = isolate_bit_core(&state, dat, bit);
   switch(status) {
   case STATUS_NOTALONE:
-    unisolated++;
     debit_log(L_CORRELATE, "not alone, together with:");
     dump_set(&state, pipdb);
     debit_log(L_CORRELATE, "set bits are:");
     dump_result(dat->width, pipname, &state);
     break;
   case STATUS_NIL:
-    nil++;
     debit_log(L_CORRELATE, "nil reached!");
     break;
   default:
     debit_log(L_CORRELATE, "isolated");
-    isolated++;
     dump_result(dat->width,pipname,&state);
   }
 
