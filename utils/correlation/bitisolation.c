@@ -20,8 +20,6 @@
    interresting
 */
 
-static char *start = NULL;
-static char *end = NULL;
 static gboolean allelems = FALSE;
 static gboolean unite = FALSE;
 static gboolean thorough = FALSE;
@@ -74,12 +72,6 @@ static int do_real_work() {
   /* Intersect and conter-interset pips */
   if (thorough) {
     do_all_pips_thorough(pipdb, dat);
-    goto exit;
-  }
-
-  /* Can't remember */
-  if (unite) {
-    do_filtered_pips(pipdb, dat, start, end);
     goto exit;
   }
 

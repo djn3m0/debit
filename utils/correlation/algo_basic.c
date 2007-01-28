@@ -242,69 +242,16 @@ flag_pip(const pip_db_t *pipdb, unsigned pip) {
   pipref->isolated = _flag_pip(state);
 }
 
-core_status_t
-isolate_bit_core(const state_t *state,
-		 const alldata_t *dat, const unsigned bit) {
-  state_t *configs = dat->states;
-  unsigned i;
-  /* loop over all available configuration */
-  for(i = 0; i < dat->nstates; i++) {
-    state_t *config = &configs[i];
-    /* fprintf(stderr,"Trying state %i\n",i); */
-    /* Don't do anything if byte is not present, due to bit collision,
-       for now unknown */
-    if (known_bit_is_present(bit,config)) {
-      unsigned bitcount = bitarray_ones_count(state->unknown_data);
-/*       debit_log(L_CORRELATE, "intersecting bit %i (%i bits set) with config %i (%i bits set)", */
-/* 		bit, bitcount, i, bitarray_ones_count(config->unknown_data)); */
-      /* Our bit is present in this config, so we and directly */
-      and_state(state, config);
-      bitcount = bitarray_ones_count(state->unknown_data);
-/*       debit_log(L_CORRELATE, "Only %i bits remaining", bitcount); */
-    }
-  }
-
-  if (unk_data_nil(state))
-    return STATUS_NIL;
-
-  if (!is_isolated(state))
-    return STATUS_NOTALONE;
-
-  return STATUS_ISOLATED;
-}
-
-/* Other possibility -> dichotomy, and do a descent with take/don't
-   contake. There's more data to memoize, but it should be far faster */
 static void
-isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
-  const gchar *pipname = get_pip_name(pipdb,bit);
-  state_t state;
-  core_status_t status;
+isolate_bit(const pip_db_t *pipdb,
+	    const unsigned bit, alldata_t *dat) {
+  state_t *db = dat->states;
+  unsigned ndb = dat->nstates;
+  pip_ref_t *pips = get_pip(pipdb, bit);
 
-  /* initial state. The printing should be specific and done outside of
-     this pip-agnostic function */
-  debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pipname);
-
-  alloc_state(&state, dat);
-  init_state(&state);
-
-  status = isolate_bit_core(&state, dat, bit);
-  switch(status) {
-  case STATUS_NOTALONE:
-    debit_log(L_CORRELATE, "not alone, together with:");
-    dump_set(&state, pipdb);
-    debit_log(L_CORRELATE, "set bits are:");
-    dump_result(dat->width, &state);
-    break;
-  case STATUS_NIL:
-    debit_log(L_CORRELATE, "nil reached!");
-    break;
-  default:
-    debit_log(L_CORRELATE, "isolated");
-    dump_result(dat->width, &state);
-  }
-
-  release_state(&state);
+  debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pips->name);
+  intersect_same_pips(pipdb, ndb, db, bit);
+  flag_pip(pipdb, bit);
 }
 
 void
@@ -314,6 +261,8 @@ do_all_pips(const pip_db_t *pipdb, alldata_t *dat) {
   debit_log(L_CORRELATE, "Trying to isolate %i pips", npips);
   for(pip = 0; pip < npips; pip++)
     isolate_bit(pipdb, pip, dat);
+
+  dump_pips_db(pipdb);
 }
 
 static void
@@ -335,56 +284,13 @@ do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat) {
   unsigned pip;
   debit_log(L_CORRELATE, "Trying to isolate %i pips", npips);
 
-  for(pip = 0; pip < npips; pip++) {
+  for(pip = 0; pip < npips; pip++)
     isolate_bit_thorough(pipdb, pip, dat);
-    flag_pip(pipdb, pip);
-  }
 
   prune_null_pips(pipdb, dat);
 
   for(pip = 0; pip < npips; pip++)
     flag_pip(pipdb, pip);
 
-  /* Then print the db */
   dump_pips_db(pipdb);
 }
-
-void
-do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
-		 const char *start, const char *end) {
-  unsigned npips = pipdb->pip_num;
-  unsigned pip;
-  state_t union_state, work_state;
-  core_status_t status;
-
-  /* allocated and zeroed */
-  alloc_state(&union_state, dat);
-  alloc_state(&work_state, dat);
-
-  debit_log(L_CORRELATE, "working on pip %s -> %s", start, end);
-
-  /* check if the pip is okay, if it is, isolate it, then OR all the
-     bits, so that we get the bit-set for a given endpoint. */
-  for(pip = 0; pip < npips; pip++) {
-    const char *pip_start = get_pip_start(pipdb, pip);
-    const char *pip_end = get_pip_end(pipdb, pip);
-    init_state(&work_state);
-    if ((start && !strcmp(pip_start,start)) ||
-	(end && !strcmp(pip_end,end))) {
-      status = isolate_bit_core(&work_state, dat, pip);
-      if (status == STATUS_ISOLATED)
-	or_state(&union_state, &work_state);
-    }
-  }
-//  dump_state(pip, dat, &union_state);
-
-  release_state(&work_state);
-  release_state(&union_state);
-}
-
-/*
- * TODO: understand theoretically if the substraction at the end of
- * individual things brings something to the table in the (negate if
- * filtered) case.
- *
- */
