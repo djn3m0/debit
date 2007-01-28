@@ -164,11 +164,9 @@ gather_null_pips(state_t *result,
 		 const pip_db_t *pipdb,
 		 const alldata_t *dat) {
   /* Remove the null pips from the set of known data */
-  size_t len = dat->known_data_len;
-  size_t ulen = dat->unknown_data_len;
   unsigned i;
 
-  init_state(result, len, ulen);
+  init_state(result);
 
   for (i = 0; i < pipdb->pip_num; i++) {
     const pip_ref_t *pip = get_pip(pipdb, i);
@@ -241,7 +239,7 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
   debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pipname);
 
   alloc_state(&state, len, ulen);
-  init_state(&state, len, ulen);
+  init_state(&state);
 
   status = isolate_bit_core(&state, dat, bit);
   switch(status) {
@@ -324,7 +322,7 @@ do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
   for(pip = 0; pip < npips; pip++) {
     const char *pip_start = get_pip_start(pipdb, pip);
     const char *pip_end = get_pip_end(pipdb, pip);
-    init_state(&work_state, len, ulen);
+    init_state(&work_state);
     if ((start && !strcmp(pip_start,start)) ||
 	(end && !strcmp(pip_end,end))) {
       status = isolate_bit_core(&work_state, dat, pip);

@@ -182,7 +182,7 @@ static void do_state(pip_ref_t *ref, void *dat) {
   unsigned len = arg->len, ulen = arg->ulen;
   state_t *state = &ref->state;
   alloc_state(state, len, ulen);
-  init_state(state, len, ulen);
+  init_state(state);
 }
 
 /* FIXME: move this to one big allocation array */

@@ -24,7 +24,7 @@ alloc_state(state_t *to, size_t len, size_t ulen) {
 }
 
 static inline void
-init_state(state_t *to, size_t len, size_t ulen) {
+init_state(state_t *to) {
   bitarray_ones(to->known_data);
   bitarray_ones(to->unknown_data);
 }
