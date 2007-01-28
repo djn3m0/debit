@@ -298,26 +298,76 @@ flag_pips(const pip_db_t *pipdb) {
 
 void
 do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat, int iterate) {
-  unsigned npips = pipdb->pip_num;
+  const unsigned npips = pipdb->pip_num;
   unsigned iteration = 0;
   int has_changed = -1;
   debit_log(L_CORRELATE, "Trying to isolate %i pips", npips);
 
   do {
+    unsigned local_change = 0;
     unsigned pip;
+
     for(pip = 0; pip < npips; pip++)
       isolate_bit_thorough(pipdb, pip, dat);
 
-    has_changed &= flag_pips(pipdb);
+    local_change |= flag_pips(pipdb);
     prune_null_pips(pipdb, dat);
-    has_changed &= flag_pips(pipdb);
+    local_change |= flag_pips(pipdb);
 
+    has_changed &= local_change;
     iteration++;
 
   } while (iterate && has_changed);
 
   dump_pips_db(pipdb);
 
-  debit_log(L_CORRELATE, "Isolation ended after %u iterations", iteration);
+  debit_log(L_CORRELATE, "Isolation ended after %u iterations",
+	    iteration);
+
+}
+
+static void
+isolate_bit_internal(const pip_db_t *pipdb, const unsigned bit,
+		     alldata_t *dat) {
+  state_t *db = pipdb->state_array;
+  unsigned ndb = pipdb->pip_num;
+  pip_ref_t *pips = get_pip(pipdb, bit);
+
+  (void) dat;
+
+  debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pips->name);
+  intersect_same_pips(pipdb, ndb, db, bit);
+  _intersect_compatible_pips(pipdb, ndb, db, bit);
+}
+
+void
+do_all_pips_internal(const pip_db_t *pipdb, alldata_t *dat, int iterate) {
+  const unsigned npips = pipdb->pip_num;
+  unsigned iteration = 0;
+  int has_changed = -1;
+
+  /* Extract the maximal information from the dataset */
+  do_all_pips_thorough(pipdb, dat, 1);
+
+  do {
+    unsigned local_change = 0;
+    unsigned pip;
+
+    for(pip = 0; pip < npips; pip++)
+      isolate_bit_internal(pipdb, pip, dat);
+
+    local_change |= flag_pips(pipdb);
+    prune_null_pips(pipdb, dat);
+    local_change |= flag_pips(pipdb);
+
+    has_changed &= local_change;
+    iteration++;
+
+  } while (iterate && has_changed);
+
+  dump_pips_db(pipdb);
+
+  debit_log(L_CORRELATE, "Internal composition ended after %u iterations",
+	    iteration);
 
 }

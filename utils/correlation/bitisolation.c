@@ -23,6 +23,7 @@
 static gboolean allelems = FALSE;
 static gboolean thorough = FALSE;
 static gboolean iterate = FALSE;
+static gboolean internal = FALSE;
 static guint width = 0;
 
 static const char *ref = NULL;
@@ -45,6 +46,7 @@ static GOptionEntry entries[] =
   {"allelems", 'a', 0, G_OPTION_ARG_NONE, &allelems, "isolate by intersection", NULL},
   {"thorough", 't', 0, G_OPTION_ARG_NONE, &thorough, "isolate by intersection and negation-intersection", NULL},
   {"iterate", 'i', 0, G_OPTION_ARG_NONE, &iterate, "iterate the algorithm until a fixed point is reached", NULL},
+  {"internal", 'n', 0, G_OPTION_ARG_NONE, &internal, "allow internal composition of the states (long)", NULL},
   { NULL }
 };
 
@@ -63,15 +65,21 @@ static int do_real_work() {
   */
   alloc_pips_state(pipdb, dat);
 
-  /* Dumbest form of isolation, interset only */
-  if (allelems) {
-    do_all_pips(pipdb, dat);
+  /* Work in full algebra -- this takes a long time */
+  if (internal) {
+    do_all_pips_internal(pipdb, dat, iterate);
     goto exit;
   }
 
   /* Intersect and conter-interset pips */
   if (thorough) {
     do_all_pips_thorough(pipdb, dat, iterate);
+    goto exit;
+  }
+
+  /* Dumbest form of isolation, interset only */
+  if (allelems) {
+    do_all_pips(pipdb, dat);
     goto exit;
   }
 
