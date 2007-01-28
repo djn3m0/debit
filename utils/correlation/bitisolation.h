@@ -16,8 +16,20 @@ typedef struct state {
   bitarray_t *unknown_data;
 } state_t;
 
+typedef struct alldata {
+  /** length in bytes of the known data array */
+  size_t known_data_len;
+  /** length in bytes of the unknown data array */
+  size_t unknown_data_len;
+  unsigned width;
+  size_t nstates;
+  state_t *states;
+} alldata_t;
+
 static inline int
-alloc_state(state_t *to, size_t len, size_t ulen) {
+alloc_state(state_t *to, const alldata_t *dat) {
+  size_t len = dat->known_data_len;
+  size_t ulen = dat->unknown_data_len;
   to->known_data = bitarray_create(8 * len);
   to->unknown_data = bitarray_create(8 * ulen);
   return 0;

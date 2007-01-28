@@ -15,16 +15,6 @@
 
 #define BYTES_OF_BITS(x) ((x + 7) / 8)
 
-typedef struct alldata {
-  /** length in bytes of the known data array */
-  size_t known_data_len;
-  /** length in bytes of the unknown data array */
-  size_t unknown_data_len;
-  unsigned width;
-  size_t nstates;
-  state_t *states;
-} alldata_t;
-
 /*
  * Currently-used API
  */
@@ -70,7 +60,7 @@ void iterate_over_pips(const pip_db_t *, pip_iterator_t, void *);
 pip_db_t *build_pip_db(const gchar **);
 void free_pip_db(pip_db_t *);
 
-void alloc_pips_state(pip_db_t *pipdb, const size_t len, const size_t ulen);
+void alloc_pips_state(pip_db_t *pip_db, const alldata_t *dat);
 void free_pips_state(pip_db_t *pipdb);
 
 const char *get_pip_name(const pip_db_t *pipdb, const unsigned i);

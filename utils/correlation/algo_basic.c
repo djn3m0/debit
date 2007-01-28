@@ -200,12 +200,10 @@ gather_null_pips(state_t *result,
 void
 prune_null_pips(const pip_db_t *pipdb,
 		alldata_t *dat) {
-  size_t len = dat->known_data_len;
-  size_t ulen = dat->unknown_data_len;
   state_t state;
   unsigned i;
 
-  alloc_state(&state, len, ulen);
+  alloc_state(&state, dat);
   init_state(&state);
 
   gather_null_pips(&state, pipdb, dat);
@@ -275,17 +273,15 @@ isolate_bit_core(const state_t *state,
    contake. There's more data to memoize, but it should be far faster */
 static void
 isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
+  const gchar *pipname = get_pip_name(pipdb,bit);
   state_t state;
   core_status_t status;
-  size_t len = dat->known_data_len;
-  size_t ulen = dat->unknown_data_len;
-  const gchar *pipname = get_pip_name(pipdb,bit);
 
   /* initial state. The printing should be specific and done outside of
      this pip-agnostic function */
   debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pipname);
 
-  alloc_state(&state, len, ulen);
+  alloc_state(&state, dat);
   init_state(&state);
 
   status = isolate_bit_core(&state, dat, bit);
@@ -359,12 +355,10 @@ do_filtered_pips(const pip_db_t *pipdb, alldata_t *dat,
   unsigned pip;
   state_t union_state, work_state;
   core_status_t status;
-  size_t len = dat->known_data_len;
-  size_t ulen = dat->unknown_data_len;
 
   /* allocated and zeroed */
-  alloc_state(&union_state, len, ulen);
-  alloc_state(&work_state, len, ulen);
+  alloc_state(&union_state, dat);
+  alloc_state(&work_state, dat);
 
   debit_log(L_CORRELATE, "working on pip %s -> %s", start, end);
 

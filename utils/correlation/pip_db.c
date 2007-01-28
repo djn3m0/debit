@@ -172,26 +172,16 @@ iterate_over_pips(const pip_db_t *pipdb, pip_iterator_t iter, void *dat) {
   }
 }
 
-typedef struct _both {
-  unsigned len;
-  unsigned ulen;
-} both_t;
-
 static void do_state(pip_ref_t *ref, void *dat) {
-  both_t *arg = dat;
-  unsigned len = arg->len, ulen = arg->ulen;
   state_t *state = &ref->state;
-  alloc_state(state, len, ulen);
+  alloc_state(state, dat);
   init_state(state);
 }
 
 /* FIXME: move this to one big allocation array */
 void
-alloc_pips_state(pip_db_t *pip_db,
-		 const size_t len, const size_t ulen) {
-  both_t arg = { .len = len, .ulen = ulen };
-
-  iterate_over_pips(pip_db, do_state, &arg);
+alloc_pips_state(pip_db_t *pip_db, const alldata_t *dat) {
+  iterate_over_pips(pip_db, do_state, (void *)dat);
 }
 
 static void free_state(pip_ref_t *ref, void *dat) {

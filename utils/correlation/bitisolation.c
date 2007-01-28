@@ -63,9 +63,7 @@ static int do_real_work() {
     Maybe this could be done at build_pip_db time, or use another
     dedicated structure.
   */
-  alloc_pips_state(pipdb,
-		   dat->known_data_len,
-		   dat->unknown_data_len);
+  alloc_pips_state(pipdb, dat);
 
   /* Dumbest form of isolation, interset only */
   if (allelems) {
