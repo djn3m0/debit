@@ -41,10 +41,9 @@ dump_state(unsigned width, const state_t *state) {
 }
 
 static void
-dump_result(unsigned width, const gchar *name, const state_t *state) {
+dump_result(unsigned width, const state_t *state) {
   GPrintFunc handler;
   handler = g_set_print_handler (dump_to_log);
-  g_print("%s::", name);
   dump_state(width, state);
   (void) g_set_print_handler (handler);
 }
@@ -82,25 +81,25 @@ static void
 print_pip_ref(pip_ref_t *ref, void *data) {
   print_db_t *dat = data;
   const pip_db_t *pipdb = dat->pipdb;
-  fprintf(stderr,"pip %s -> %s\n", ref->start, ref->end);
+  fprintf(stderr,"pip %s -> %s:: ", ref->start, ref->end);
 
   switch (ref->isolated) {
   case PIP_VOID:
     dat->stats.nil++;
-    debit_log(L_CORRELATE, "nil reached!");
+    fprintf(stderr,"NULL\n");
     break;
   case PIP_ACCOMPANIED:
     dat->stats.unisolated++;
-    fprintf(stderr,"pip not isolated\n");
-    debit_log(L_CORRELATE, "not alone, together with:");
+    fprintf(stderr,"not alone\n");
+    debit_log(L_CORRELATE, "together with:");
     dump_set(&ref->state, pipdb);
     debit_log(L_CORRELATE, "set bits:");
-    dump_result(0,ref->name,&ref->state);
+    dump_result(0,&ref->state);
     break;
   case PIP_ISOLATED:
     dat->stats.isolated++;
-    fprintf(stderr,"pip isolated\n");
-    dump_result(0,ref->name,&ref->state);
+    fprintf(stderr,"isolated ");
+    dump_result(0,&ref->state);
   }
 }
 
@@ -152,18 +151,18 @@ typedef struct _ep_cmp {
 } ep_cmp_t;
 
 static int
-has_endpoint(const int pip, void *dat) {
+has_startpoint(const int pip, void *dat) {
   ep_cmp_t *epcmp = dat;
   /* We can compare-equal thanks to the stringchunk */
-  return (get_pip_end(epcmp->pipdb, pip) == epcmp->ep);
+  return (get_pip_start(epcmp->pipdb, pip) == epcmp->ep);
 }
 
 static int
-shares_endpoint(const pip_db_t *pipdb, const char *ep, const state_t *state) {
+shares_startpoint(const pip_db_t *pipdb, const char *ep, const state_t *state) {
   /* For all pips present in the state, check whether
      the pip has the same endpoint or not */
   ep_cmp_t arg = { .pipdb = pipdb, .ep = ep };
-  int ret = bitarray_iter_ones (state->known_data, has_endpoint, &arg);
+  int ret = bitarray_iter_ones (state->known_data, has_startpoint, &arg);
   return ret;
 }
 
@@ -173,16 +172,16 @@ _intersect_compatible_pips(pip_ref_t *result,
 			   const size_t ndb, const state_t *db,
 			   const unsigned bit) {
   unsigned i;
-  const char *endp = result->end;
+  const char *endp = result->start;
 
   for(i = 0; i < ndb; i++) {
     const state_t *config = &db[i];
-    if (!shares_endpoint(pipdb, endp, config))
+    if (!shares_startpoint(pipdb, endp, config))
       and_neg_state(&result->state, config);
   }
 }
 
-void
+static void
 gather_null_pips(state_t *result,
 		 const pip_db_t *pipdb,
 		 const alldata_t *dat) {
@@ -196,6 +195,31 @@ gather_null_pips(state_t *result,
     if (pip->isolated == PIP_VOID)
       bitarray_unset(result->known_data, i);
   }
+}
+
+void
+prune_null_pips(const pip_db_t *pipdb,
+		alldata_t *dat) {
+  size_t len = dat->known_data_len;
+  size_t ulen = dat->unknown_data_len;
+  state_t state;
+  unsigned i;
+
+  alloc_state(&state, len, ulen);
+  init_state(&state);
+
+  gather_null_pips(&state, pipdb, dat);
+
+  /* Then AND all states */
+  for (i = 0; i < pipdb->pip_num; i++) {
+    const state_t *pip = get_pip_state(pipdb,i);
+    and_state(pip, &state);
+  }
+
+  for (i = 0; i < dat->nstates; i++)
+    and_state(&dat->states[i], &state);
+
+  release_state(&state);
 }
 
 /* Compute the status of a pip */
@@ -270,14 +294,14 @@ isolate_bit(const pip_db_t *pipdb, const unsigned bit, alldata_t *dat) {
     debit_log(L_CORRELATE, "not alone, together with:");
     dump_set(&state, pipdb);
     debit_log(L_CORRELATE, "set bits are:");
-    dump_result(dat->width, pipname, &state);
+    dump_result(dat->width, &state);
     break;
   case STATUS_NIL:
     debit_log(L_CORRELATE, "nil reached!");
     break;
   default:
     debit_log(L_CORRELATE, "isolated");
-    dump_result(dat->width,pipname,&state);
+    dump_result(dat->width, &state);
   }
 
   release_state(&state);
@@ -314,6 +338,13 @@ do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat) {
   for(pip = 0; pip < npips; pip++) {
     pip_ref_t *pipref = get_pip(pipdb, pip);
     isolate_bit_thorough(pipdb, pip, dat);
+    flag_pip(pipref);
+  }
+
+  prune_null_pips(pipdb, dat);
+
+  for(pip = 0; pip < npips; pip++) {
+    pip_ref_t *pipref = get_pip(pipdb, pip);
     flag_pip(pipref);
   }
 
