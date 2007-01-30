@@ -68,22 +68,22 @@ AC_CHECK_FUNCS([memset munmap regcomp strdup strerror strtoul])
 # Enable non-debug mode
 AC_ARG_ENABLE(asserts, [  --disable-asserts    remove assertions in the code], enable_asserts=$enableval, enable_asserts=yes)
 if test "x$enable_asserts" = "xno"; then
-   CPPFLAGS+="-DG_DISABLE_CHECKS -DG_DISABLE_ASSERT "
+   CPPFLAGS="$CPPFLAGS -DG_DISABLE_CHECKS -DG_DISABLE_ASSERT "
 fi
 
 AC_ARG_ENABLE(debug, [  --disable-debug    disable debug print functions], enable_debug=$enableval, enable_debug=yes)
 if test "x$enable_debug" = "xno"; then
-   CPPFLAGS+="-DDEBIT_DEBUG=0 "
+   CPPFLAGS="$CPPFLAGS -DDEBIT_DEBUG=0 "
 fi
 
 AC_ARG_ENABLE(wiredb, [  --enable-wiredb    enable built-in wire database], enable_wiredb=$enableval, enable_wiredb=no)
 if test "x$enable_wiredb" = "xyes"; then
-   CPPFLAGS+="-D__COMPILED_WIREDB "
+   CPPFLAGS="$CPPFLAGS -D__COMPILED_WIREDB "
 fi
 
 AC_ARG_ENABLE(pipsdb, [  --enable-pipsdb    enable built-in pips database], enable_pipsdb=$enableval, enable_pipsdb=no)
 if test "x$enable_pipsdb" = "xyes"; then
-   CPPFLAGS+="-D__COMPILED_PIPSDB "
+   CPPFLAGS="$CPPFLAGS -D__COMPILED_PIPSDB "
 fi
 
 AC_CONFIG_FILES([Makefile tests/Makefile \
