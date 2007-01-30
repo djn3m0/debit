@@ -13,6 +13,9 @@
 #include "interface.h"
 #include "support.h"
 
+static gchar *ifile = NULL;
+static gchar *datadir = DATADIR;
+
 static void glade_do_init() {
   GtkWidget *menu;
 /*   GtkWidget *birdseye; */
@@ -23,6 +26,10 @@ static void glade_do_init() {
   *    * the project. Delete any components that you don't want shown initially.
   *
   */
+  gchar *pixmapsdir = g_build_filename(datadir, "pixmaps", NULL);
+  add_pixmap_directory (pixmapsdir);
+  g_free(pixmapsdir);
+
   menu = create_menu ();
   gtk_widget_show (menu);
 /*   birdseye = create_birdseye (); */
@@ -65,8 +72,6 @@ display_window(bitstream_analyzed_t *nlz,
  * Commandline arguments
  */
 
-static gchar *ifile = NULL;
-static gchar *datadir = DATADIR;
 
 #if DEBIT_DEBUG > 0
 unsigned int debit_debug = 0;

@@ -1,6 +1,10 @@
 # Files which will be distributed
 svg_artwork = ulogic_banner.svg ulogic_logo.svg ulogic_withname.svg ulogic_icon.svg ulogic_splash.svg
 
+# Pixmap files, which are generated for xiledit
+pixmapsdir   = $(pkgdatadir)/pixmaps
+dist_pixmaps_DATA = ulogic_icon_32.png
+
 # Files which can be rebuilt
 # We also distribute them, as some special fonts are needed to generate them properly
 # We provide entries for various resolutions.
