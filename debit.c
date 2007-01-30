@@ -38,7 +38,7 @@ static gboolean bramdump = FALSE;
 static gchar *ifile = NULL;
 static gchar *odir = "";
 static gchar *datadir = DATADIR;
-static gchar *suffix = "";
+static gchar *suffix = ".bin";
 
 #if DEBIT_DEBUG > 0
 unsigned int debit_debug = 0;

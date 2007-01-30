@@ -10,6 +10,6 @@
 void do_all_pips(const pip_db_t *pipdb, alldata_t *dat);
 void do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat, int iterate);
 void do_all_pips_internal(const pip_db_t *pipdb, alldata_t *dat, int iterate);
-
+void dump_pips_db(const pip_db_t *pipdb);
 
 #endif /* _HAS_ALGOS_H */

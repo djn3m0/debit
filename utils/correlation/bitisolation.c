@@ -68,27 +68,29 @@ static int do_real_work() {
   /* Work in full algebra -- this takes a long time */
   if (internal) {
     do_all_pips_internal(pipdb, dat, iterate);
-    goto exit;
+    goto dump;
   }
 
   /* Intersect and conter-interset pips */
   if (thorough) {
     do_all_pips_thorough(pipdb, dat, iterate);
-    goto exit;
+    goto dump;
   }
 
   /* Dumbest form of isolation, interset only */
   if (allelems) {
     do_all_pips(pipdb, dat);
-    goto exit;
+    goto dump;
   }
 
+  goto exit;
+
+ dump:
+  dump_pips_db(pipdb);
  exit:
   free_pips_state(pipdb);
   free_all_data(dat);
   free_pip_db(pipdb);
-
-/*   print_summary(); */
   return 0;
 }
 

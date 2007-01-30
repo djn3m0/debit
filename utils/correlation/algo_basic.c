@@ -81,16 +81,16 @@ static void
 print_pip_ref(pip_ref_t *ref, state_t *state, void *data) {
   print_db_t *dat = data;
   const pip_db_t *pipdb = dat->pipdb;
-  fprintf(stderr,"pip %s -> %s:: ", ref->start, ref->end);
+  fprintf(stderr,"pip %s -> %s ", ref->start, ref->end);
 
   switch (ref->isolated) {
   case PIP_VOID:
     dat->stats.nil++;
-    fprintf(stderr,"NULL\n");
+    fprintf(stderr,":NULL:\n");
     break;
   case PIP_ACCOMPANIED:
     dat->stats.unisolated++;
-    fprintf(stderr,"not alone\n");
+    fprintf(stderr,":not alone:\n");
     debit_log(L_CORRELATE, "together with:");
     dump_set(state, pipdb);
     debit_log(L_CORRELATE, "set bits:");
@@ -98,7 +98,7 @@ print_pip_ref(pip_ref_t *ref, state_t *state, void *data) {
     break;
   case PIP_ISOLATED:
     dat->stats.isolated++;
-    fprintf(stderr,"isolated ");
+    fprintf(stderr,":isolated: ");
     dump_result(0, state);
   }
 }
@@ -199,7 +199,7 @@ gather_null_pips(state_t *result,
   }
 }
 
-void
+static void
 prune_null_pips(const pip_db_t *pipdb,
 		alldata_t *dat) {
   state_t state;
@@ -268,8 +268,6 @@ do_all_pips(const pip_db_t *pipdb, alldata_t *dat) {
   debit_log(L_CORRELATE, "Trying to isolate %i pips", npips);
   for(pip = 0; pip < npips; pip++)
     isolate_bit(pipdb, pip, dat);
-
-  dump_pips_db(pipdb);
 }
 
 static void
@@ -319,8 +317,6 @@ do_all_pips_thorough(const pip_db_t *pipdb, alldata_t *dat, int iterate) {
 
   } while (iterate && has_changed);
 
-  dump_pips_db(pipdb);
-
   debit_log(L_CORRELATE, "Isolation ended after %u iterations",
 	    iteration);
 
@@ -365,9 +361,6 @@ do_all_pips_internal(const pip_db_t *pipdb, alldata_t *dat, int iterate) {
 
   } while (iterate && has_changed);
 
-  dump_pips_db(pipdb);
-
   debit_log(L_CORRELATE, "Internal composition ended after %u iterations",
 	    iteration);
-
 }
