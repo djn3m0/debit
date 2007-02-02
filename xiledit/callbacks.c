@@ -83,10 +83,7 @@ on_zoom_out1_activate                  (gpointer         user_data,
   GtkMenu * menu = GTK_MENU (user_data);
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(gtk_menu_get_attach_widget (menu));
 
-  double zoom;
-
-  zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
-  gtk_adjustment_set_value(xildraw->zoomadjust, zoom * 0.75);
+  egg_xildraw_zoom_out(xildraw);
 }
 
 
@@ -97,11 +94,7 @@ on_zoom_in1_activate                   (gpointer         user_data,
   GtkMenu * menu = GTK_MENU (user_data);
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(gtk_menu_get_attach_widget (menu));
 
-  /* NB: should just emit a signal */
-  double zoom;
-
-  zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
-  gtk_adjustment_set_value(xildraw->zoomadjust, zoom * 1 / 0.75);
+  egg_xildraw_zoom_in(xildraw);
 }
 
 void

@@ -28,6 +28,8 @@ static gboolean egg_xildraw_key_press_event(GtkWidget *widget,
 					    GdkEventKey *event);
 static gboolean egg_xildraw_button_press_event(GtkWidget *widget,
 					       GdkEventButton *event);
+static gboolean egg_xildraw_button_release_event(GtkWidget *widget,
+						 GdkEventButton *event);
 static gboolean egg_xildraw_motion_notify_event(GtkWidget *widget,
 						GdkEventMotion *event);
 static gboolean egg_xildraw_scroll_event(GtkWidget *widget, GdkEventScroll *event);
@@ -43,6 +45,7 @@ egg_xildraw_face_class_init (EggXildrawFaceClass *class)
   widget_class->expose_event = egg_xildraw_face_expose;
   widget_class->key_press_event = egg_xildraw_key_press_event;
   widget_class->button_press_event = egg_xildraw_button_press_event;
+  widget_class->button_release_event = egg_xildraw_button_release_event;
   widget_class->motion_notify_event = egg_xildraw_motion_notify_event;
   widget_class->scroll_event = egg_xildraw_scroll_event;
 
@@ -105,9 +108,8 @@ egg_xildraw_face_init (EggXildrawFace *xildraw)
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON_PRESS_MASK);
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON_RELEASE_MASK);
 
-  /* add / remove this on drag start -- we usually don't want to handle it */
-  //  gtk_widget_add_events (GTK_WIDGET (xildraw),
-  //  GDK_POINTER_MOTION_MASK);
+  /* For smooth dragging, we use the MOTION_HINT */
+  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_POINTER_MOTION_HINT_MASK);
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON2_MOTION_MASK);
   gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_SCROLL_MASK);
 
@@ -337,6 +339,10 @@ static void
 egg_xildraw_adapt_widget(EggXildrawFace *self) {
   GtkWidget *window = gtk_widget_get_parent( GTK_WIDGET(self) );
   egg_xildraw_adapt_window(self, GTK_WINDOW(window));
+
+  /* Redraw now */
+  egg_xildraw_pixmap_recompute (self);
+  egg_xildraw_redraw (self);
 }
 
 /* Needed for the new implementation */
@@ -425,17 +431,12 @@ xildraw_scale_at(EggXildrawFace *xildraw,
     return;
 
   zoom = gtk_adjustment_get_value(zoomadjust);
-  /* Set new zoom value, new coordinates all in one go, by generating
-     only one redraw event: is this possible ? */
-  gtk_adjustment_set_value(zoomadjust, zoom * zoom_level);
-
   scaling = (zoom_level - 1) / (zoom_level * zoom);
   xildraw_adjust_delta(xildraw->hadjust, x * scaling);
   xildraw_adjust_delta(xildraw->vadjust, y * scaling);
 
-  /* Redraw now */
-  egg_xildraw_pixmap_recompute (xildraw);
-  egg_xildraw_redraw (xildraw);
+  /* Set new zoom value, which triggers redraw */
+  gtk_adjustment_set_value(zoomadjust, zoom * zoom_level);
 }
 
 static void
@@ -447,20 +448,20 @@ xildraw_scale_center(EggXildrawFace *xildraw,
   xildraw_scale_at (xildraw, zoom_level, width / 2, height / 2);
 }
 
-static inline void
-zoom_in(EggXildrawFace *xildraw) {
+void
+egg_xildraw_zoom_in(EggXildrawFace *xildraw) {
   xildraw_scale_center(xildraw, 1.0/0.75);
+}
+
+void
+egg_xildraw_zoom_out(EggXildrawFace *xildraw) {
+  xildraw_scale_center(xildraw, 0.75);
 }
 
 static inline void
 zoom_in_at(EggXildrawFace *xildraw,
 	   const double x, const double y) {
   xildraw_scale_at(xildraw, 1.0/0.75, x, y);
-}
-
-static inline void
-zoom_out(EggXildrawFace *xildraw) {
-  xildraw_scale_center(xildraw, 0.75);
 }
 
 static inline void
@@ -499,11 +500,11 @@ egg_xildraw_key_press_event(GtkWidget *widget,
     break;
   case GDK_minus:
   case GDK_KP_Subtract:
-    zoom_out(xildraw);
+    egg_xildraw_zoom_out(xildraw);
     goto redraw;
   case GDK_plus:
   case GDK_KP_Add:
-    zoom_in(xildraw);
+    egg_xildraw_zoom_in(xildraw);
     goto redraw;
     break;
   }
@@ -547,6 +548,54 @@ egg_xildraw_scroll_event(GtkWidget *widget,
   return FALSE;
 }
 
+static void
+xildraw_set_cursor(EggXildrawFace *self, GdkCursorType type) {
+  GdkWindow *window = gtk_widget_get_parent_window ( GTK_WIDGET(self) );
+  GdkCursor *cursor = NULL;
+
+  if (type != GDK_CURSOR_IS_PIXMAP)
+    cursor = gdk_cursor_new(type);
+
+  gdk_window_set_cursor(window, cursor);
+
+  if (cursor)
+    gdk_cursor_destroy(cursor);
+}
+
+static gboolean
+egg_xildraw_button_release_event(GtkWidget *widget,
+				 GdkEventButton *event)
+{
+  EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
+
+  guint state, button;
+  GdkEventType type;
+
+  state = event->state;
+  button = event->button;
+  type = event->type;
+
+  switch (button) {
+    /* middle button release */
+  case 2:
+    switch (type) {
+    case GDK_BUTTON_RELEASE:
+      xildraw->dragging = FALSE;
+      xildraw_set_cursor(xildraw, GDK_CURSOR_IS_PIXMAP);
+      break;
+      /* Should not happen */
+    case GDK_BUTTON_PRESS:
+    default:
+      return FALSE;
+    }
+    return TRUE;
+
+  default:
+    return FALSE;
+  }
+  return FALSE;
+}
+
 static gboolean
 egg_xildraw_button_press_event(GtkWidget *widget,
 			       GdkEventButton *event)
@@ -568,14 +617,18 @@ egg_xildraw_button_press_event(GtkWidget *widget,
   case 2:
     switch (type) {
     case GDK_BUTTON_PRESS:
-      xildraw->drag = TRUE;
-      gdk_event_get_coords ((GdkEvent *)event,
-			    &xildraw->refx,
-			    &xildraw->refy);
+      xildraw->dragging = TRUE;
+      /* Change the cursor shape */
+      xildraw_set_cursor(xildraw, GDK_FLEUR);
+      xildraw->drag_anchor_x = event->x;
+      xildraw->drag_anchor_y = event->y;
+      /* Record full state at start of drag */
+      xildraw->drag_ofs_start_x = gtk_adjustment_get_value(xildraw->hadjust);
+      xildraw->drag_ofs_start_y = gtk_adjustment_get_value(xildraw->vadjust);
       break;
+
+      /* Should not happen */
     case GDK_BUTTON_RELEASE:
-      xildraw->drag = FALSE;
-      break;
     default:
       return FALSE;
     }
@@ -588,45 +641,52 @@ egg_xildraw_button_press_event(GtkWidget *widget,
       return TRUE;
     }
   /* mouse wheel usual config */
-  case 4:
-    zoom_in(xildraw);
-    return TRUE;
-  case 5:
-    zoom_out(xildraw);
-    return TRUE;
+/*   case 4: */
+/*     zoom_in_at (xildraw, x, y); */
+/*     return TRUE; */
+/*   case 5: */
+/*     zoom_out_at (xildraw, x, y); */
+/*     return TRUE; */
   default:
     g_warning("Unknown button %i pressed", button);
   }
   return FALSE;
 }
 
-/* Mouse movement */
+/* Mouse movement while grabbed */
 static gboolean
 egg_xildraw_motion_notify_event(GtkWidget *widget,
 				GdkEventMotion *event)
 {
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
   gdouble zoom = gtk_adjustment_get_value(xildraw->zoomadjust);
+  gint newx, newy;
+  GdkModifierType mods;
 
-  if (xildraw->drag) {
-    gdouble oldx = xildraw->refx, oldy = xildraw->refy;
-    gdouble newx, newy;
+  if (!xildraw->dragging)
+    return FALSE;
 
-    /* Compute the motion vector */
-    gdk_event_get_coords ((GdkEvent *)event, &newx, &newy);
-
-    /* Redraw at new position. We must switch to device coordinates. */
-    xildraw_adjust_delta(xildraw->vadjust, (oldy - newy) / zoom);
-    xildraw_adjust_delta(xildraw->hadjust, (oldx - newx) / zoom);
-
-    /* Reset the motion vector */
-    xildraw->refx = newx;
-    xildraw->refy = newy;
-
-    return TRUE;
+  /* Compute the motion vector */
+  if (event->is_hint)
+    gdk_window_get_pointer(widget->window, &newx, &newy, &mods);
+  else {
+    newx = event->x;
+    newy = event->y;
   }
 
-  return FALSE;
+  /* Redraw at new position. We must switch to device coordinates */
+  gtk_adjustment_set_value(xildraw->hadjust,
+			   xildraw->drag_ofs_start_x +
+			   (xildraw->drag_anchor_x - newx) / zoom);
+  gtk_adjustment_set_value(xildraw->vadjust,
+			   xildraw->drag_ofs_start_y +
+			   (xildraw->drag_anchor_y - newy) / zoom);
+
+  /* Draw */
+  egg_xildraw_pixmap_recompute (xildraw);
+  egg_xildraw_redraw (xildraw);
+
+  return TRUE;
 }
 
 /* Various exported functions to act on the xildraw context. At some
@@ -657,6 +717,7 @@ egg_xildraw_adapt_window(EggXildrawFace *xildraw, GtkWindow *window) {
    certainly be drawn from the toplevel window. */
 void
 egg_xildraw_fullscreen(EggXildrawFace *self) {
+  /* Should use gtk_widget_get_ancestor with type window */
   GtkWidget *window = gtk_widget_get_parent( GTK_WIDGET(self) );
   gtk_window_fullscreen ( GTK_WINDOW(window) );
 }
@@ -676,12 +737,8 @@ egg_xildraw_zoom_fit(EggXildrawFace *self) {
   double new_zoom = pix_width / draw_width;
 
   /* zoom & adjust the view */
-  gtk_adjustment_set_value(self->zoomadjust, new_zoom);
   gtk_adjustment_set_value(self->hadjust, 0);
-
-  /* and redraw */
-  egg_xildraw_pixmap_recompute (self);
-  egg_xildraw_redraw (self);
+  gtk_adjustment_set_value(self->zoomadjust, new_zoom);
 }
 
 void

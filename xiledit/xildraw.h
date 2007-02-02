@@ -45,9 +45,11 @@ struct _EggXildrawFace
   GtkAdjustment *zoomadjust;
 
   /* state variables for dragging */
-  gboolean drag;
-  double refx;
-  double refy;
+  gboolean dragging;
+  double drag_anchor_x;
+  double drag_anchor_y;
+  double drag_ofs_start_x;
+  double drag_ofs_start_y;
 
   /* context menu */
   GtkMenu *menu;
@@ -67,6 +69,8 @@ void egg_xildraw_fullscreen(EggXildrawFace *self);
 void egg_xildraw_unfullscreen(EggXildrawFace *self);
 void egg_xildraw_site_names(EggXildrawFace *self, gboolean val);
 void egg_xildraw_zoom_fit(EggXildrawFace *self);
+void egg_xildraw_zoom_in(EggXildrawFace *xildraw);
+void egg_xildraw_zoom_out(EggXildrawFace *xildraw);
 
 G_END_DECLS
 
