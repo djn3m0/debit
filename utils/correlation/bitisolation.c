@@ -36,8 +36,8 @@ unsigned int debit_debug = L_ANY;
 static GOptionEntry entries[] =
 {
   {"data", 'd', 0, G_OPTION_ARG_FILENAME_ARRAY, &data,
-   "<names>.bin and <names>.dat are input/output pairs of the binary function",
-   "names"},
+   "read *.bin and *.dat input/output pairs of the binary function from <datadir>",
+   "datadir"},
 #if DEBIT_DEBUG > 0
   {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
 #endif

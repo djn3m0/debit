@@ -45,15 +45,28 @@ get_pip_index(const pip_db_t *pipdb, const gchar *pip) {
 
 typedef void (*ifile_iterator_t)(const gchar*, void *data);
 
-void
+static void
 iterate_over_input(const gchar **knw,
 		   ifile_iterator_t iter, void *data) {
   unsigned idx = 0;
-  const gchar *inp = knw[0];
+  const gchar *inp;
 
-  while (inp != NULL) {
-    iter(inp, data);
-    inp = knw[++idx];
+  while ((inp = knw[idx++])) {
+    GDir *dir = g_dir_open(inp, 0, NULL);
+    const gchar *file;
+
+    if (!dir)
+      continue;
+
+    /* Iterate over elements in the directory */
+    while ((file = g_dir_read_name (dir)))
+      if (g_str_has_suffix(file, ".dat")) {
+	gchar *filename = g_build_filename(inp,file,NULL);
+	iter(filename, data);
+	g_free(filename);
+      }
+
+    g_dir_close(dir);
   }
 }
 
@@ -104,10 +117,8 @@ iterate_over_lines(const gchar *filename,
 static void
 add_pip_file(const gchar *file, void *data) {
   pip_db_t *pipdb = data;
-  gchar *filename = g_strconcat(file,".dat",NULL);
-  debit_log(L_CORRELATE, "Loading file %s", filename);
-  iterate_over_lines(filename, add_pip_line, pipdb);
-  g_free(filename);
+  debit_log(L_CORRELATE, "Loading file %s", file);
+  iterate_over_lines(file, add_pip_line, pipdb);
 }
 
 static void

@@ -136,6 +136,7 @@ fill_all_data(const pip_db_t *db, const gchar *reffile, const gchar **knw) {
   gsize udl_ref = 0;
   unsigned idx = 0;
   GArray *data_array;
+  const gchar *inp;
 
   data_array = g_array_new(FALSE, FALSE, sizeof(state_t));
 
@@ -143,10 +144,24 @@ fill_all_data(const pip_db_t *db, const gchar *reffile, const gchar **knw) {
     get_file_bindata(&ref, &udl_ref, reffile);
 
   /* What about udl_ref here ??? */
-  while (knw[idx] != NULL) {
-    const gchar *inp = knw[idx];
-    process_data(data_array, &udl_ref, inp, ref, db);
-    idx++;
+  while ((inp = knw[idx++])) {
+    GDir *dir = g_dir_open(inp, 0, NULL);
+    const gchar *file;
+
+    if (!dir)
+      continue;
+
+    /* Iterate over elements in the directory */
+    while ((file = g_dir_read_name (dir)))
+      if (g_str_has_suffix(file, ".dat")) {
+	gchar *filename = g_build_filename(inp,file,NULL);
+	gchar *replace = g_strrstr(filename, ".dat");
+	replace[0] = '\0';
+	process_data(data_array, &udl_ref, filename, ref, db);
+	g_free(filename);
+      }
+
+    g_dir_close(dir);
   }
 
   if (reffile)
