@@ -88,6 +88,10 @@ Section "Debitting graphical tools" SecDisplay
   SetOutPath "$INSTDIR\bin"
   File ..\xiledit\xiledit.exe
 
+; xiledit pixmaps
+  SetOutPath "$INSTDIR\pixmaps"
+  File "$(SRDIR)\desktop\artwork\ulogic_icon_32.png"
+
   SetOutPath "$INSTDIR\gfx"
   File "${SRCDIR}\desktop\artwork\ulogic_icon.ico"
 
@@ -189,8 +193,10 @@ Section "Uninstall"
   ;; Data files deletion
 
   Delete "$INSTDIR\bin\xiledit.exe"
+  Delete "$INSTDIR\pixmaps\ulogic_icon_32.ico"
+  RMDir "$INSTDIR\pixmaps"
   Delete "$INSTDIR\gfx\ulogic_icon.ico"
-
+  RMDir "$INSTDIR\gfx"
 
   Delete "$INSTDIR\bin\altera.exe"
   Delete "$INSTDIR\bin\bitisolation.exe"
