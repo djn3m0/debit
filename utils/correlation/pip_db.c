@@ -148,7 +148,7 @@ build_pip_db(const gchar **files) {
   /* the summary of the table, nicely put */
   pipnum = g_hash_table_size(db->hash);
   db->pip_num = pipnum;
-  db->pip_array = g_new(pip_ref_t, pipnum);
+  db->pip_array = g_new0(pip_ref_t, pipnum);
   db->state_array = g_new(state_t, pipnum);
   g_hash_table_foreach (hash, store_iline, db);
   return db;

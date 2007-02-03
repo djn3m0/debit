@@ -20,7 +20,7 @@
  */
 
 typedef enum _pip_status {
-  PIP_ACCOMPANIED,
+  PIP_ACCOMPANIED = 0,
   PIP_VOID,
   PIP_ISOLATED,
 } pip_status_t;
