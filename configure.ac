@@ -88,7 +88,8 @@ fi
 
 AC_CONFIG_FILES([Makefile tests/Makefile \
 		data/Makefile data/virtex2/Makefile data/virtex4/Makefile \
-		debian/Makefile rpm/Makefile windows/Makefile \
+		debian/Makefile rpm/Makefile \
+		windows/Makefile windows/scripts/Makefile \
 		altera/Makefile \
 		codes/Makefile utils/Makefile utils/correlation/Makefile \
 		xiledit/Makefile \

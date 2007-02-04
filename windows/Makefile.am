@@ -1,3 +1,5 @@
+SUBDIRS = scripts
+
 scriptutils=convert.sh xcompile.sh gendb.sh
 products=debit-installer.exe debit.nsi xildb.nsh
 EXTRA_DIST=debit.nsi.tmpl cross.env $(scriptutils)

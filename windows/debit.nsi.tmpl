@@ -89,7 +89,7 @@ Section "Debitting graphical tools" SecDisplay
   File ..\xiledit\xiledit.exe
 
 ; xiledit pixmaps
-  SetOutPath "$INSTDIR\pixmaps"
+  SetOutPath "$INSTDIR\data\pixmaps"
   File "${SRCDIR}\desktop\artwork\ulogic_icon_32.png"
 
   SetOutPath "$INSTDIR\gfx"
@@ -112,6 +112,14 @@ Section "Debitting shell tools" SecXilinx
   File ..\utils\correlation\bitisolation.exe
   File ..\utils\diff_bin_pos.exe
   File ..\debit.exe
+  File ..\bit2pdf.exe
+
+  DetailPrint "Installing debitting .bat helper files..."
+  SetOutPath "$INSTDIR"
+  File ${SRCDIR}\windows\scripts\bit2pdf.bat
+  File ${SRCDIR}\windows\scripts\bit2luts.bat
+  File ${SRCDIR}\windows\scripts\bit2bram.bat
+  File ${SRCDIR}\windows\scripts\bit2pips.bat
 
   ;Store installation folder
   WriteRegStr HKCU "Software\debit" "" $INSTDIR
@@ -151,7 +159,7 @@ Section "File type and context menus" SecCtx
   IfErrors 0 +2
      DetailPrint "Problem creating file associations for bitstream files"
 
-  DetailPrint "creating default browser for bitstream"
+  DetailPrint "Registering default browser for Xilinx bitstreams"
   ClearErrors
   ReadRegStr $0 HKCR ".bit" ""
   WriteRegStr HKCR "$0\shell\edit" "" "Browse bitstream file"
@@ -159,7 +167,21 @@ Section "File type and context menus" SecCtx
 ;  ReadRegStr $0 HKCR ".sof" ""
 ;  WriteRegStr HKCR "$0\shell\edit\command" "" '"$INSTDIR\bin\altedit.exe" "%1"'
   IfErrors 0 +2
-     DetailPrint "Problems creating default browser"
+     DetailPrint "Error creating default browser"
+
+  DetailPrint "Creating context menu entries for debit"
+  ClearErrors
+  ReadRegStr $0 HKCR ".bit" ""
+  WriteRegStr HKCR "$0\shell\x_pdf" "" "Convert to PDF"
+  WriteRegStr HKCR "$0\shell\x_pdf\command" "" '"$INSTDIR\bit2pdf.bat" "%1"'
+  WriteRegStr HKCR "$0\shell\y_pips" "" "Extract PIPs"
+  WriteRegStr HKCR "$0\shell\y_pips\command" "" '"$INSTDIR\bit2pips.bat" "%1"'
+  WriteRegStr HKCR "$0\shell\y_bram" "" "Extract BRAM data"
+  WriteRegStr HKCR "$0\shell\y_bram\command" "" '"$INSTDIR\bit2bram.bat" "%1"'
+  WriteRegStr HKCR "$0\shell\y_lut" "" "Extract LUT data"
+  WriteRegStr HKCR "$0\shell\y_lut\command" "" '"$INSTDIR\bit2luts.bat" "%1"'
+  IfErrors 0 +2
+     DetailPrint "Error creating custom actions"
 
   DetailPrint "Signalling the change to windows"
   System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
@@ -193,8 +215,11 @@ Section "Uninstall"
   ;; Data files deletion
 
   Delete "$INSTDIR\bin\xiledit.exe"
-  Delete "$INSTDIR\pixmaps\ulogic_icon_32.ico"
-  RMDir "$INSTDIR\pixmaps"
+  Delete "$INSTDIR\data\pixmaps\ulogic_icon_32.png"
+  RMDir "$INSTDIR\data\pixmaps"
+
+  Delete "$INSTDIR\gfx\application-x-xilinx-bitstream.ico"
+  Delete "$INSTDIR\gfx\application-x-altera-bitstream.ico"
   Delete "$INSTDIR\gfx\ulogic_icon.ico"
   RMDir "$INSTDIR\gfx"
 
@@ -202,14 +227,18 @@ Section "Uninstall"
   Delete "$INSTDIR\bin\bitisolation.exe"
   Delete "$INSTDIR\bin\diff_bin_pos.exe"
   Delete "$INSTDIR\bin\debit.exe"
+  Delete "$INSTDIR\bin\bit2pdf.exe"
   RMDir "$INSTDIR\bin"
 
   RMDir /r "$INSTDIR\data"
 
   Delete "$INSTDIR\Uninstall.exe"
 
+  Delete "$INSTDIR\bit2pdf.bat"
+  Delete "$INSTDIR\bit2luts.bat"
+  Delete "$INSTDIR\bit2bram.bat"
+  Delete "$INSTDIR\bit2pips.bat"
   RMDir "$INSTDIR"
-
 
   ;; Start Menu deletion
 
