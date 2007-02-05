@@ -35,7 +35,8 @@ v4_frame_count[V4C__NB_CFG] = {
 static const
 chip_struct_t bitdescr[XC4VLX__NUM] = {
   /* FLR is always 41 for virtex-4 */
-  [XC4VLX15] = { .idcode = 0x01658093,
+  [XC4VLX15] = { .idcode = 0x01658093U,
+		 .chip = XC4VLX15,
 		 .framelen = 41,
 		 .frame_count = v4_frame_count,
 		 .col_count = {
@@ -45,6 +46,7 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		 },
 		 .row_count = 2, },
   [XC4VLX25] = { .idcode = 0x0167C093,
+		 .chip = XC4VLX25,
 		 .framelen = 41,
 		 .frame_count = v4_frame_count,
 		 .col_count = {
@@ -53,7 +55,8 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		   [V4_TYPE_BRAM_INT] = 3,
 		 },
 		 .row_count = 3, },
-  [XC4VLX40] = { .idcode = 0x016A4093,
+  [XC4VLX40] = { .idcode = 0x016A4093U,
+		 .chip = XC4VLX40,
 		 .framelen = 41,
 		 .frame_count = v4_frame_count,
 		 .col_count = {
@@ -62,7 +65,8 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		   [V4_TYPE_BRAM_INT] = 3,
 		 },
 		 .row_count = 4, },
-  [XC4VLX60] = { .idcode = 0x016B4093,
+  [XC4VLX60] = { .idcode = 0x016B4093U,
+		 .chip = XC4VLX60,
 		 .framelen = 41,
 		 .frame_count = v4_frame_count,
 		 .col_count = {
@@ -71,7 +75,8 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		   [V4_TYPE_BRAM_INT] = 5,
 		 },
 		 .row_count = 4, },
-  [XC4VLX80] = { .idcode = 0x016D8093,
+  [XC4VLX80] = { .idcode = 0x016D8093U,
+		 .chip = XC4VLX80,
 		 .framelen = 41,
 		 .frame_count = v4_frame_count,
 		 .col_count = {
@@ -80,7 +85,8 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		   [V4_TYPE_BRAM_INT] = 5,
 		 },
 		 .row_count = 5, },
-  [XC4VLX100] = { .idcode = 0x01700093,
+  [XC4VLX100] = { .idcode = 0x01700093U,
+		  .chip = XC4VLX100,
 		  .framelen = 41,
 		  .frame_count = v4_frame_count,
 		  .col_count = {
@@ -89,7 +95,8 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		    [V4_TYPE_BRAM_INT] = 5,
 		  },
 		  .row_count = 6, },
-  [XC4VLX160] = { .idcode = 0x01718093,
+  [XC4VLX160] = { .idcode = 0x01718093U,
+		  .chip = XC4VLX160,
 		  .framelen = 41,
 		  .frame_count = v4_frame_count,
 		  .col_count = {
@@ -98,7 +105,8 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		    [V4_TYPE_BRAM_INT] = 6,
 		  },
 		  .row_count = 6, },
-  [XC4VLX200] = { .idcode = 0x01734093,
+  [XC4VLX200] = { .idcode = 0x01734093U,
+		  .chip = XC4VLX200,
 		  .framelen = 41,
 		  .frame_count = v4_frame_count,
 		  .col_count = {

@@ -169,8 +169,6 @@ dump_site_iter(unsigned site_x, unsigned site_y,
   fullname = g_build_filename(dumpsite->odir, filename, NULL);
   g_free(filename);
 
-  g_warning("Dumping %s", fullname);
-
   ok = g_file_set_contents(fullname, buffer, buffer_len, NULL);
   if (!ok)
     g_warning("Failed to dump %s", fullname);
