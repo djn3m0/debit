@@ -30,7 +30,8 @@
 static inline void
 print_pip(const csite_descr_t *site, const gchar *start, const gchar *end) {
   gchar site_buf[32];
-  sprint_csite(site_buf, site);
+  /* XXX */
+  sprint_csite(site_buf, site, 0, 0);
   g_printf("pip %s %s -> %s\n", site_buf, start, end);
 }
 
@@ -65,7 +66,8 @@ print_pip_iter(gpointer data,
   pip_db_t *pipdb = data;
   wire_db_t *wiredb = pipdb->wiredb;
   gchar site_buf[32];
-  sprint_csite(site_buf, site);
+  /* XXX */
+  sprint_csite(site_buf, site, 0, 0);
   g_printf("pip %s %s -> %s\n", site_buf,
 	   wire_name(wiredb,start), wire_name(wiredb,end));
 }
@@ -162,14 +164,16 @@ dump_site_iter(unsigned site_x, unsigned site_y,
   /* Get the bitstream contents */
   query_bitstream_site_data(buffer, buffer_len, dumpsite->parsed, site);
 
-  sprint_csite(site_buf, site);
+  sprint_csite(site_buf, site, site_x, site_y);
   filename = g_strconcat(site_buf,dumpsite->suffix,NULL);
   fullname = g_build_filename(dumpsite->odir, filename, NULL);
   g_free(filename);
 
+  g_warning("Dumping %s", fullname);
+
   ok = g_file_set_contents(fullname, buffer, buffer_len, NULL);
   if (!ok)
-    g_warning("Failed to dump %s", filename);
+    g_warning("Failed to dump %s", fullname);
 
   g_free(fullname);
 }

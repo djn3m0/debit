@@ -307,6 +307,7 @@ typedef enum _site_print_type {
   PRINT_BOTH = 0,
   PRINT_X,
   PRINT_Y,
+  PRINT_BOTH_INVERT,
 } site_print_t;
 
 #if defined(VIRTEX2)
@@ -346,22 +347,29 @@ static const char *print_str[NR_SITE_TYPE] = {
 
 #elif defined(VIRTEX4)
 
-static const site_print_t print_type[NR_SITE_TYPE];
+static const site_print_t print_type[NR_SITE_TYPE] = {
+  [SITE_TYPE_NEUTRAL] = PRINT_BOTH_INVERT,
+  [IOB] = PRINT_BOTH_INVERT,
+  [CLB] = PRINT_BOTH_INVERT,
+  [DSP48] = PRINT_BOTH_INVERT,
+  [GCLKC] = PRINT_BOTH_INVERT,
+  [BRAM] = PRINT_BOTH_INVERT,
+};
 
 static const char *print_str[NR_SITE_TYPE] = {
-  [SITE_TYPE_NEUTRAL] = "INT_R%iC%i",
-  [IOB] = "IOB_R%iC%i",
-  [CLB] = "CLB_R%iC%i",
-  [DSP48] = "DSP48_R%iC%i",
-  [GCLKC] = "GCLKC_R%iC%i",
-  [BRAM] = "BRAM_R%iC%i",
+  [SITE_TYPE_NEUTRAL] = "INT_X%iY%i",
+  [IOB] = "IOB_X%iY%i",
+  [CLB] = "CLB_X%iY%i",
+  [DSP48] = "DSP48_X%iY%i",
+  [GCLKC] = "GCLKC_X%iY%i",
+  [BRAM] = "BRAM_X%iY%i",
 };
 
 #endif
 
 void
-sprint_csite(gchar *data, const csite_descr_t *site) {
-  /* Use a string chunk ? */
+sprint_csite(gchar *data, const csite_descr_t *site,
+	     unsigned gx, unsigned gy) {
   const char *str = print_str[site->type];
   const site_print_t strtype = print_type[site->type];
   const guint x = site->type_coord.x + 1;
@@ -380,15 +388,18 @@ sprint_csite(gchar *data, const csite_descr_t *site) {
     case PRINT_Y:
       sprintf(data, str, y);
       break;
+    /* V4-style site naming needs global coordinates */
+    case PRINT_BOTH_INVERT:
+      sprintf(data, str, gx, gy);
+      break;
   }
-
 }
 
 static void
 print_iterator(unsigned x, unsigned y,
 	       csite_descr_t *site, gpointer dat) {
   gchar name[32];
-  sprint_csite(name, site);
+  sprint_csite(name, site, x, y);
   (void) dat;
   g_print("global site (%i,%i) is %s\n", x, y, name);
 }

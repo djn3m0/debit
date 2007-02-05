@@ -82,12 +82,15 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const site_type_t site_type = site->type;
   const unsigned x = site->type_coord.x;
   const unsigned y = site->type_coord.y;
-  const unsigned ymid = chip_struct->row_count - 1;
+  const unsigned ymid = chip_struct->row_count;
+  /* Rows are packed by groups of 16 */
   unsigned row = (y >> 4);
   /* a bittest should be sufficient for top, but is hard to compute
      (depends on bitlength of the value, which is costly to compute) */
-  const unsigned top = (row > ymid) ? 1 : 0;
+  const unsigned top = (row >= ymid) ? 0 : 1;
   const unsigned row_local = y & 0xF;
+  /* We must skip 4 bytes of SECDED and CLK information in the middle of
+   * the frame */
   const unsigned row_second_half = (y >> 1) & 0x4;
 
   const guint frame_x = byte_x(cfgbyte);
@@ -95,12 +98,12 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const guint frame_y = row_local * 10 + row_second_half + byte_y(cfgbyte);
   const gchar *frame;
 
-  g_print("row is %i for (%i,%i), mid is %i\n", row, x, y, ymid);
-
-  row = top ? row >> 1 : row;
+  //g_print("row is %i for (%i,%i), mid is %i\n", row, x, y, ymid);
+  row = top ? row : row - ymid;
 
   frame = get_frame(bitstream, type_bits[site_type].col_type, row, top, x, frame_x);
-  return frame[frame_y];
+  /* The adressing here is a bit strange, due to the frame byte order */
+  return frame[frame_y ^ 0x3];
 }
 
 /** \brief Get some (up to 4) config bytes from a site
@@ -272,9 +275,10 @@ gsize
 query_bitstream_type_size(const bitstream_parsed_t *parsed,
 			  const site_type_t type) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
-  const unsigned *col_count = chip_struct->col_count;
-  /* per site, 80 bits on one column, or 10 bytes */
-  return type_col_count(col_count, type) * 10;
+  /* Get the col type from the site type */
+  const v4_design_col_t col_type = type_bits[type].col_type;
+  /* per site, 80 bits in each frame -- 10 bytes */
+  return type_frame_count(chip_struct, col_type) * 10;
 }
 
 /** \brief Get all configuration bits from a site
@@ -297,7 +301,7 @@ query_bitstream_site_data(gchar *data, const gsize nbytes,
   gsize i;
 
   for (i = 0; i < nbytes; i++) {
-    unsigned pos = bitpos_to_cfgbit(i, width);
+    unsigned pos = bitpos_to_cfgbit(i << 3, width);
     data[i] = query_bitstream_site_byte(parsed, site, pos);
   }
 

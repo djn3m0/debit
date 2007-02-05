@@ -296,7 +296,8 @@ sprint_spip(gchar *buf,
   const gchar *start = wire_name(wdb, spip->pip.source);
   const gchar *end = wire_name(wdb, spip->pip.target);
   gchar site_buf[30];
-  sprint_csite(site_buf, spip->site);
+  /* XXX */
+  sprint_csite(site_buf, spip->site, 0, 0);
   sprintf(buf, "pip %s %s -> %s", site_buf, start, end);
 }
 

@@ -147,6 +147,12 @@ typedef struct _chip_struct_v4 {
 } chip_struct_t;
 
 
+static inline unsigned
+type_frame_count(const chip_struct_t *chip,
+		 const v4_design_col_t type) {
+  return chip->frame_count[type];
+}
+
 /**** Frame fast indexing ****/
 
 static inline unsigned

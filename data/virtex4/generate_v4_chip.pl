@@ -3,10 +3,9 @@
 use strict;
 
 # This script generates chip_control and chip_data databases for the
-# virtex-II family
+# virtex-4 family
+# Yeah, I know. If you feel like rewriting this, please go ahead.
 
-# It could be worse, but not much more... DSPs-enabled V4 and V2P will be fun !
-# Type => num
 my $i = 0;
 
 my $y_offset = 0;
@@ -83,7 +82,7 @@ for $chip (keys %clbwidth) {
     $filename = "${dirname}/chip_data";
     open(DESCR, ">$filename") || die "opening $filename";
 
-    # The CLBs are interleaved with other things
+    # The CLBs are interleaved with other things
     my $type;
     for $type (keys %C_enum) {
 	if ($type =~ /^NR_SITE_TYPE$/) {
@@ -95,28 +94,28 @@ for $chip (keys %clbwidth) {
 	if ($type =~ /^PAD$/) {
 	    next;
 	}
+	if ($type =~ /^GCLK$/) {
+	    next;
+	}
 
 	print DESCR "[$type]\n";
-	# No switch...
+	#No switch...
 	# CLBs for starters
 	if ($type =~ /^CLB$/) {
 	    #function print_clb_height
 	    #hard, according to type...
 	    #print_clb_width();
-	    print_clb_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
+	    print_clb_width($brams{$chip}, $clbwidth{$chip} - 1, \*DESCR);
 	    print_clb_height($clbheight{$chip}, \*DESCR);
 	} elsif ($type =~ /^IOB$/) {
-	    print_iob_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
+	    print_iob_width($brams{$chip}, $clbwidth{$chip} - 1, \*DESCR);
 	    print_clb_height($clbheight{$chip}, \*DESCR);
 	} elsif ($type =~ /^DSP48$/) {
 	    # They follow the CLB on the width
-	    print_dsp_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_clb_height($clbheight{$chip},\*DESCR);
-	} elsif ($type =~ /^GCLK$/) {
-	    print_gclk_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
+	    print_dsp_width($brams{$chip}, $clbwidth{$chip} - 1, \*DESCR);
 	    print_clb_height($clbheight{$chip},\*DESCR);
 	} elsif ($type =~ /^BRAM$/) {
-	    print_bram_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
+	    print_bram_width($brams{$chip}, $clbwidth{$chip} - 1, \*DESCR);
 	    print_clb_height($clbheight{$chip},\*DESCR);
 	}
 	print DESCR "type=$C_enum{$type}\n";
@@ -131,52 +130,14 @@ sub print_clb_height
     print $output "y=$y_offset;$last_y\n";
 }
 
-#   switch (type) {
-#   case V4_TYPE_CLB:
-#     {
-#       const int col = addr->col;
-#       const unsigned end = bitdescr[chiptype].col_count[V4_TYPE_CLB] - 1;
-#       const unsigned middle = end >> 1;
-#       const unsigned dsp = DSP_V4_OF_END(end);
-#       /* Let's be more intelligent.
-# 	 Middle, extremities: IO.
-# 	 DSP is at fixed position and the rest is CLB */
-#       if (col == 0 || col == end || col == middle)
-# 	return V4C_IOB;
-#       if (col == (middle + 1))
-# 	return V4C_GCLK;
-#       if (col == dsp)
-# 	return V4C_DSP48;
-#       return V4C_CLB;
-#     }
-
-#   case V4C_IOB:
-#     return 3;
-#   case V4C_GCLK:
-#     return 1;
-#   case V4C_DSP48:
-#     return 1;
-#   case V4C_CLB:
-#     return col_count[V4_TYPE_CLB] - 5;
-
 sub print_dsp_width
 {
     my ($nbrams, $ncols, $output) = @_;
     print $output "x=";
     my $inter = $ncols;
     #define DSP_V4_OF_END(x) ((x) > 50 ? 13 : 9)
-    my $dsp_offset = $ncols > 50 ? 13 : 9;
+    my $dsp_offset = $ncols > 50 ? (1+12+2) : (1+8+1);
     print_interval($output,$dsp_offset,$dsp_offset+1);
-    print $output "\n";
-}
-
-sub print_gclk_width
-{
-    my ($nbrams, $ncols, $output) = @_;
-    print $output "x=";
-    my $inter = $ncols;
-    my $gclk_offset = ($ncols >> 1) + 1;
-    print_interval($output,$gclk_offset,$gclk_offset+1);
     print $output "\n";
 }
 
@@ -184,9 +145,10 @@ sub print_iob_width
 {
     my ($nbrams, $ncols, $output) = @_;
     print $output "x=";
-    my $inter = $ncols;
-    my $iob_offset = $ncols >> 1;
-    my $endcol = $ncols - 1;
+    my $inter = $ncols + $nbrams;
+    #XXX Not sure about this !
+    my $iob_offset = ($inter) >> 1;
+    my $endcol = $inter - 1;
     print_interval($output,0,1);
     print_sep($output);
     print_interval($output,$iob_offset,$iob_offset+1);
@@ -201,22 +163,66 @@ sub print_clb_width
     print $output "x=";
     my $inter = $ncols;
 
+    #BRAM is present after 4 clbs, then before 4 clbs
+
     #We lack bram for now, will be done later
-    my $dsp_offset = $ncols > 50 ? 13 : 9;
-    my $iob_offset = $ncols >> 1;
+    my $dsp_offset = $ncols > 50 ? 13+2 : 9+1;
+    my $iob_offset = ($ncols+$nbrams) >> 1;
+    my $endcol = $ncols+$nbrams-1;
+    my $running_start;
+
+    #up to first bram
+    print_interval($output,1,5);
+    print_sep($output);
+    $running_start = 6;
+
+    # Second bram row
+    if ($nbrams >= 5) {
+	print_interval($output, 6, 10);
+	print_sep($output);
+	$running_start = 11;
+    }
 
     # Up to the first DSP
-    print_interval($output,1,$dsp_offset);
+    print_interval($output,$running_start,$dsp_offset);
     print_sep($output);
+    $running_start = $dsp_offset+1;
+
+    #possibly interrupted by brams again, after the DSP
+    if ($nbrams >= 6) {
+	print_interval($output, $running_start, $running_start+4);
+	$running_start = $running_start + 5;
+    }
 
     # Then up to the first IOB / GCLK
-    print_interval($output,$dsp_offset+1,$iob_offset);
+    print_interval($output,$running_start,$iob_offset);
+    print_sep($output);
+    $running_start = $iob_offset+1;
+
+    # More complex
+    if ($nbrams >= 7) {
+	print_interval($output, $running_start, $endcol - 20);
+	print_sep($output);
+
+	print_interval($output, $endcol - 19, $endcol - 15);
+	print_sep($output);
+
+    } elsif ($nbrams >= 5) {
+	print_interval($output,$running_start,$endcol - 15);
+	print_sep($output);
+	$running_start = $endcol - 15 + 1;
+    }
+
+    # The last two bram colomn are always present
+    print_interval($output, $running_start, $endcol - 10);
+    print_sep($output);
+
+    print_interval($output, $endcol - 9, $endcol - 5);
     print_sep($output);
 
     # Then up to the END
-    print_interval($output,$iob_offset+2,$ncols-1);
+    print_interval($output,$endcol - 4,$endcol);
 
-    # But the brams !!!! ???? !!!!
     print $output "\n";
 }
 
@@ -225,8 +231,42 @@ sub print_clb_width
 sub print_bram_width
 {
     my ($nbrams, $ncols, $output) = @_;
+    my $endcol = $ncols + $nbrams;
     print $output "x=";
-    print_interval($output,$ncols,$ncols+$nbrams);
+
+    #First bram row
+    print_interval($output,5,6);
+    print_sep($output);
+
+    # Second bram row
+    if ($nbrams >= 5) {
+	print_interval($output, 10, 11);
+	print_sep($output);
+    }
+
+    if ($nbrams >= 6) {
+	print_interval($output, 20, 21);
+	print_sep($output);
+    }
+
+    # Middle
+    if ($nbrams >= 7) {
+	print_interval($output, $endcol-21, $endcol-20);
+	print_sep($output);
+    }
+
+    if ($nbrams >= 5) {
+	print_interval($output, $endcol-16, $endcol-15);
+	print_sep($output);
+    }
+
+    #Last two bram rows
+    print_interval($output,$endcol-11,$endcol-10);
+    print_sep($output);
+
+    print_interval($output,$endcol-6,$endcol-5);
+
+#    print_interval($output,$ncols,$ncols+$nbrams);
     print $output "\n";    
 }
 
