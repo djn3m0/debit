@@ -153,8 +153,13 @@ static const gchar *basedbnames[NR_SITE_TYPE] = {
 
 #elif defined(VIRTEX4)
 
+/* XXX
+   Should be indexed on Interconnect type, not on site type -- and
+   we should have an Interconnect type -> site types concerned
+*/
+
 static const gchar *basedbnames[NR_SITE_TYPE] = {
-  [SITE_TYPE_NEUTRAL] = "int",
+  [CLB] = "int",
 /*   [IOB] = "iob", */
 /*   [CLB] = "clb", */
 /*   [DSP48] = "dsp48", */
