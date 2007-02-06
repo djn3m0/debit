@@ -64,6 +64,30 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
  * Untyped query functions
  */
 
+/*
+ * Helper function
+ */
+static unsigned char
+mirror_byte(const unsigned char dat) {
+  unsigned char res = 0;
+  int i;
+  for (i = 0; i < 8; i++)
+    if (dat & (1 << i))
+      res |= (1 << (7-i));
+  return res;
+}
+/* static unsigned char */
+/* mirror_byte(const unsigned char dat) { */
+/*   return ((dat * 0x0802LU & 0x22110LU) | (dat * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16; */
+/* } */
+
+/* static unsigned char */
+/* mirror_byte(const unsigned char dat) { */
+/*   unsigned result = (dat >> 4) | (dat << 4); */
+/*   result = ((result & 0xcc) >> 2 ) | ((result & 0x33) << 2); */
+/*   result = ((result & 0xaa) >> 1 ) | ((result & 0x55) << 1); */
+/*   return result; */
+/* } */
 
 /** \brief Get one config byte from a site
  *
@@ -95,15 +119,18 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 
   const guint frame_x = byte_x(cfgbyte);
   /* Middle word contains SECDED and clk information, so we skip it sometimes */
-  const guint frame_y = row_local * 10 + row_second_half + byte_y(cfgbyte);
+  guint frame_y = row_local * 10 + row_second_half + byte_y(cfgbyte);
   const gchar *frame;
+  unsigned char byte;
 
-  //g_print("row is %i for (%i,%i), mid is %i\n", row, x, y, ymid);
-  row = top ? row : row - ymid;
-
+  /* When top is one, the row numbering is inverted, and bits are mirrored */
+  row = top ? (ymid - 1 - row) : row - ymid;
   frame = get_frame(bitstream, type_bits[site_type].col_type, row, top, x, frame_x);
+  frame_y = top ? (164 - 1 - frame_y) : frame_y;
+
   /* The adressing here is a bit strange, due to the frame byte order */
-  return frame[frame_y ^ 0x3];
+  byte = frame[frame_y ^ 0x3];
+  return top ? mirror_byte(byte) : byte;
 }
 
 /** \brief Get some (up to 4) config bytes from a site
