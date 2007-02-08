@@ -63,19 +63,22 @@ static void
 print_pip_iter(gpointer data,
 	       wire_atom_t start, wire_atom_t end,
 	       site_ref_t site) {
-  pip_db_t *pipdb = data;
-  wire_db_t *wiredb = pipdb->wiredb;
+  bitstream_analyzed_t *bitstream = data;
+  wire_db_t *wiredb = bitstream->pipdb->wiredb;
+  chip_descr_t *chip = bitstream->chip;
+  unsigned index = site_index(chip, site);
+  unsigned width = chip->width;
   gchar site_buf[32];
-  /* XXX */
-  sprint_csite(site_buf, site, 0, 0);
+
+  sprint_csite(site_buf, site, index % width, index / width);
   g_printf("pip %s %s -> %s\n", site_buf,
 	   wire_name(wiredb,start), wire_name(wiredb,end));
 }
 
 static void
-print_all_pips(const pip_db_t *pipdb, const chip_descr_t *chip,
+print_all_pips(const bitstream_analyzed_t *bitstream,
 	       const pip_parsed_dense_t *pipdat) {
-  iterate_over_bitpips(pipdat, chip, print_pip_iter, (gpointer)pipdb);
+  iterate_over_bitpips(pipdat, bitstream->chip, print_pip_iter, (gpointer)bitstream);
 }
 
 static void
@@ -119,7 +122,7 @@ print_all_bram(const chip_descr_t *chip,
  */
 
 void dump_pips(bitstream_analyzed_t *bitstream) {
-  print_all_pips(bitstream->pipdb, bitstream->chip, bitstream->pipdat);
+  print_all_pips(bitstream, bitstream->pipdat);
 }
 
 /** \brief Test function which dumps the bram data of a bitstream on

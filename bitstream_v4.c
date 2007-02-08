@@ -130,7 +130,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 
   /* The adressing here is a bit strange, due to the frame byte order */
   byte = frame[frame_y ^ 0x3];
-  return top ? mirror_byte(byte) : byte;
+  return top ? byte : mirror_byte(byte);
 }
 
 /** \brief Get some (up to 4) config bytes from a site
@@ -170,8 +170,8 @@ static inline gboolean
 query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
 			 const csite_descr_t *site,
 			 const guint cfgbit) {
-  const guchar cfgbyte_dat = query_bitstream_site_byte(bitstream, site, cfgbit >> 3);
-  const guint  cfgbyte_off = cfgbit & 7;
+  const guchar cfgbyte_dat = query_bitstream_site_byte(bitstream, site, byte_addr(cfgbit));
+  const guint  cfgbyte_off = bit_offset(cfgbit);
 
   if ((cfgbyte_dat >> cfgbyte_off) & 1)
     return TRUE;
