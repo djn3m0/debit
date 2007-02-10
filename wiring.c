@@ -274,7 +274,7 @@ get_wire_startpoint(const wire_db_t *wiredb,
     return FALSE;
 
   ep_site = translate_global_site(chipdb, sorig, -wo->dx, -wo->dy);
-  if (ep_site == NULL)
+  if (ep_site == SITE_NULL)
     return FALSE;
 
   *wtarget = ep;
@@ -292,12 +292,14 @@ get_wire_startpoint(const wire_db_t *wiredb,
 void
 sprint_spip(gchar *buf,
 	    const wire_db_t *wdb,
+	    const chip_descr_t *chip,
 	    const sited_pip_t *spip) {
   const gchar *start = wire_name(wdb, spip->pip.source);
   const gchar *end = wire_name(wdb, spip->pip.target);
+  const csite_descr_t *site = get_site(chip, spip->site);
   gchar site_buf[30];
   /* XXX */
-  sprint_csite(site_buf, spip->site, 0, 0);
+  sprint_csite(site_buf, site, 0, 0);
   sprintf(buf, "pip %s %s -> %s", site_buf, start, end);
 }
 

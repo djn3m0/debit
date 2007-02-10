@@ -33,7 +33,8 @@ typedef struct _site_descr {
    used for pointer arithmetic to get back to the site's global
    coordinates. Actually I should model this on the wiredb model and
    just have a uint16t here. Or choose something. */
-typedef const csite_descr_t *site_ref_t;
+typedef uint16_t site_ref_t;
+#define SITE_NULL ((site_ref_t)-1)
 
 typedef struct _chip_descr {
   unsigned width;
@@ -65,10 +66,8 @@ switch_of(switch_ref_t ref) {
 
 /* get a site index, in-order WRT iterate_over_sites */
 static inline unsigned
-site_index(const chip_descr_t *chip,
-	   const site_ref_t site) {
-  unsigned offset = ((csite_descr_t *)site) - chip->data;
-  return offset;
+site_index(const site_ref_t site) {
+  return site;
 }
 
 /* get a site by its global coordinates */
@@ -81,18 +80,24 @@ get_global_site(const chip_descr_t *chip,
   return &chip->data[y*width + x];
 }
 
+static inline csite_descr_t *
+get_site(const chip_descr_t *chip,
+	 const site_ref_t ref) {
+  return &chip->data[ref];
+}
+
 static inline site_ref_t
 translate_global_site(const chip_descr_t *chip,
 		      site_ref_t site, int dx, int dy) {
   unsigned width = chip->width;
-  unsigned offset = site - chip->data;
+  unsigned offset = site_index(site);
   unsigned x = offset % width;
   unsigned y = offset / width;
   unsigned newx = x+dx, newy = y+dy;
   /* check that we stay within bound */
   if (newx < chip->width && newy < chip->height)
-    return get_global_site(chip, newx, newy);
-  return NULL;
+    return newx + width * newy;
+  return SITE_NULL;
 }
 
 /* The returned string is allocated and should be freed */

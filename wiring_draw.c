@@ -157,7 +157,7 @@ draw_wire_iter(gpointer data,
   cairo_t *cr = iter->ctx->cr;
   const chip_descr_t *chip = iter->chip;
   unsigned width = chip->width;
-  unsigned index = site_index(chip, site);
+  unsigned index = site_index(site);
   double dx = (index % width) * SITE_WIDTH, dy = (index / width) * SITE_HEIGHT;
 
   /* These save / restore could be balanced so that we don't do them too
@@ -223,7 +223,7 @@ draw_wire_iter_limited(gpointer data,
   const chip_descr_t *chip = iter->chip;
   const site_area_t *area = iter->area;
   unsigned width = chip->width;
-  unsigned index = site_index(chip, site);
+  unsigned index = site_index(site);
   double dx = (index % width) * SITE_WIDTH, dy = (index / width) * SITE_HEIGHT;
 
   /* if we're not in range, skip it */

@@ -62,12 +62,13 @@ print_lut_data(const csite_descr_t *site, const guint16 data[]) {
 static void
 print_pip_iter(gpointer data,
 	       wire_atom_t start, wire_atom_t end,
-	       site_ref_t site) {
+	       site_ref_t site_ref) {
   bitstream_analyzed_t *bitstream = data;
-  wire_db_t *wiredb = bitstream->pipdb->wiredb;
-  chip_descr_t *chip = bitstream->chip;
-  unsigned index = site_index(chip, site);
-  unsigned width = chip->width;
+  const wire_db_t *wiredb = bitstream->pipdb->wiredb;
+  const chip_descr_t *chip = bitstream->chip;
+  const unsigned index = site_index(site_ref);
+  const unsigned width = chip->width;
+  const csite_descr_t *site = get_site(chip, site_ref);
   gchar site_buf[32];
 
   sprint_csite(site_buf, site, index % width, index / width);

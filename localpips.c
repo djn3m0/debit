@@ -783,7 +783,7 @@ get_interconnect_startpoint(const pip_db_t *pipdb,
 			    wire_atom_t *wire,
 			    const wire_atom_t orig,
 			    const site_ref_t site) {
-  unsigned stidx = site_index(chip, site);
+  unsigned stidx = site_index(site);
   unsigned *indexes = pipdat->site_index;
   unsigned start = indexes[stidx], end = indexes[stidx+1];
 
@@ -801,9 +801,9 @@ get_interconnect_startpoint(const pip_db_t *pipdb,
 pip_t *
 pips_of_site_dense(const pip_parsed_dense_t *pipdat,
 		   const chip_descr_t *chip,
-		   const csite_descr_t *site,
+		   const site_ref_t site,
 		   gsize *size) {
-  unsigned stidx = site_index(chip, site);
+  unsigned stidx = site_index(site);
   unsigned *indexes = pipdat->site_index;
   unsigned start = indexes[stidx], end = indexes[stidx+1];
 
@@ -819,7 +819,7 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
 		     const chip_descr_t *chip,
 		     bitpip_iterator_t fun, gpointer data) {
   unsigned nsites = chip->width * chip->height;
-  site_ref_t site = chip->data;
+  site_ref_t site = 0;
   unsigned *indexes = pipdat->site_index;
   unsigned start = 0, i;
 
@@ -827,7 +827,7 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
     unsigned end = indexes[i+1];
     for ( ; start < end; start++) {
       pip_t *pip = &pipdat->bitpips[start];
-      debit_log(L_PIPS, "calling iterator for site %p", site);
+      debit_log(L_PIPS, "calling iterator for site #%i", site);
       fun(data, pip->source, pip->target, site);
     }
     start = end;
@@ -846,7 +846,7 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
 			     const chip_descr_t *chip,
 			     bitpip_iterator_t fun, gpointer data) {
   unsigned nsites = chip->width * chip->height;
-  site_ref_t site = chip->data;
+  site_ref_t site = 0;
   unsigned *indexes = pipdat->site_index;
   unsigned start = 0, i;
 
@@ -854,7 +854,7 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
     unsigned end = indexes[i+1];
     for ( ; start < end; start++) {
       pip_t *pip = &pipdat->bitpips[start];
-      debit_log(L_PIPS, "calling iterator for site %p", site);
+      debit_log(L_PIPS, "calling iterator for site #%i", site);
       fun(data, pip->source, pip->target, site);
     }
     start = end;

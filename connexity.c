@@ -28,7 +28,7 @@ static inline unsigned
 net_offset_of(const chip_descr_t *chip,
 	      const wire_db_t *wiredb,
 	      const sited_pip_t *spip) {
-  unsigned site_offset = site_index(chip, spip->site);
+  unsigned site_offset = site_index(spip->site);
   unsigned net_offset = spip->pip.source + site_offset * wiredb->dblen;
   debit_log(L_CONNEXITY, "returning net_offset value %i, site_offset %i", net_offset, site_offset);
   return net_offset;
@@ -228,6 +228,7 @@ void free_nets(nets_t *nets) {
 /* Printing function */
 struct _print_net {
   const wire_db_t *wiredb;
+  const chip_descr_t *chipdb;
 };
 
 static gboolean
@@ -235,8 +236,9 @@ print_wire(GNode *net,
 	   gpointer data) {
   struct _print_net *arg = data;
   const wire_db_t *wiredb = arg->wiredb;
+  const chip_descr_t *chip = arg->chipdb;
   gchar buf[64];
-  sprint_spip(buf, wiredb, net->data);
+  sprint_spip(buf, wiredb, chip, net->data);
   g_print("%s ,\n", buf);
   return FALSE;
 }
@@ -251,7 +253,7 @@ print_net(GNode *net, gpointer data) {
 void print_nets(nets_t *net,
 		const pip_db_t *pipdb,
 		const chip_descr_t *cdb) {
-  struct _print_net arg = { .wiredb = pipdb->wiredb, };
+  struct _print_net arg = { .wiredb = pipdb->wiredb, .chipdb = cdb };
   /* Iterate through nets */
   g_node_children_foreach (net->head, G_TRAVERSE_ALL, print_net, &arg);
 }

@@ -86,7 +86,8 @@ typedef struct _sited_pip {
   pip_t pip;
 } sited_pip_t;
 
-void sprint_spip(gchar *buf, const wire_db_t *wdb, const sited_pip_t *spip);
+void sprint_spip(gchar *buf, const wire_db_t *wdb, const chip_descr_t *chip,
+		 const sited_pip_t *spip);
 
 /* /\* \brief Fill a sited_wire_t from the origin component of a sited_pip_t */
 /*  *\/ */

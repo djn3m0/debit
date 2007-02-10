@@ -95,7 +95,7 @@ pip_t *pips_of_site(const pip_db_t *pipdb,
 
 pip_t *pips_of_site_dense(const pip_parsed_dense_t *dat,
 			  const chip_descr_t *chip,
-			  const csite_descr_t *site,
+			  const site_ref_t site,
 			  gsize *size);
 
 gboolean

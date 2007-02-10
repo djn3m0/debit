@@ -369,7 +369,7 @@ static const char *print_str[NR_SITE_TYPE] = {
 
 void
 sprint_csite(gchar *data, const csite_descr_t *site,
-	     unsigned gx, unsigned gy) {
+	     const unsigned gx, const unsigned gy) {
   const char *str = print_str[site->type];
   const site_print_t strtype = print_type[site->type];
   const guint x = site->type_coord.x + 1;
