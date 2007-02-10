@@ -49,6 +49,20 @@ typedef struct site_area {
   unsigned height;
 } site_area_t;
 
+typedef uint32_t switch_ref_t;
+#define SWITCH_LEN 8
+#define SWITCH_MASK ((1 << SWITCH_LEN) - 1)
+
+static inline unsigned
+site_of(switch_ref_t ref) {
+  return (ref >> SWITCH_LEN);
+}
+
+static inline unsigned
+switch_of(switch_ref_t ref) {
+  return (ref & SWITCH_MASK);
+}
+
 /* get a site index, in-order WRT iterate_over_sites */
 static inline unsigned
 site_index(const chip_descr_t *chip,
