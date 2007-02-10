@@ -37,5 +37,6 @@ void dump_sites(const bitstream_analyzed_t *nlz,
 void dump_pips(bitstream_analyzed_t *bitstream);
 void dump_luts(bitstream_analyzed_t *bitstream);
 void dump_bram(bitstream_analyzed_t *bitstream);
+void dump_nets(const bitstream_analyzed_t *bitstream);
 
 #endif /* _HAS_ANALYSIS_H */

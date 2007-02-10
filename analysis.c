@@ -156,6 +156,20 @@ typedef struct _dump_site {
   gchar *buffer;
 } dump_site_t;
 
+/** \brief Test function which dumps the nets of a bitstream to
+ * stdout.
+ *
+ * @param nlz the parsed bitstream
+ */
+
+void dump_nets(const bitstream_analyzed_t *nlz) {
+  nets_t * nets;
+  /* Then do some work */
+  nets = build_nets(nlz->pipdb, nlz->chip, nlz->pipdat);
+  print_nets(nets, nlz->pipdb, nlz->chip);
+  free_nets(nets);
+}
+
 static void
 dump_site_iter(unsigned site_x, unsigned site_y,
 	       csite_descr_t *site, gpointer dat) {
@@ -274,7 +288,6 @@ bitstream_analyzed_t *
 analyze_bitstream(bitstream_parsed_t *bitstream,
 		  const gchar *datadir) {
   bitstream_analyzed_t *anal = g_new0(bitstream_analyzed_t, 1);
-/*   nets_t * nets; */
   int err;
 
   err = fill_analysis(anal, bitstream, datadir);
@@ -282,11 +295,6 @@ analyze_bitstream(bitstream_parsed_t *bitstream,
     g_free(anal);
     return NULL;
   }
-
-  /* Then do some work */
-/*   nets = build_nets(anal->pipdb, anal->chip, anal->pipdat); */
-/*   print_nets(nets, anal->pipdb, anal->chip); */
-/*   free_nets(nets); */
 
   return anal;
 }

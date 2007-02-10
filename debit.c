@@ -34,6 +34,7 @@ static gboolean unkdump = FALSE;
 static gboolean pipdump = FALSE;
 static gboolean lutdump = FALSE;
 static gboolean bramdump = FALSE;
+static gboolean netdump = FALSE;
 
 static gchar *ifile = NULL;
 static gchar *odir = "";
@@ -65,7 +66,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
   if (unkdump)
     design_dump_frames(bit, odir);
 
-  if (sitedump || pipdump || lutdump || bramdump) {
+  if (sitedump || pipdump || lutdump || bramdump || netdump) {
     bitstream_analyzed_t *analysis = analyze_bitstream(bit, datadir);
     if (analysis == NULL)
       goto out_free;
@@ -80,6 +81,8 @@ debit_file(gchar *input_file, gchar *output_dir) {
       dump_luts(analysis);
     if (bramdump)
       dump_bram(analysis);
+    if (netdump)
+      dump_nets(analysis);
 
     free_analysis(analysis);
   }
@@ -109,6 +112,7 @@ static GOptionEntry entries[] =
   {"pipdump", 'p', 0, G_OPTION_ARG_NONE, &pipdump, "Dump pips in the bitstream", NULL},
   {"lutdump", 'l', 0, G_OPTION_ARG_NONE, &lutdump, "Dump lut data from the bitstream", NULL},
   {"bramdump", 'b', 0, G_OPTION_ARG_NONE, &bramdump, "Dump bram data from the bitstream", NULL},
+  {"netdump", 'n', 0, G_OPTION_ARG_NONE, &netdump, "Dump nets rebuilt from the bitstream (experimental)", NULL},
   { NULL }
 };
 
