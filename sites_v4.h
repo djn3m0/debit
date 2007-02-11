@@ -9,6 +9,7 @@
 typedef enum _switch_type {
   SW_NONE = 0,
   SW_INT, SW_CLB,
+  SW_IOB, SW_DSP48,
   NR_SWITCH_TYPE,
 } __attribute__((packed)) switch_type_t;
 
@@ -23,6 +24,8 @@ typedef enum _site_type {
 static const uint64_t sw_of_type[NR_SITE_TYPE] = {
   [SITE_TYPE_NEUTRAL] = 0,
   SIMPLE_SITE(CLB),
+  SIMPLE_SITE(IOB),
+  SIMPLE_SITE(DSP48),
 };
 #undef SIMPLE_SITE
 
