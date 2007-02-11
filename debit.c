@@ -61,10 +61,10 @@ debit_file(gchar *input_file, gchar *output_dir) {
 
   /* Have some action */
   if (framedump)
-    design_write_frames(bit, odir);
+    design_write_frames(bit, output_dir);
 
   if (unkdump)
-    design_dump_frames(bit, odir);
+    design_dump_frames(bit, output_dir);
 
   if (sitedump || pipdump || lutdump || bramdump || netdump) {
     bitstream_analyzed_t *analysis = analyze_bitstream(bit, datadir);
@@ -74,7 +74,7 @@ debit_file(gchar *input_file, gchar *output_dir) {
 /*     print_chip(analysis->chip); */
 
     if (sitedump)
-      dump_sites(analysis, odir, suffix);
+      dump_sites(analysis, output_dir, suffix);
     if (pipdump)
       dump_pips(analysis);
     if (lutdump)
@@ -113,7 +113,7 @@ static GOptionEntry entries[] =
   {"lutdump", 'l', 0, G_OPTION_ARG_NONE, &lutdump, "Dump lut data from the bitstream", NULL},
   {"bramdump", 'b', 0, G_OPTION_ARG_NONE, &bramdump, "Dump bram data from the bitstream", NULL},
   {"netdump", 'n', 0, G_OPTION_ARG_NONE, &netdump, "Dump nets rebuilt from the bitstream (experimental)", NULL},
-  { NULL }
+  { NULL, '\0', 0, 0, 0, NULL, NULL }
 };
 
 int

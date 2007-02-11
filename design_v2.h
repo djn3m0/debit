@@ -38,8 +38,8 @@ typedef struct _chip_struct {
   v2_id_t chip;
   guint32 idcode;
   guint32 framelen;
-  const int col_count[V2C__NB_CFG];
-  const int frame_count[V2C__NB_CFG];
+  const unsigned col_count[V2C__NB_CFG];
+  const unsigned frame_count[V2C__NB_CFG];
 } chip_struct_t;
 
 /*
@@ -133,8 +133,8 @@ const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
 			    const guint index,
 			    const guint frame) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
-  const int *col_count = chip_struct->col_count;
-  const int *frame_count = chip_struct->frame_count;
+  const unsigned *col_count = chip_struct->col_count;
+  const unsigned *frame_count = chip_struct->frame_count;
   g_assert(type < V2C__NB_CFG);
   g_assert(index < col_count[type]);
   g_assert(frame < frame_count[type]);

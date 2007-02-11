@@ -25,7 +25,7 @@ parse_header(const gchar *buf, const size_t buf_len) {
      reverse-engeneer the very first option */
   while (*buf != FILENAME) {
     buf++;
-    if (buf - start > buf_len)
+    if (buf > start + buf_len)
       return -1;
   }
 

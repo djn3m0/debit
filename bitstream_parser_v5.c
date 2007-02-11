@@ -254,13 +254,10 @@ typedef struct _bitstream_parser {
 } bitstream_parser_t;
 
 /*
- * Returns the length, in words, of a frame, according to the flr value
+ * Length, in words, of a frame.
  */
 
-static inline guint
-frame_length(const bitstream_parser_t *parser) {
-  return 41;
-}
+#define frame_length 41
 
 /***
  * Raw register IO
@@ -336,6 +333,7 @@ typed_frame_name(char *buf, unsigned buf_len,
 		 const unsigned type,
 		 const unsigned index,
 		 const unsigned frameid) {
+  (void) buf; (void) buf_len; (void) type; (void) index; (void) frameid;
 }
 
 /***
@@ -526,12 +524,11 @@ default_register_write(bitstream_parser_t *parser,
 static
 void record_frame(bitstream_parsed_t *parsed,
 		  bitstream_parser_t *bitstream,
-		  const guint32 myfar,
-		  const unsigned far_offset) {
+		  const guint32 myfar) {
   const char *dataframe = bitstream->last_frame;
   frame_record_t framerec;
   framerec.far = myfar;
-  framerec.framelen = 41;
+  framerec.framelen = frame_length;
   framerec.frame = dataframe;
 
   /* Check the frame's Hamming Code */
@@ -560,6 +557,7 @@ void
 iterate_over_frames(const bitstream_parsed_t *parsed,
 		    frame_iterator_t iter, void *itdat) {
   /* Iterate over the whole thing */
+  (void) parsed; (void) iter; (void) itdat;
   return;
 }
 
@@ -583,24 +581,22 @@ handle_fdri_write(bitstream_parsed_t *parsed,
 		  const unsigned length) {
   bytearray_t *ba = &parser->ba;
   const gchar *frame = bytearray_get_ptr(ba);
-  const guint frame_len = frame_length(parser);
   guint i, nrframes;
-  guint32 last_far, last_far_offset;
+  guint32 last_far = 0;
 
   /* Frame length writes must be a multiple of the flr length */
-  if (length % frame_len) {
+  if (length % frame_length) {
     debit_log(L_BITSTREAM,"%i bytes in FDRI write, "
 	      "which is inconsistent with the FLR value %i",
-	      length, frame_len);
+	      length, frame_length);
     return -1;
   }
 
-  nrframes = length / frame_len;
+  nrframes = length / frame_length;
 
   /* We handle here a complete series of writes, so that we have
      the ability to see the start and end frames */
   last_far = register_read(parser, FAR);
-  last_far_offset = parser->far_offset;
 
   for (i = 0; i < nrframes; i++) {
 
@@ -610,14 +606,13 @@ handle_fdri_write(bitstream_parsed_t *parsed,
     if (i != 0)
       /* flush the previous frame into the frame array with the previous
 	 FAR address */
-      record_frame(parsed, parser, last_far, last_far_offset);
+      record_frame(parsed, parser, last_far);
 
     last_far = register_read(parser, FAR);
-    last_far_offset = parser->far_offset;
     parser->last_frame = frame;
 
     far_increment(parser);
-    frame += frame_len * sizeof(guint32);
+    frame += frame_length * sizeof(guint32);
   }
 
   debit_log(L_BITSTREAM,"%i frames written to fdri", i);
@@ -633,7 +628,7 @@ handle_cmd_write(bitstream_parsed_t *parsed,
   switch(cmd) {
   case MFW:
     debit_log(L_BITSTREAM,"Executing multi-frame write");
-    record_frame(parsed, parser, register_read(parser, FAR), parser->far_offset);
+    record_frame(parsed, parser, register_read(parser, FAR));
     break;
   case RCRC:
     debit_log(L_BITSTREAM,"Resetting CRC");
@@ -762,7 +757,7 @@ read_next_token(bitstream_parsed_t *parsed,
 		bitstream_parser_t *parser) {
   gint state = parser->state;
   bytearray_t *ba = &parser->ba;
-  int offset = 1;
+  unsigned offset = 1;
   int err = 0;
 
   print_parser_state(parser);

@@ -86,6 +86,8 @@ static void
 print_lut_iter(unsigned site_x, unsigned site_y,
 	       csite_descr_t *site, gpointer dat) {
   bitstream_parsed_t *bitstream = dat;
+  (void) site_x;
+  (void) site_y;
   guint16 luts[4];
   query_bitstream_luts(bitstream, site, luts);
   print_lut_data(site,luts);

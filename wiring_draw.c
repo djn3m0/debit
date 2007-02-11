@@ -284,6 +284,7 @@ draw_cairo_wires(cairo_t *cr, const bitstream_analyzed_t *nlz) {
 
 void draw_wires_by_net(const drawing_context_t *ctx) {
   // iterate_over_nets
+  (void) ctx;
   return;
 }
 

@@ -433,6 +433,9 @@ typed_frame_name(char *buf, unsigned buf_len,
 int
 snprintf_far(char *buf, const size_t buf_len,
 	     const uint32_t hwfar) {
+  (void) buf;
+  (void) buf_len;
+  (void) hwfar;
   return 0;
 }
 
@@ -457,7 +460,7 @@ _type_of_far(const bitstream_parser_t *bitstream,
   switch(ba) {
   case BA_TYPE_CLB: {
     v2_id_t chiptype = bitstream->type;
-    const int *col_count = bitdescr[chiptype].col_count;
+    const unsigned *col_count = bitdescr[chiptype].col_count;
     int nclb = col_count[V2C_CLB];
     int mja = addr->mja;
 
@@ -526,7 +529,7 @@ static inline void
 _far_increment_mja(bitstream_parser_t *bitstream,
 		   sw_far_t *addr, int type) {
   v2_id_t chiptype = bitstream->type;
-  const int *col_count = bitdescr[chiptype].col_count;
+  const unsigned *col_count = bitdescr[chiptype].col_count;
   guint mja;
 
   addr->mja += 1;
@@ -543,7 +546,7 @@ static inline void
 _far_increment_mna(bitstream_parser_t *bitstream,
 		   sw_far_t *addr) {
   v2_id_t chiptype = bitstream->type;
-  const int *frame_count = bitdescr[chiptype].frame_count;
+  const unsigned *frame_count = bitdescr[chiptype].frame_count;
   int type;
 
   addr->mna += 1;
@@ -631,8 +634,8 @@ void record_frame(bitstream_parsed_t *parsed,
 static void
 alloc_indexer(bitstream_parsed_t *parsed) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
-  const int *col_count = chip_struct->col_count;
-  const int *frame_count = chip_struct->frame_count;
+  const unsigned *col_count = chip_struct->col_count;
+  const unsigned *frame_count = chip_struct->frame_count;
 
   gsize total_size = 0;
   gsize type_offset = 0;
@@ -673,8 +676,8 @@ void
 iterate_over_frames(const bitstream_parsed_t *parsed,
 		    frame_iterator_t iter, void *itdat) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
-  const int *col_counts = chip_struct->col_count;
-  const int *frame_counts = chip_struct->frame_count;
+  const unsigned *col_counts = chip_struct->col_count;
+  const unsigned *frame_counts = chip_struct->frame_count;
   guint type, index, frame;
 
   /* Iterate over the whole thing */
@@ -694,6 +697,9 @@ iterate_over_frames(const bitstream_parsed_t *parsed,
 
 void iterate_over_unk_frames(const bitstream_parsed_t *parsed,
 			     frame_unk_iterator_t iter, void *itdat) {
+  (void) parsed;
+  (void) iter;
+  (void) itdat;
   return;
 }
 
@@ -888,12 +894,12 @@ print_parser_state(const bitstream_parser_t *parser) {
  * @returns the number of words read
  */
 
-static gint
+static int
 read_next_token(bitstream_parsed_t *parsed,
 		bitstream_parser_t *parser) {
   gint state = parser->state;
   bytearray_t *ba = &parser->ba;
-  int offset = 1;
+  unsigned offset = 1;
   int err = 0;
 
   print_parser_state(parser);

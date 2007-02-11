@@ -202,6 +202,9 @@ init_site_coord(unsigned site_x, unsigned site_y,
   gint x = count->x, y = count->y, y_global = count->y_global;
   gboolean newline = y_global < (int)site_y ? TRUE : FALSE;
 
+  (void) site_x;
+  (void) site_y;
+
   if (newline) {
     y++;
     x = 0;

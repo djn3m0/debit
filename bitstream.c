@@ -172,7 +172,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const gint y_offset = type_bits[site_type].y_offset;
 
   /* site offset in the y axis -- inverted. Should not be done here maybe */
-  const guint y_type_offset = (y_offset >= 0) ? y_offset : (flen + y_offset);
+  const guint y_type_offset = (y_offset >= 0) ? (unsigned)y_offset : (flen + y_offset);
   const off_t site_off = y * y_width + y_type_offset;
 
   /* offset in-site. only this really needs to be computed locally */
@@ -334,6 +334,10 @@ guint16
 query_bistream_config(const bitstream_parsed_t *bitstream,
 		      const site_t *site, const guint subsite,
 		      const property_t *prop) {
+  (void) bitstream;
+  (void) site;
+  (void) subsite;
+  (void) prop;
   return 0;
 }
 
@@ -405,6 +409,8 @@ const gchar *
 query_bitstream_bram_parity(const bitstream_parsed_t *bitstream,
 			    const site_t *site) {
   /* Actually this is only bit reordering */
+  (void) bitstream;
+  (void) site;
   return NULL;
 }
 
@@ -418,7 +424,7 @@ gsize
 query_bitstream_type_size(const bitstream_parsed_t *parsed,
 			  const site_type_t type) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
-  const int *frame_count = chip_struct->frame_count;
+  const unsigned *frame_count = chip_struct->frame_count;
   const type_bits_t *type_bit = &type_bits[type];
   return frame_count[type_bit->col_type] * type_bit->y_width;
 }

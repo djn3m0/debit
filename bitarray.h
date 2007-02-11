@@ -37,7 +37,7 @@ const gchar *bytearray_get_ptr(const bytearray_t *ba) {
 }
 
 static inline
-off_t bytearray_available(const bytearray_t *ba) {
+size_t bytearray_available(const bytearray_t *ba) {
   return ba->len - ba->pos;
 }
 

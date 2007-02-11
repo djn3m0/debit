@@ -280,7 +280,6 @@ egg_xildraw_pixmap_recompute (EggXildrawFace *xildraw)
     x_offset = gtk_adjustment_get_value(xildraw->hadjust) * zoom,
     y_offset = gtk_adjustment_get_value(xildraw->vadjust) * zoom;
   drawing_context_t *ctx = xildraw->ctx;
-  bitstream_analyzed_t *nlz = xildraw->nlz;
   cairo_t *cr;
   site_area_t range;
   double width = widget->allocation.width,
@@ -291,7 +290,7 @@ egg_xildraw_pixmap_recompute (EggXildrawFace *xildraw)
   set_cairo_context(ctx, cr);
 
   /* generate the patterns before clipping */
-  generate_patterns(ctx, nlz->chip);
+  generate_patterns(ctx);
 
   /* redraw on the pixmap */
   cairo_rectangle (cr, 0, 0, width, height);

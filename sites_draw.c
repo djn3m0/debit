@@ -213,7 +213,7 @@ draw_full_clb_pattern(drawing_context_t *ctx,
 }
 
 void
-generate_patterns(drawing_context_t *ctx, const chip_descr_t *chip) {
+generate_patterns(drawing_context_t *ctx) {
   /* redraw the thing at the right zoom level */
   ctx->site_sing_patterns[CLB] = draw_clb_pattern(ctx);
 }

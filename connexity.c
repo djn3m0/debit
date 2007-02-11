@@ -25,8 +25,7 @@ alloc_wire_table(const pip_db_t *pipdb, const chip_descr_t *chip) {
 
 /* Be dumb again */
 static inline unsigned
-net_offset_of(const chip_descr_t *chip,
-	      const wire_db_t *wiredb,
+net_offset_of(const wire_db_t *wiredb,
 	      const sited_pip_t *spip) {
   unsigned site_offset = site_index(spip->site);
   unsigned net_offset = spip->pip.source + site_offset * wiredb->dblen;
@@ -37,21 +36,19 @@ net_offset_of(const chip_descr_t *chip,
 static inline GNode *
 net_of(GNode **db,
        const wire_db_t *wiredb,
-       const chip_descr_t *chip,
        const sited_pip_t *pip) {
-  unsigned index = net_offset_of(chip, wiredb, pip);
+  unsigned index = net_offset_of(wiredb, pip);
   return db[index];
 }
 
 static inline GNode *
 net_register(GNode **db,
 	     const wire_db_t *wiredb,
-	     const chip_descr_t *chip,
 	     const sited_pip_t *pip) {
   //  sited_wire_t *newwire = g_new(sited_wire_t, 1);
   sited_pip_t *newpip = g_slice_new(sited_pip_t);
   GNode *added = g_node_new(newpip);
-  unsigned index = net_offset_of(chip, wiredb, pip);
+  unsigned index = net_offset_of(wiredb, pip);
   *newpip = *pip;
   db[index] = added;
   return added;
@@ -102,7 +99,7 @@ build_net_from(nets_t *nets,
 #endif
 
     /* make a node out of the sited pip and register it, if needed */
-    father = net_of(nodetable, wiredb, cdb, &spip);
+    father = net_of(nodetable, wiredb, &spip);
     if (father) {
       debit_log(L_CONNEXITY, "GNode was already present");
       if (child) {
@@ -113,7 +110,7 @@ build_net_from(nets_t *nets,
     }
 
     /* the pip is not yet present in the table, so we add it */
-    father = net_register(nodetable, wiredb, cdb, &spip);
+    father = net_register(nodetable, wiredb, &spip);
     if (child) {
       debit_log(L_CONNEXITY, "linking to previous pip");
       g_node_prepend(father, child);
@@ -125,8 +122,7 @@ build_net_from(nets_t *nets,
     /* First, check that the wire is not locally-driven */
     /* Warning ! we're heavily relying on the fact that spip won't be
        touched if !found */
-    found = get_interconnect_startpoint(pipdb, cdb, pipdat,
-					&spip.pip.source, pip_source, spip.site);
+    found = get_interconnect_startpoint(pipdat, &spip.pip.source, pip_source, spip.site);
     if (found) {
       debit_log(L_CONNEXITY, "pip is locally driven");
       spip.pip.target = pip_source;
@@ -141,7 +137,7 @@ build_net_from(nets_t *nets,
     }
 
     /* ask for the startpoint */
-    found = get_interconnect_startpoint(pipdb, cdb, pipdat, &spip.pip.source, spip.pip.target, spip.site);
+    found = get_interconnect_startpoint(pipdat, &spip.pip.source, spip.pip.target, spip.site);
     if (!found) {
       debit_log(L_CONNEXITY, "leaving build_net_from, for lack of drivet at copper startpoint");
       return g_node_prepend(nets->head, father);

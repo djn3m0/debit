@@ -1,7 +1,7 @@
 SUBDIRS = data debian doc rpm windows altera utils xiledit desktop tests codes
 
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\"
-AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
+AM_CFLAGS	= -Wall -Werror -Wextra -Wunused -O3 -g
 
 SHARED_SRC	= bitarray.c bitarray.h \
 		bitheader.c bitheader.h \

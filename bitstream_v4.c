@@ -242,6 +242,9 @@ query_bitstream_luts(const bitstream_parsed_t *bitstream,
 		     const csite_descr_t *site, guint16 luts[]) {
   guint i;
 
+  (void) bitstream;
+  (void) site;
+
   /* query four luts. Bits are MSB first, but in reverse order */
   for (i=0; i<4; i++) {
     luts[i] = 0;
@@ -260,6 +263,10 @@ guint16
 query_bistream_config(const bitstream_parsed_t *bitstream,
 		      const site_t *site, const guint subsite,
 		      const property_t *prop) {
+  (void) bitstream;
+  (void) site;
+  (void) subsite;
+  (void) prop;
   return 0;
 }
 
@@ -275,6 +282,8 @@ query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
 			  const csite_descr_t *site) {
   /* Actually this is only bit reordering */
   guint16 *bram_data = g_new0(guint16,64*16);
+  (void) bitstream;
+  (void) site;
   return bram_data;
 }
 
@@ -289,6 +298,8 @@ const gchar *
 query_bitstream_bram_parity(const bitstream_parsed_t *bitstream,
 			    const site_t *site) {
   /* Actually this is only bit reordering */
+  (void) bitstream;
+  (void) site;
   return NULL;
 }
 

@@ -777,9 +777,7 @@ void free_pipdat(pip_parsed_dense_t *pipdat) {
  */
 
 gboolean
-get_interconnect_startpoint(const pip_db_t *pipdb,
-			    const chip_descr_t *chip,
-			    const pip_parsed_dense_t *pipdat,
+get_interconnect_startpoint(const pip_parsed_dense_t *pipdat,
 			    wire_atom_t *wire,
 			    const wire_atom_t orig,
 			    const site_ref_t site) {
@@ -800,7 +798,6 @@ get_interconnect_startpoint(const pip_db_t *pipdb,
 
 pip_t *
 pips_of_site_dense(const pip_parsed_dense_t *pipdat,
-		   const chip_descr_t *chip,
 		   const site_ref_t site,
 		   gsize *size) {
   unsigned stidx = site_index(site);
