@@ -153,13 +153,8 @@ static const gchar *basedbnames[NR_SWITCH_TYPE] = {
 
 #elif defined(VIRTEX4)
 
-/* XXX
-   Should be indexed on Interconnect type, not on site type -- and
-   we should have an Interconnect type -> site types concerned
-*/
-
 static const gchar *basedbnames[NR_SWITCH_TYPE] = {
-  [SW_CLB] = "int",
+  [SW_INT] = "int",
 /*   [IOB] = "iob", */
 /*   [CLB] = "clb", */
 /*   [DSP48] = "dsp48", */
@@ -875,10 +870,10 @@ iterate_over_switch_bitpips(const pip_parsed_dense_t *pipdat,
 
   for (i = 0; i < nsites * NR_SWITCH_TYPE; i+=NR_SWITCH_TYPE) {
     for (sw = 0; sw < NR_SWITCH_TYPE; sw++) {
-      unsigned end = indexes[i+NR_SWITCH_TYPE];
+      unsigned end = indexes[i+sw+1];
       for ( ; start < end; start++) {
 	pip_t *pip = &pipdat->bitpips[start];
-	debit_log(L_PIPS, "calling iterator for site #%i", site);
+	debit_log(L_PIPS, "calling iterator for site #%i[%i]", site, sw);
 	fun(data, pip->source, pip->target, switched_site(site, sw));
       }
     }

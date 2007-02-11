@@ -348,6 +348,10 @@ static const char *print_str[NR_SITE_TYPE] = {
   [BRAM] = "BRAMR%iC%i",
 };
 
+/* Dangerous, but working for now */
+static const char **sw_str = print_str;
+static const site_print_t *sw_type = print_type;
+
 #elif defined(VIRTEX4)
 
 static const site_print_t print_type[NR_SITE_TYPE] = {
@@ -360,12 +364,24 @@ static const site_print_t print_type[NR_SITE_TYPE] = {
 };
 
 static const char *print_str[NR_SITE_TYPE] = {
-  [SITE_TYPE_NEUTRAL] = "INT_X%iY%i",
+  [SITE_TYPE_NEUTRAL] = "NEUTRAL_X%iY%i",
   [IOB] = "IOB_X%iY%i",
   [CLB] = "CLB_X%iY%i",
   [DSP48] = "DSP48_X%iY%i",
   [GCLKC] = "GCLKC_X%iY%i",
   [BRAM] = "BRAM_X%iY%i",
+};
+
+static const site_print_t sw_type[NR_SWITCH_TYPE] = {
+  [SW_NONE] = PRINT_BOTH_INVERT,
+  [SW_INT] = PRINT_BOTH_INVERT,
+  [SW_CLB] = PRINT_BOTH_INVERT,
+};
+
+static const char *sw_str[NR_SWITCH_TYPE] = {
+  [SW_NONE] = "NONE_X%iY%i",
+  [SW_INT] = "INT_X%iY%i",
+  [SW_CLB] = "CLB_X%iY%i",
 };
 
 #endif
@@ -395,6 +411,42 @@ sprint_csite(gchar *data, const csite_descr_t *site,
     case PRINT_BOTH_INVERT:
       sprintf(data, str, gx, gy);
       break;
+  }
+}
+
+void
+sprint_switch(gchar *data, const chip_descr_t *chip,
+	      const switch_ref_t swb) {
+  const site_ref_t site_ref = site_of(swb);
+  const switch_type_t switch_ref = switch_of(swb);
+  const char *str = sw_str[switch_ref];
+  const site_print_t strtype = sw_type[switch_ref];
+
+  const csite_descr_t *site = get_site(chip, site_ref);
+  const guint x = site->type_coord.x + 1;
+  const guint y = site->type_coord.y + 1;
+
+  if (!str)
+    str = sw_str[SW_NONE];
+
+  switch (strtype) {
+  case PRINT_BOTH:
+    sprintf(data, str, y, x);
+    break;
+  case PRINT_X:
+    sprintf(data, str, x);
+    break;
+  case PRINT_Y:
+    sprintf(data, str, y);
+    break;
+    /* V4-style site naming needs global coordinates */
+  case PRINT_BOTH_INVERT: {
+    unsigned width = chip->width;
+    unsigned gx = site_ref % width,
+      gy = site_ref / width;
+    sprintf(data, str, gx, gy);
+  }
+    break;
   }
 }
 

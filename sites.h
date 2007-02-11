@@ -112,9 +112,10 @@ translate_global_site(const chip_descr_t *chip,
   return SITE_NULL;
 }
 
-/* The returned string is allocated and should be freed */
 void sprint_csite(gchar *data, const csite_descr_t *site,
 		  unsigned gx, unsigned gy);
+void sprint_switch(gchar *data, const chip_descr_t *chip,
+		   const switch_ref_t swb);
 
 typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
 				csite_descr_t *site, gpointer dat);
