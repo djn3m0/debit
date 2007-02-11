@@ -135,20 +135,20 @@ static void destroy_datatree(GNode *head);
 
 #if defined(VIRTEX2)
 
-static const gchar *basedbnames[NR_SITE_TYPE] = {
-  [CLB] = "clb",
-  [TTERM] = "tterm",
-  [BTERM] = "bterm",
-  [RTERM] = "rterm",
-  [LTERM] = "lterm",
-  [BIOI] = "bioi",
-  [TIOI] = "tioi",
-  [RIOI] = "rioi",
-  [LIOI] = "lioi",
-  [BRAM] = "bram",
-  [BTERMBRAM] = "btermbram",
-  [BIOIBRAM] = "bioibram",
-  [TIOIBRAM] = "tioibram",
+static const gchar *basedbnames[NR_SWITCH_TYPE] = {
+  [SW_CLB] = "clb",
+  [SW_TTERM] = "tterm",
+  [SW_BTERM] = "bterm",
+  [SW_RTERM] = "rterm",
+  [SW_LTERM] = "lterm",
+  [SW_BIOI] = "bioi",
+  [SW_TIOI] = "tioi",
+  [SW_RIOI] = "rioi",
+  [SW_LIOI] = "lioi",
+  [SW_BRAM] = "bram",
+  [SW_BTERMBRAM] = "btermbram",
+  [SW_BIOIBRAM] = "bioibram",
+  [SW_TIOIBRAM] = "tioibram",
 };
 
 #elif defined(VIRTEX4)
@@ -158,8 +158,8 @@ static const gchar *basedbnames[NR_SITE_TYPE] = {
    we should have an Interconnect type -> site types concerned
 */
 
-static const gchar *basedbnames[NR_SITE_TYPE] = {
-  [CLB] = "int",
+static const gchar *basedbnames[NR_SWITCH_TYPE] = {
+  [SW_CLB] = "int",
 /*   [IOB] = "iob", */
 /*   [CLB] = "clb", */
 /*   [DSP48] = "dsp48", */
@@ -189,7 +189,7 @@ read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
   GKeyFile *control = NULL, *data = NULL;
   guint i;
 
-  for (i = 0; i < NR_SITE_TYPE; i++) {
+  for (i = 0; i < NR_SWITCH_TYPE; i++) {
     const gchar *base = basedbnames[i];
 
     if (!base)
@@ -271,7 +271,7 @@ free_pipdb(pip_db_t *pipdb) {
   if (pipdb->wiredb)
     free_wiredb(pipdb->wiredb);
 
-  for(i = 0; i < NR_SITE_TYPE; i++) {
+  for(i = 0; i < NR_SWITCH_TYPE; i++) {
     GNode *tree = pipdb->memorydb[i];
     if (tree)
       destroy_datatree(tree);
@@ -631,22 +631,33 @@ examine_groupnode (GNode *node, gpointer data) {
 }
 
 static void
+__pips_of_switchbox_append(const pip_db_t *pipdb,
+			   const examine_endpoint_memory_t *exam_arg,
+			   const switch_type_t swbox) {
+  GNode *head = pipdb->memorydb[swbox];
+
+  if (!head)
+    return;
+
+  iterate_over_groups_memory(head, examine_groupnode, (void *)exam_arg);
+}
+
+static void
 __pips_of_site_append(const pip_db_t *pipdb,
 		      const bitstream_parsed_t *bitstream,
 		      const csite_descr_t *site,
 		      GArray *pips_array) {
-  GNode *head = pipdb->memorydb[site->type];
-  examine_endpoint_memory_t exam_arg = {
+  switch_type_t swbox = 0;
+  const examine_endpoint_memory_t exam_arg = {
     .bitstream = bitstream,
     .site = site,
     .array = pips_array,
     .wiredb = pipdb->wiredb,
   };
 
-  if (!head)
-    return;
-
-  iterate_over_groups_memory(head, examine_groupnode, &exam_arg);
+  for (swbox = 0; swbox < NR_SWITCH_TYPE; swbox++)
+    if (site_has_switch(site->type, swbox))
+      __pips_of_switchbox_append(pipdb, &exam_arg, swbox);
 }
 
 #endif /* __COMPILED_PIPSDB */
@@ -702,19 +713,38 @@ typedef struct _allpips_iter {
 } allpips_iter_t;
 
 static void
+__pips_of_site_append_index(const pip_db_t *pipdb,
+			    const bitstream_parsed_t *bitstream,
+			    const csite_descr_t *site,
+			    allpips_iter_t *data) {
+  unsigned *site_index = data->site_index;
+  GArray *pips_array = data->array;
+
+  switch_type_t swbox = 0;
+  const examine_endpoint_memory_t exam_arg = {
+    .bitstream = bitstream,
+    .site = site,
+    .array = pips_array,
+    .wiredb = pipdb->wiredb,
+  };
+
+  for (swbox = 0; swbox < NR_SWITCH_TYPE; swbox++) {
+    site_index[data->site_idx++] = pips_array->len;
+    if (site_has_switch(site->type, swbox))
+      __pips_of_switchbox_append(pipdb, &exam_arg, swbox);
+  }
+}
+
+static void
 _pips_of_bitstream_iter(unsigned site_x, unsigned site_y,
 			csite_descr_t *site, gpointer dat) {
   allpips_iter_t *data = dat;
-  unsigned *site_index = data->site_index;
-  GArray *pips_array = data->array;
 
   (void) site_x;
   (void) site_y;
 
-  /* Register the current pip index */
-  site_index[data->site_idx++] = pips_array->len;
   /* Get back our pips */
-  __pips_of_site_append(data->pipdb, data->bitstream, site, pips_array);
+  __pips_of_site_append_index(data->pipdb, data->bitstream, site, data);
 }
 
 int
@@ -724,7 +754,10 @@ _pips_of_bitstream(const pip_db_t *pipdb, const chip_descr_t *chipdb,
   /* This array will hold *all* of the pips */
   GArray *pips_array = g_array_new(FALSE, FALSE, sizeof(pip_t));
   gsize nsites = chipdb->width * chipdb->height;
-  unsigned *site_index = g_new0(unsigned, nsites + 1);
+  /* XXX This is obviously we bigger than needed. We need to redo this
+     part */
+  unsigned array_len = nsites * NR_SWITCH_TYPE;
+  unsigned *site_index = g_new0(unsigned, array_len + 1);
 
   allpips_iter_t arg = {
     .bitstream = bitstream,
@@ -736,7 +769,7 @@ _pips_of_bitstream(const pip_db_t *pipdb, const chip_descr_t *chipdb,
 
   iterate_over_sites(chipdb, _pips_of_bitstream_iter, &arg);
 
-  site_index[nsites] = pips_array->len;
+  site_index[array_len] = pips_array->len;
   debit_log(L_PIPS, "Got %i explicit pips", pips_array->len);
 
   fill->site_index = site_index;
@@ -781,9 +814,9 @@ get_interconnect_startpoint(const pip_parsed_dense_t *pipdat,
 			    wire_atom_t *wire,
 			    const wire_atom_t orig,
 			    const site_ref_t site) {
-  unsigned stidx = site_index(site);
+  unsigned stidx = site_index(site) * NR_SWITCH_TYPE;
   unsigned *indexes = pipdat->site_index;
-  unsigned start = indexes[stidx], end = indexes[stidx+1];
+  unsigned start = indexes[stidx], end = indexes[stidx+NR_SWITCH_TYPE];
 
   /* Do a run over the set of points for a site */
   while (start < end) {
@@ -800,9 +833,9 @@ pip_t *
 pips_of_site_dense(const pip_parsed_dense_t *pipdat,
 		   const site_ref_t site,
 		   gsize *size) {
-  unsigned stidx = site_index(site);
+  unsigned stidx = site_index(site) * NR_SWITCH_TYPE;
   unsigned *indexes = pipdat->site_index;
-  unsigned start = indexes[stidx], end = indexes[stidx+1];
+  unsigned start = indexes[stidx], end = indexes[stidx+NR_SWITCH_TYPE];
 
   *size = (end - start);
   return &pipdat->bitpips[start];
@@ -818,24 +851,30 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
   unsigned nsites = chip->width * chip->height;
   site_ref_t site = 0;
   unsigned *indexes = pipdat->site_index;
-  unsigned start = 0, i;
+  unsigned start = 0, i, sw;
 
-  for (i = 0; i < nsites; i++) {
-    unsigned end = indexes[i+1];
-    for ( ; start < end; start++) {
-      pip_t *pip = &pipdat->bitpips[start];
-      debit_log(L_PIPS, "calling iterator for site #%i", site);
-      fun(data, pip->source, pip->target, site);
+  for (i = 0; i < nsites * NR_SWITCH_TYPE; i+=NR_SWITCH_TYPE) {
+    for (sw = 0; sw < NR_SWITCH_TYPE; sw++) {
+      unsigned end = indexes[i+sw];
+      for ( ; start < end; start++) {
+	pip_t *pip = &pipdat->bitpips[start];
+	debit_log(L_PIPS, "calling iterator for site #%i", site);
+	fun(data, pip->source, pip->target, site);
+      }
     }
-    start = end;
     site++;
   }
 }
 
 /*
  * Complex iterator needed for optimal display.
- * A function is called on site change whose result is used to skip the
+ * A function is called on site change if the site has some pips.
+ * The result of the function is used to skip -- or not -- the
  * pip iteration (result is FALSE) or not (when result is TRUE).
+ *
+ * For pips, for instance, this can be used to compute only once
+ * the site string.
+ *
  */
 
 void
@@ -845,16 +884,17 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
   unsigned nsites = chip->width * chip->height;
   site_ref_t site = 0;
   unsigned *indexes = pipdat->site_index;
-  unsigned start = 0, i;
+  unsigned start = 0, i, sw;
 
-  for (i = 0; i < nsites; i++) {
-    unsigned end = indexes[i+1];
-    for ( ; start < end; start++) {
-      pip_t *pip = &pipdat->bitpips[start];
-      debit_log(L_PIPS, "calling iterator for site #%i", site);
-      fun(data, pip->source, pip->target, site);
+  for (i = 0; i < nsites * NR_SWITCH_TYPE; i+=NR_SWITCH_TYPE) {
+    for (sw = 0; sw < NR_SWITCH_TYPE; sw++) {
+      unsigned end = indexes[i+sw];
+      for ( ; start < end; start++) {
+	pip_t *pip = &pipdat->bitpips[start];
+	debit_log(L_PIPS, "calling iterator for site #%i", site);
+	fun(data, pip->source, pip->target, site);
+      }
     }
-    start = end;
     site++;
   }
 }

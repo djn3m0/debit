@@ -64,6 +64,12 @@ switch_of(switch_ref_t ref) {
   return (ref & SWITCH_MASK);
 }
 
+static inline int
+site_has_switch(const site_type_t site,
+		const switch_type_t sw) {
+  return (sw_of_type[site] & (1 << sw));
+}
+
 /* get a site index, in-order WRT iterate_over_sites */
 static inline unsigned
 site_index(const site_ref_t site) {

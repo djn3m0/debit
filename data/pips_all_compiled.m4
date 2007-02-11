@@ -22,7 +22,7 @@ define(_PIPS_DB,
 include(PIPSDB)dnl
 undefine(`_PIPS_DB')dnl
 
-static const pipdb_control_t dbrefs[NR_SITE_TYPE] = {
+static const pipdb_control_t dbrefs[NR_SWITCH_TYPE] = {
 define(_PIPS_DB,[$1] = { .pipctrl = pipdb_$1`,' .pipctrl_len = N_ELEMS(pipdb_$1)`,' .pipctrldata = ctrl_$1.control_tab`,' .pipdatadata = data_$1.data_tab }`,')dnl
 include(PIPSDB)dnl
 undefine(_PIPS_DB)dnl

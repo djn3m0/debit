@@ -7,7 +7,7 @@
 #define _SITES_V4_H
 
 typedef enum _switch_type {
-  SWITCH_TYPE_NEUTRAL = 0,
+  SW_NONE = 0,
   SW_INT, SW_CLB,
   NR_SWITCH_TYPE,
 } __attribute__((packed)) switch_type_t;

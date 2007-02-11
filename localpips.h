@@ -35,7 +35,7 @@ typedef struct pip_db {
 #else /* __COMPILED_PIPSDB */
 
 typedef struct pip_db {
-  GNode *memorydb[NR_SITE_TYPE];
+  GNode *memorydb[NR_SWITCH_TYPE];
   wire_db_t *wiredb;
 } pip_db_t;
 
