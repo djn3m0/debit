@@ -103,11 +103,20 @@ get_interconnect_startpoint(const pip_parsed_dense_t *pipdat,
 			    const wire_atom_t orig,
 			    const site_ref_t site);
 
-typedef void (*bitpip_iterator_t)(gpointer, wire_atom_t, wire_atom_t, site_ref_t);
+typedef void (*bitpip_iterator_t)(gpointer, wire_atom_t, wire_atom_t,
+				  site_ref_t);
+typedef void (*switchpip_iterator_t)(gpointer, wire_atom_t, wire_atom_t,
+				     const switch_ref_t);
 
 void
 iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
 		     const chip_descr_t *chip,
 		     bitpip_iterator_t fun, gpointer data);
+
+/* Iterator which adds the switch data */
+void
+iterate_over_switch_bitpips(const pip_parsed_dense_t *pipdat,
+			    const chip_descr_t *chip,
+			    switchpip_iterator_t fun, gpointer data);
 
 #endif /* _LOCALPIPS_H */

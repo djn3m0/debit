@@ -166,8 +166,7 @@ typedef struct _net_iterator {
 
 static void
 build_net_iter(gpointer data,
-	       wire_atom_t start,
-	       wire_atom_t end,
+	       wire_atom_t start, wire_atom_t end,
 	       site_ref_t site) {
   net_iterator_t *arg = data;
   sited_pip_t spip = {
@@ -175,6 +174,7 @@ build_net_iter(gpointer data,
     .pip = { .source = start,
 	     .target = end, }
   };
+
   build_net_from(arg->nets, arg->nodetable,
 		 arg->pipdb, arg->cdb, arg->pipdat, &spip);
 }

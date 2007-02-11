@@ -851,15 +851,35 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
   unsigned nsites = chip->width * chip->height;
   site_ref_t site = 0;
   unsigned *indexes = pipdat->site_index;
-  unsigned start = 0, i, sw;
+  unsigned start = 0, i;
 
   for (i = 0; i < nsites * NR_SWITCH_TYPE; i+=NR_SWITCH_TYPE) {
-    for (sw = 0; sw < NR_SWITCH_TYPE; sw++) {
-      unsigned end = indexes[i+sw];
+      unsigned end = indexes[i+NR_SWITCH_TYPE];
       for ( ; start < end; start++) {
 	pip_t *pip = &pipdat->bitpips[start];
 	debit_log(L_PIPS, "calling iterator for site #%i", site);
 	fun(data, pip->source, pip->target, site);
+      }
+      site++;
+  }
+}
+
+void
+iterate_over_switch_bitpips(const pip_parsed_dense_t *pipdat,
+			    const chip_descr_t *chip,
+			    switchpip_iterator_t fun, gpointer data) {
+  unsigned nsites = chip->width * chip->height;
+  site_ref_t site = 0;
+  unsigned *indexes = pipdat->site_index;
+  unsigned start = 0, i, sw;
+
+  for (i = 0; i < nsites * NR_SWITCH_TYPE; i+=NR_SWITCH_TYPE) {
+    for (sw = 0; sw < NR_SWITCH_TYPE; sw++) {
+      unsigned end = indexes[i+NR_SWITCH_TYPE];
+      for ( ; start < end; start++) {
+	pip_t *pip = &pipdat->bitpips[start];
+	debit_log(L_PIPS, "calling iterator for site #%i", site);
+	fun(data, pip->source, pip->target, switched_site(site, sw));
       }
     }
     site++;
@@ -884,17 +904,15 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
   unsigned nsites = chip->width * chip->height;
   site_ref_t site = 0;
   unsigned *indexes = pipdat->site_index;
-  unsigned start = 0, i, sw;
+  unsigned start = 0, i;
 
   for (i = 0; i < nsites * NR_SWITCH_TYPE; i+=NR_SWITCH_TYPE) {
-    for (sw = 0; sw < NR_SWITCH_TYPE; sw++) {
-      unsigned end = indexes[i+sw];
+      unsigned end = indexes[i+NR_SWITCH_TYPE];
       for ( ; start < end; start++) {
 	pip_t *pip = &pipdat->bitpips[start];
 	debit_log(L_PIPS, "calling iterator for site #%i", site);
 	fun(data, pip->source, pip->target, site);
       }
-    }
     site++;
   }
 }

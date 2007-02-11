@@ -54,14 +54,20 @@ typedef uint32_t switch_ref_t;
 #define SWITCH_LEN 8
 #define SWITCH_MASK ((1 << SWITCH_LEN) - 1)
 
-static inline unsigned
-site_of(switch_ref_t ref) {
+static inline site_ref_t
+site_of(const switch_ref_t ref) {
   return (ref >> SWITCH_LEN);
 }
 
-static inline unsigned
-switch_of(switch_ref_t ref) {
+static inline switch_type_t
+switch_of(const switch_ref_t ref) {
   return (ref & SWITCH_MASK);
+}
+
+static inline switch_ref_t
+switched_site(const site_ref_t site,
+	      const switch_type_t sw) {
+  return (site << SWITCH_LEN) | sw;
 }
 
 static inline int
