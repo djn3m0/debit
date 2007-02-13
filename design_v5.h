@@ -136,7 +136,7 @@ typedef struct _chip_struct {
   id_v5vlx_t chip;
   guint32 idcode;
   guint32 framelen;
-  const unsigned frame_count[V5C__NB_CFG];
+  const unsigned *frame_count;
   const unsigned col_count[V5__NB_COL_TYPES];
   unsigned bram_count;
   unsigned row_count;

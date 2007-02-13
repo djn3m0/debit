@@ -20,20 +20,23 @@
 #include "codes/crc32-c.h"
 #include "codes/xhamming.h"
 
+static const unsigned
+v5_frame_count[V5C__NB_CFG] = {
+  [V5C_IOB] = 54,
+  [V5C_CLB] = 36,
+  [V5C_DSP48] = 28,
+  [V5C_GCLK] = 4,
+  [V5C_BRAM_INT] = 30,
+  [V5C_BRAM] = 128,
+  [V5C_PAD] = 2,
+};
+
 static const
 chip_struct_t bitdescr[XC5VLX__NUM] = {
   /* FLR is always 41 for virtex-5 */
   [XC5VLX30] = { .idcode = 0x286E093,
 		 .framelen = 41,
-		 .frame_count = {
-		   [V5C_IOB] = 54,
-		   [V5C_CLB] = 36,
-		   [V5C_DSP48] = 28,
-		   [V5C_GCLK] = 4,
-		   [V5C_BRAM_INT] = 30,
-		   [V5C_BRAM] = 128,
-		   [V5C_PAD] = 2,
-		 },
+		 .frame_count = v5_frame_count,
 		 .col_count = {
 		   [V5_TYPE_CLB] = XC5VLX30_NFRAMES,
 		   [V5_TYPE_BRAM] = XC5VLX30_NBRAMS,
@@ -43,15 +46,7 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
   },
   [XC5VLX50] = { .idcode = 0x2896093,
 		 .framelen = 41,
-		 .frame_count = {
-		   [V5C_IOB] = 54,
-		   [V5C_CLB] = 36,
-		   [V5C_DSP48] = 28,
-		   [V5C_GCLK] = 4,
-		   [V5C_BRAM_INT] = 30,
-		   [V5C_BRAM] = 128,
-		   [V5C_PAD] = 2,
-		 },
+		 .frame_count = v5_frame_count,
 		 .col_count = {
 		   [V5_TYPE_CLB] = XC5VLX30_NFRAMES,
 		   [V5_TYPE_BRAM] = XC5VLX30_NBRAMS,
@@ -61,15 +56,7 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
   },
   [XC5VLX85] = { .idcode = 0x28AE093,
 		 .framelen = 41,
-		 .frame_count = {
-		   [V5C_IOB] = 54,
-		   [V5C_CLB] = 36,
-		   [V5C_DSP48] = 28,
-		   [V5C_GCLK] = 4,
-		   [V5C_BRAM_INT] = 30,
-		   [V5C_BRAM] = 128,
-		   [V5C_PAD] = 2,
-		 },
+		 .frame_count = v5_frame_count,
 		 .col_count = {
 		   [V5_TYPE_CLB] = XC5VLX85_NFRAMES,
 		   [V5_TYPE_BRAM] = XC5VLX85_NBRAMS,
@@ -79,15 +66,7 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
   },
   [XC5VLX110] = { .idcode = 0x28D6093,
 		  .framelen = 41,
-		  .frame_count = {
-		    [V5C_IOB] = 54,
-		    [V5C_CLB] = 36,
-		    [V5C_DSP48] = 28,
-		    [V5C_GCLK] = 4,
-		    [V5C_BRAM_INT] = 30,
-		    [V5C_BRAM] = 128,
-		    [V5C_PAD] = 2,
-		  },
+		  .frame_count = v5_frame_count,
 		  .col_count = {
 		    [V5_TYPE_CLB] = XC5VLX85_NFRAMES,
 		    [V5_TYPE_BRAM] = XC5VLX85_NBRAMS,
@@ -97,15 +76,7 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
   },
   [XC5VLX220] = { .idcode = 0x290C093,
 		  .framelen = 41,
-		  .frame_count = {
-		    [V5C_IOB] = 54,
-		    [V5C_CLB] = 36,
-		    [V5C_DSP48] = 28,
-		    [V5C_GCLK] = 4,
-		    [V5C_BRAM_INT] = 30,
-		    [V5C_BRAM] = 128,
-		    [V5C_PAD] = 2,
-		  },
+		  .frame_count = v5_frame_count,
 		  .col_count = {
 		    [V5_TYPE_CLB] = XC5VLX220_NFRAMES,
 		    [V5_TYPE_BRAM] = XC5VLX220_NBRAMS,
@@ -116,15 +87,7 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
   /* not verified, I cannot synthetize for this chip */
   [XC5VLX330] = { .idcode = 0x295C093,
 		  .framelen = 41,
-		  .frame_count = {
-		    [V5C_IOB] = 54,
-		    [V5C_CLB] = 36,
-		    [V5C_DSP48] = 28,
-		    [V5C_GCLK] = 4,
-		    [V5C_BRAM_INT] = 30,
-		    [V5C_BRAM] = 128,
-		    [V5C_PAD] = 2,
-		  },
+		  .frame_count = v5_frame_count,
 		  .col_count = {
 		    [V5_TYPE_CLB] = XC5VLX220_NFRAMES,
 		    [V5_TYPE_BRAM] = XC5VLX220_NBRAMS,
