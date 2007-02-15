@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl"
+   href="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+]>
+
+
+<article>
+
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="debit.xml" />
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="bit2pdf.xml" />
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="xiledit.xml" />
+
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="altera.xml" />
+
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="bitisolation.xml" />
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="diff_bin_pos.xml" />
+
+</article>
