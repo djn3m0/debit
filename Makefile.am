@@ -40,7 +40,7 @@ debit_v4_CFLAGS	= $(AM_CFLAGS) -DVIRTEX4 @GLIB_CFLAGS@
 debit_v4_LDADD	= @GLIB_LIBS@
 
 debit_v5_SOURCES	= $(SHARED_SRC)	debit.c \
-			bitstream_parser_v5.c \
+			sites_v5.h bitstream_parser_v5.c \
 			bitstream_v5.h design_v5.h \
 			codes/crc32-c.c codes/crc32-c.h \
 			bitstream_v4.c bitstream.h \
