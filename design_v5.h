@@ -214,9 +214,8 @@ const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
   (void) col_count;
 
   /* This is a double-lookup method */
-  return &parsed->frames[type][ index * (2 * rowcount * framecount) +
-				(top * rowcount + row) * framecount +
-				frame ];
+  return &parsed->frames[type][ framecount * ((index * 2 + top) * rowcount + row)
+				+ frame ];
 }
 
 static inline
