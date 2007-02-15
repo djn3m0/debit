@@ -395,7 +395,8 @@ far_is_pad(bitstream_parser_t *bitstream, guint32 myfar) {
    parameters. */
 
 static inline v5_design_col_t
-_type_of_far(bitstream_parser_t *bitstream, const sw_far_v5_t *addr) {
+_type_of_far(const bitstream_parser_t *bitstream,
+	     const sw_far_v5_t *addr) {
   const id_v5vlx_t chiptype = bitstream->type;
   const v5_col_type_t type = addr->type;
 
@@ -484,6 +485,56 @@ default_register_write(bitstream_parser_t *parser,
 
 }
 
+static inline unsigned
+typed_col_dumb(const v5_design_col_t *array,
+	       const unsigned col) {
+  const v5_design_col_t type = array[col];
+  unsigned i, count = 0;
+
+  for (i = 0; i < col; i++)
+    if (array[i] == type)
+      count++;
+
+  return count;
+}
+
+
+static inline unsigned
+_typed_col_of_far(const bitstream_parser_t *bitstream,
+		  const sw_far_v5_t *addr) {
+  const id_v5vlx_t chiptype = bitstream->type;
+  const v5_col_type_t type = addr->type;
+  const unsigned col = addr->col;
+
+  /* unlikely, move this out of main exec flow */
+  if (_far_is_pad(bitstream, addr))
+    return type;
+
+  switch (type) {
+  case V5_TYPE_CLB: {
+    const v5_design_col_t *typear = bitdescr[chiptype].col_type;
+    return typed_col_dumb(typear, col);
+  }
+  default:
+    return col;
+  }
+
+  return -1;
+}
+
+static inline const gchar **
+get_frameloc_from_far(const bitstream_parsed_t *parsed,
+		      const bitstream_parser_t *parser,
+		      const guint32 myfar) {
+  sw_far_v5_t far;
+  v5_design_col_t type;
+  unsigned typed_col;
+  fill_swfar_v5(&far, myfar);
+  type = _type_of_far(parser, &far);
+  typed_col = _typed_col_of_far(parser, &far);
+  return get_frame_loc(parsed, type, far.row, far.tb, typed_col, far.mna);
+}
+
 static
 void record_frame(bitstream_parsed_t *parsed,
 		  bitstream_parser_t *bitstream,
@@ -501,11 +552,61 @@ void record_frame(bitstream_parsed_t *parsed,
      frames are not present in compressed bitstreams, it seems... */
   if (far_is_pad(bitstream, myfar) == FALSE)
     g_array_append_val(parsed->frame_array, framerec);
+
+  /* record the frame in the flat descriptor */
+  {
+    const gchar **framepos = get_frameloc_from_far(parsed, bitstream, myfar);
+    if (*framepos)
+      g_warning("Replacing frame already present for far [%08x]", myfar);
+    *framepos = dataframe;
+  }
 }
 
 /* Bitstream frame indexing */
+
+static unsigned
+frames_of_type(const chip_struct_t *chip_struct,
+	       const v5_design_col_t type) {
+  const unsigned *col_count = chip_struct->col_count;
+  return 2 * chip_struct->row_count * type_col_count(col_count,type) * v5_frame_count[type];
+}
+
 static void
 alloc_indexer(bitstream_parsed_t *parsed) {
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  gsize total_size = 0;
+  gsize type_offset = 0;
+  v5_design_col_t type;
+  const gchar ***type_lut, **frame_array;
+
+  /* The frame array is a triple-lookup array:
+     - first index is index type (v4_design_col_t, length V4C__NB_CFG)
+     - second index is y-location (length 2*rows)
+     - third index is x-location (complex length, to be computed from the frame type)
+     - fourth index is mna sublocation (complex length too, from the v4_frame_count)
+
+     The array is indexed on the first index.
+  */
+
+  /* We need room for control of the type lookup */
+  total_size += V5C__NB_CFG * sizeof(gchar **);
+
+  /* We need room for the frames themselves */
+  for (type = 0; type < V5C__NB_CFG; type++)
+    total_size += frames_of_type(chip_struct, type) * sizeof(gchar *);
+
+  /* We allocate only one big array with the type_lut at the beginning
+     and the frame_array at the end */
+  type_lut = g_new0(const gchar **, total_size);
+  frame_array = (const gchar **) &type_lut[V5C__NB_CFG];
+
+  /* fill in the control data */
+  for (type = 0; type < V5C__NB_CFG; type++) {
+    type_lut[type] = &frame_array[type_offset];
+    type_offset += frames_of_type(chip_struct, type);
+  }
+
+  parsed->frames = type_lut;
   parsed->frame_array = g_array_new(FALSE, FALSE, sizeof(frame_record_t));
 }
 

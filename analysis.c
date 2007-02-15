@@ -212,7 +212,7 @@ void dump_sites(const bitstream_analyzed_t *nlz,
 	    TTERMBRAM, BTERMBRAM,
 	    TIOI, LIOI, BIOI, RIOI,
 	    TIOIBRAM, BIOIBRAM, BRAM };
-#elif defined(VIRTEX4)
+#elif defined(VIRTEX4) || defined(VIRTEX5)
   site_type_t types[] = { IOB, CLB, DSP48, GCLKC, BRAM };
 #endif
 

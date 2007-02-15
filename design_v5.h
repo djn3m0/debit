@@ -7,6 +7,7 @@
 #define _DESIGN_V5_H
 
 #include <stdint.h>
+#include "bitstream_parser.h"
 
 #define CHIP "virtex5"
 
@@ -132,7 +133,7 @@ typedef enum {
   V5C__NB_CFG,
 } v5_design_col_t;
 
-typedef struct _chip_struct {
+typedef struct _chip_struct_v5 {
   id_v5vlx_t chip;
   guint32 idcode;
   guint32 framelen;
@@ -142,5 +143,92 @@ typedef struct _chip_struct {
   unsigned row_count;
   const v5_design_col_t *col_type;
 } chip_struct_t;
+
+static inline unsigned
+type_frame_count(const chip_struct_t *chip,
+		 const v5_design_col_t type) {
+  return chip->frame_count[type];
+}
+
+#define design_col_t v5_design_col_t
+
+static inline unsigned
+type_col_count_v5(const unsigned *col_count,
+		  const v5_design_col_t type) {
+  switch (type) {
+  case V5C_IOB:
+    return 3;
+  case V5C_GCLK:
+    return 1;
+  case V5C_DSP48:
+    if (col_count[V5_TYPE_BRAM] >= 6)
+      return 2;
+    return 1;
+  case V5C_CLB:
+    if (col_count[V5_TYPE_BRAM] >= 6)
+      return col_count[V5_TYPE_CLB] - 6 - col_count[V5_TYPE_BRAM];
+    return col_count[V5_TYPE_CLB] - 5 - col_count[V5_TYPE_BRAM];
+  case V5C_BRAM:
+    return col_count[V5_TYPE_BRAM];
+  case V5C_BRAM_INT:
+    return col_count[V5_TYPE_BRAM];
+  case V5C_PAD:
+    return V5__NB_COL_TYPES;
+  case V5C__NB_CFG:
+    /* return the total ? */
+  default:
+    g_assert_not_reached();
+  }
+  return 0;
+}
+
+#define type_col_count type_col_count_v5
+
+/*
+ * The frame index is a four-way lookup table. We have chosen for now to use
+ * a two-way lookup table to index the frames internally, redoing most
+ * of the computation for the v4.
+ */
+
+static inline
+const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
+			    const guint type,
+			    const guint row,
+			    const guint top,
+			    const guint index,
+			    const guint frame) {
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  const unsigned rowcount = chip_struct->row_count;
+  const unsigned framecount = chip_struct->frame_count[type];
+  const unsigned *col_count = chip_struct->col_count;
+  g_assert(type < V5C__NB_CFG);
+  //  g_assert(index < type_col_count(col_count, type));
+  if ( index >= type_col_count(col_count, type))
+    g_warning("problem in index %i >= %i for type %i", index, type_col_count(col_count, type), type);
+  if ( row >= rowcount )
+    g_warning("problem in row %i >= %i for type %i", row, rowcount, type);
+  g_assert(row < rowcount);
+  //  g_assert(frame < framecount);
+  if (frame >= framecount)
+    g_warning("problem in frame %i >= %i for type %i", frame, framecount, type);
+  (void) col_count;
+
+  /* This is a double-lookup method */
+  return &parsed->frames[type][ index * (2 * rowcount * framecount) +
+				(top * rowcount + row) * framecount +
+				frame ];
+}
+
+static inline
+const gchar *get_frame(const bitstream_parsed_t *parsed,
+		       const guint type,
+		       const guint row,
+		       const guint top,
+		       const guint index,
+		       const guint frame) {
+  const gchar *frameptr = *get_frame_loc(parsed, type, row, top, index, frame);
+  g_assert(frameptr != NULL);
+  return frameptr;
+}
 
 #endif /* design_v5.h */

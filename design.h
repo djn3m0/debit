@@ -10,6 +10,8 @@
 #include "design_v2.h"
 #elif defined(VIRTEX4)
 #include "design_v4.h"
+#elif defined(VIRTEX5)
+#include "design_v5.h"
 #else
 #error "You must define a type macro"
 #endif

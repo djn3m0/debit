@@ -43,10 +43,10 @@ debit_v5_SOURCES	= $(SHARED_SRC)	debit.c \
 			bitstream_parser_v5.c \
 			bitstream_v5.h design_v5.h \
 			codes/crc32-c.c codes/crc32-c.h \
-			bitstream.c bitstream.h \
+			bitstream_v4.c bitstream.h \
 			codes/xhamming.c codes/xhamming.h \
 			config.h
-debit_v5_CFLAGS	= $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@
+debit_v5_CFLAGS	= $(AM_CFLAGS) -DVIRTEX5 @GLIB_CFLAGS@
 debit_v5_LDADD	= @GLIB_LIBS@
 
 bit2pdf_SOURCES = $(SHARED_SRC) $(SHARED_SRC_V2) bit2pdf.c sites_draw.c wiring_draw.c bitdraw.h

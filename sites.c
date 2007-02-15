@@ -58,6 +58,18 @@ chipfiles[XC4VLX__NUM] = {
   [XC4VLX200] = "xc4vlx200",
 };
 
+#elif defined(VIRTEX5)
+
+static const gchar *
+chipfiles[XC5VLX__NUM] = {
+  [XC5VLX30] = "xc5vlx30",
+  [XC5VLX50] = "xc5vlx50",
+  [XC5VLX85] = "xc5vlx85",
+  [XC5VLX110] = "xc5vlx110",
+  [XC5VLX220] = "xc5vlx220",
+  [XC5VLX330] = "xc5vlx330",
+};
+
 #endif
 
 /* iterate over intervals */
@@ -352,7 +364,7 @@ static const char *print_str[NR_SITE_TYPE] = {
 static const char **sw_str = print_str;
 static const site_print_t *sw_type = print_type;
 
-#elif defined(VIRTEX4)
+#elif defined(VIRTEX4) || defined(VIRTEX5)
 
 static const site_print_t print_type[NR_SITE_TYPE] = {
   [SITE_TYPE_NEUTRAL] = PRINT_BOTH_INVERT,

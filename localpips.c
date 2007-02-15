@@ -162,6 +162,17 @@ static const gchar *basedbnames[NR_SWITCH_TYPE] = {
 /*   [BRAM] = "bram", */
 };
 
+#elif defined(VIRTEX5)
+
+static const gchar *basedbnames[NR_SWITCH_TYPE] = {
+/*   [SW_INT] = "int", */
+/*   [IOB] = "iob", */
+/*   [CLB] = "clb", */
+/*   [DSP48] = "dsp48", */
+/*   [GCLKC] = "gclk", */
+/*   [BRAM] = "bram", */
+};
+
 #endif
 
 /** \brief Read a database from files

@@ -153,11 +153,13 @@ type_frame_count(const chip_struct_t *chip,
   return chip->frame_count[type];
 }
 
+#define design_col_t v4_design_col_t
+
 /**** Frame fast indexing ****/
 
 static inline unsigned
-type_col_count(const unsigned *col_count,
-	       const v4_design_col_t type) {
+type_col_count_v4(const unsigned *col_count,
+		  const v4_design_col_t type) {
   switch (type) {
   case V4C_IOB:
     return 3;
@@ -180,6 +182,8 @@ type_col_count(const unsigned *col_count,
   }
   return 0;
 }
+
+#define type_col_count type_col_count_v4
 
 /*
  * The frame index is a four-way lookup table. We have chosen for now to use
@@ -211,6 +215,7 @@ const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
   (void) col_count;
 
   /* This is a double-lookup method */
+  /* divide the number of multiplications */
   return &parsed->frames[type][ index * (2 * rowcount * framecount) +
 				(top * rowcount + row) * framecount +
 				frame ];

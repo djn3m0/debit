@@ -13,6 +13,8 @@
 #include "sites_v2.h"
 #elif defined(VIRTEX4)
 #include "sites_v4.h"
+#elif defined(VIRTEX5)
+#include "sites_v5.h"
 #endif
 
 /* This is the coordinates of the site in its

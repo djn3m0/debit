@@ -9,8 +9,8 @@
 #include "bitstream_parser.h"
 #include "sites.h"
 #include "bitstream.h"
-#include "design_v4.h"
 
+#include "design.h"
 #include "cfgbit.h"
 
 /** \file
@@ -30,10 +30,10 @@
  * bytes, or one guint32).
  */
 
-/*
- * XXX To be removed once the databases conform to the new way of doing things
- */
+#if defined(VIRTEX4)
+
 #define STDWIDTH 10
+
 const type_bits_t type_bits[NR_SITE_TYPE] = {
   [SITE_TYPE_NEUTRAL] = {
     .y_width = STDWIDTH,
@@ -59,10 +59,42 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
     .y_width = STDWIDTH,
   },
 };
+#elif defined(VIRTEX5)
+
+#define STDWIDTH 8
+
+const type_bits_t type_bits[NR_SITE_TYPE] = {
+  [SITE_TYPE_NEUTRAL] = {
+    .y_width = STDWIDTH,
+  },
+  [IOB] = {
+    .col_type = V5C_IOB,
+    .y_width = STDWIDTH,
+  },
+  [CLB] = {
+    .col_type = V5C_CLB,
+    .y_width = STDWIDTH,
+  },
+  [DSP48] = {
+    .col_type = V5C_DSP48,
+    .y_width = STDWIDTH,
+  },
+  [GCLKC] = {
+    .col_type = V5C_GCLK,
+    .y_width = STDWIDTH,
+  },
+  [BRAM] = {
+    .col_type = V5C_BRAM_INT,
+    .y_width = STDWIDTH,
+  },
+};
+#endif
 
 /*
  * Untyped query functions
  */
+
+#if defined (VIRTEX4)
 
 /*
  * Helper function
@@ -116,10 +148,9 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   /* We must skip 4 bytes of SECDED and CLK information in the middle of
    * the frame */
   const unsigned row_second_half = (y >> 1) & 0x4;
-
   const guint frame_x = byte_x(cfgbyte);
   /* Middle word contains SECDED and clk information, so we skip it sometimes */
-  guint frame_y = row_local * 10 + row_second_half + byte_y(cfgbyte);
+  guint frame_y = row_local * STDWIDTH + row_second_half + byte_y(cfgbyte);
   const gchar *frame;
   unsigned char byte;
 
@@ -132,6 +163,40 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   byte = frame[frame_y ^ 0x3];
   return top ? byte : mirror_byte(byte);
 }
+
+#elif defined(VIRTEX5)
+
+static guchar
+query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
+			  const csite_descr_t *site,
+			  const int cfgbyte) {
+  const chip_struct_t *chip_struct = bitstream->chip_struct;
+  const site_type_t site_type = site->type;
+  const unsigned x = site->type_coord.x;
+  const unsigned y = site->type_coord.y;
+  const unsigned ymid = chip_struct->row_count;
+  /* Rows are packed by groups of 20 */
+  unsigned row = (y / 20);
+  /* a bittest should be sufficient for top, but is hard to compute
+     (depends on bitlength of the value, which is costly to compute) */
+  const unsigned top = (row >= ymid) ? 0 : 1;
+  const unsigned row_local = y % 20;
+  const unsigned row_second_half = (row_local >= 10) ? 4 : 0;
+
+  const guint frame_x = byte_x(cfgbyte);
+  /* Middle word contains SECDED and clk information, so we skip it sometimes */
+  guint frame_y = row_local * STDWIDTH + row_second_half + byte_y(cfgbyte);
+  const gchar *frame;
+
+  /* When top is one, the row numbering is inverted */
+  row = top ? (ymid - 1 - row) : row - ymid;
+  frame = get_frame(bitstream, type_bits[site_type].col_type, row, top, x, frame_x);
+
+  /* The adressing here is a bit strange, due to the frame byte order */
+  return frame[frame_y ^ 0x3];
+}
+
+#endif
 
 /** \brief Get some (up to 4) config bytes from a site
  *
@@ -314,9 +379,9 @@ query_bitstream_type_size(const bitstream_parsed_t *parsed,
 			  const site_type_t type) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
   /* Get the col type from the site type */
-  const v4_design_col_t col_type = type_bits[type].col_type;
+  const design_col_t col_type = type_bits[type].col_type;
   /* per site, 80 bits in each frame -- 10 bytes */
-  return type_frame_count(chip_struct, col_type) * 10;
+  return type_frame_count(chip_struct, col_type) * STDWIDTH;
 }
 
 /** \brief Get all configuration bits from a site
