@@ -60,10 +60,24 @@ unsigned assemble_cfgbit(const unsigned x,
 
 /* Temporary conversion function for the database. To get rid of once
    the database is moved to the new format */
+#if defined(VIRTEX5)
+
+#define BITPOS_INVERT(val, width) ((val) << 3)
+static inline
+unsigned bitpos_invert(const unsigned bitpos, const unsigned width) {
+  (void) width;
+  return bitpos << 3;
+}
+
+#else /* This is still in use for virtex4 and virtex2 */
+
+#define BITPOS_INVERT(val, width) (((width - 1) - (val)) << 3)
 static inline
 unsigned bitpos_invert(const unsigned bitpos, const unsigned width) {
   return ((width - 1) - bitpos) << 3;
 }
+
+#endif
 
 static inline
 unsigned bitpos_to_cfgbit(const unsigned bitpos, const unsigned width) {
@@ -74,7 +88,6 @@ unsigned bitpos_to_cfgbit(const unsigned bitpos, const unsigned width) {
 }
 
 /* Unrolled macro version of the above */
-#define BITPOS_INVERT(val, width) (((width - 1) - (val)) << 3)
 #define XOFF(val, width) ((val) / (8*width))
 #define YOFF(val, width) ((val) % (8*width))
 #define NYOFF(val, width) (BITPOS_INVERT(YOFF(val, width) >> 3, width) | (YOFF(val, width) & 7))

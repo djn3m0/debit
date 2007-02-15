@@ -1,5 +1,5 @@
 # This directory only contains data file
-SUBDIRS=virtex2 virtex4
+SUBDIRS=virtex2 virtex4 virtex5
 
 DBGENSCRIPT=wires_to_db.pl
 

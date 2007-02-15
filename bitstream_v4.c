@@ -405,6 +405,7 @@ query_bitstream_site_data(gchar *data, const gsize nbytes,
 
   for (i = 0; i < nbytes; i++) {
     unsigned pos = bitpos_to_cfgbit(i << 3, width);
+    g_print("From site, getting pos %i ", pos);
     data[i] = query_bitstream_site_byte(parsed, site, pos);
   }
 

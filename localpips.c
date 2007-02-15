@@ -165,7 +165,7 @@ static const gchar *basedbnames[NR_SWITCH_TYPE] = {
 #elif defined(VIRTEX5)
 
 static const gchar *basedbnames[NR_SWITCH_TYPE] = {
-/*   [SW_INT] = "int", */
+  [SW_INT] = "int",
 /*   [IOB] = "iob", */
 /*   [CLB] = "clb", */
 /*   [DSP48] = "dsp48", */
