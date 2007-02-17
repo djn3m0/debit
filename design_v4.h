@@ -184,51 +184,8 @@ type_col_count_v4(const unsigned *col_count,
 }
 
 #define type_col_count type_col_count_v4
+#define V__NB_CFG V4C__NB_CFG
 
-/*
- * The frame index is a four-way lookup table. We have chosen for now to use
- * a two-way lookup table to index the frames internally, redoing most
- * of the computation for the v4.
- */
-
-static inline
-const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
-			    const guint type,
-			    const guint row,
-			    const guint top,
-			    const guint index,
-			    const guint frame) {
-  const chip_struct_t *chip_struct = parsed->chip_struct;
-  const unsigned rowcount = chip_struct->row_count;
-  const unsigned framecount = chip_struct->frame_count[type];
-  const unsigned *col_count = chip_struct->col_count;
-  g_assert(type < V4C__NB_CFG);
-  //  g_assert(index < type_col_count(col_count, type));
-  if ( index >= type_col_count(col_count, type))
-    g_warning("problem in index %i >= %i for type %i", index, type_col_count(col_count, type), type);
-  if ( row >= rowcount )
-    g_warning("problem in row %i >= %i for type %i", row, rowcount, type);
-  g_assert(row < rowcount);
-  //  g_assert(frame < framecount);
-  if (frame >= framecount)
-    g_warning("problem in frame %i >= %i for type %i", frame, framecount, type);
-  (void) col_count;
-
-  /* This is a double-lookup method */
-  return &parsed->frames[type][ framecount * ((index * 2 + top) * rowcount + row)
-				+ frame ];
-}
-
-static inline
-const gchar *get_frame(const bitstream_parsed_t *parsed,
-		       const guint type,
-		       const guint row,
-		       const guint top,
-		       const guint index,
-		       const guint frame) {
-  const gchar *frameptr = *get_frame_loc(parsed, type, row, top, index, frame);
-  g_assert(frameptr != NULL);
-  return frameptr;
-}
+#include "design_common.h"
 
 #endif /* design_v4.h */
