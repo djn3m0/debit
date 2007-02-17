@@ -119,4 +119,18 @@ type_of_v2pkt(const uint32_t v2pkt) {
   return (v2pkt & V2_PKT_TYPE_MASK) >> V2_PKT_TYPE_OFFSET;
 }
 
+typedef enum _cmd_pkt_ver {
+  TYPE_V1 = 1, TYPE_V2 = 2,
+} cmd_pkt_ver_t;
+
+typedef enum _special_words {
+  SYNCHRO = 0xAA995566U,
+  NOOP    = 0x20000000U,
+  NULLPKT = 0x00000000U,
+} special_word_t;
+
+typedef struct _xil_register {
+  guint32 value;
+} xil_register_t;
+
 #endif /* _BITSTREAM_PACKETS_H */

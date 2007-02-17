@@ -317,19 +317,6 @@ char *cmd_names[__NUM_CMD_CODE] = {
 };
 #endif
 
-typedef enum _cmd_pkt_ver {
-  V1 = 1, V2 =2,
-} cmd_pkt_ver_t;
-
-typedef enum _special_words {
-  SYNCHRO = 0xAA995566U,
-  NOOP    = 0x20000000U,
-} special_word_t;
-
-typedef struct _xil_register {
-  guint32 value;
-} xil_register_t;
-
 /* This structure contains the internal structure of the parser */
 typedef struct _bitstream_parser {
   /* state of the parser */
@@ -926,14 +913,14 @@ read_next_token(bitstream_parsed_t *parsed,
 
       /* v1 or v2 packet */
       switch (type_of_pkt1(pkt)) {
-      case V1: {
+      case TYPE_V1: {
 	debit_log(L_BITSTREAM,"Got V1 packet");
 	parser->active_register = rega_of_pkt1(pkt);
 	parser->active_length = wordc_of_pkt1(pkt);
 	parser->write__read = wr_of_pkt1(pkt);
 	break;
       }
-      case V2: {
+      case TYPE_V2: {
 	debit_log(L_BITSTREAM,"Got V2 packet");
 	parser->active_length = wordc_of_v2pkt(pkt);
 	break;

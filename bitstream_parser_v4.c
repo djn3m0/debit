@@ -142,7 +142,7 @@ typedef enum _v4_registers_index {
 
 typedef enum _cmd_code {
   CMD_NULL = 0,
-  WCFG, C_MFWR,
+  WCFG, MFW,
   LFRM, RCFG, START, RCAP, RCRC,
   AGHIGH, SWITCH, GRESTORE,
   SHUTDOWN, GCAPTURE,
@@ -173,7 +173,7 @@ static const
 char *cmd_names[__NUM_CMD_CODE] = {
   [CMD_NULL] = "NULL",
   [WCFG] = "WCFG",
-  [C_MFWR] = "MFWR",
+  [MFW] = "MFWR",
   [LFRM] = "LFRM",
   [RCFG] = "RCFG",
   [START] = "START",
@@ -188,19 +188,15 @@ char *cmd_names[__NUM_CMD_CODE] = {
 };
 #endif
 
-typedef enum _cmd_pkt_ver {
-  TYPE_V1 = 1, TYPE_V2 = 2,
-} cmd_pkt_ver_t;
-
-typedef enum _special_words {
-  SYNCHRO = 0xAA995566U,
-  NOOP    = 0x20000000U,
-  NULLPKT = 0x00000000U,
-} special_word_t;
-
-typedef struct _xil_register {
-  guint32 value;
-} xil_register_t;
+#define sw_far_t sw_far_v4_t
+#define id_vlx_t id_v4vlx_t
+#define col_type_t v4_col_type_t
+#define design_col_t v4_design_col_t
+#define XC_VLX__NUM XC4VLX__NUM
+#define VC__NB_CFG V4C__NB_CFG
+#define get_hwfar get_hwfar_v4
+#define fill_swfar fill_swfar_v4
+#define frame_count_v v4_frame_count
 
 /* This structure contains the internal structure of the parser */
 typedef struct _bitstream_parser {
@@ -215,10 +211,9 @@ typedef struct _bitstream_parser {
   xil_register_t registers[__V4_NUM_REGISTERS];
 
   /* detailed view of some registers */
-  id_v4vlx_t type;
+  id_vlx_t type;
 
   /* Specific FDRI quirks */
-/*   gboolean fdri_direct_mode; */
   const void *last_frame;
 
   /* Bitstream proper */
@@ -226,8 +221,7 @@ typedef struct _bitstream_parser {
 } bitstream_parser_t;
 
 /*
- * Returns the length, in words, of a frame.
- * The frame is constant in length for v4 and v5.
+ * Length, in words, of a frame.
  */
 
 #define frame_length 41
@@ -318,12 +312,12 @@ print_far(bitstream_parser_t *parser) {
 }
 
 static inline void
-_far_increment_type(sw_far_v4_t *addr) {
+_far_increment_type(sw_far_t *addr) {
   addr->type++;
 }
 
 static inline void
-_far_increment_tb(sw_far_v4_t *addr) {
+_far_increment_tb(sw_far_t *addr) {
   v4_tb_t tb = addr->tb;
   switch (tb) {
   case V4_TB_TOP:
@@ -341,8 +335,8 @@ _far_increment_tb(sw_far_v4_t *addr) {
 
 static inline void
 _far_increment_row(bitstream_parser_t *bitstream,
-		   sw_far_v4_t *addr) {
-  const id_v4vlx_t chiptype = bitstream->type;
+		   sw_far_t *addr) {
+  const id_vlx_t chiptype = bitstream->type;
   const unsigned row_count = bitdescr[chiptype].row_count;
   unsigned row = addr->row;
 
@@ -357,17 +351,16 @@ _far_increment_row(bitstream_parser_t *bitstream,
 
 static inline void
 _far_increment_col(bitstream_parser_t *bitstream,
-		   sw_far_v4_t *addr) {
-  const id_v4vlx_t chiptype = bitstream->type;
+		   sw_far_t *addr) {
+  const id_vlx_t chiptype = bitstream->type;
   const unsigned *col_count = bitdescr[chiptype].col_count;
-  const v4_col_type_t type = addr->type;
+  const col_type_t type = addr->type;
   guint col;
 
   col = addr->col;
   col += 1;
 
-  /* There is one pad column at the end, once this is skipped then we
-     resume the normal flow */
+  /* There are two pad columns */
   if (col == col_count[type] + 1) {
     col = 0;
     _far_increment_row(bitstream, addr);
@@ -379,10 +372,10 @@ _far_increment_col(bitstream_parser_t *bitstream,
 
 static inline gboolean
 _far_is_pad(const bitstream_parser_t *bitstream,
-	    const sw_far_v4_t *addr) {
-  const id_v4vlx_t chiptype = bitstream->type;
+	    const sw_far_t *addr) {
+  const id_vlx_t chiptype = bitstream->type;
   const unsigned *col_count = bitdescr[chiptype].col_count;
-  const v4_col_type_t type = addr->type;
+  const col_type_t type = addr->type;
   unsigned col = addr->col;
 
   /* There are pad frames for all three types of data frames */
@@ -393,8 +386,8 @@ _far_is_pad(const bitstream_parser_t *bitstream,
 
 static inline gboolean
 far_is_pad(bitstream_parser_t *bitstream, guint32 myfar) {
-  sw_far_v4_t far;
-  fill_swfar_v4(&far, myfar);
+  sw_far_t far;
+  fill_swfar(&far, myfar);
   return _far_is_pad(bitstream, &far);
 }
 
@@ -403,11 +396,11 @@ far_is_pad(bitstream_parser_t *bitstream, guint32 myfar) {
    parameters. */
 #define DSP_V4_OF_END(x) ((x) > 50 ? 13 : 9)
 
-static inline v4_design_col_t
+static inline design_col_t
 _type_of_far(const bitstream_parser_t *bitstream,
-	     const sw_far_v4_t *addr) {
-  const id_v4vlx_t chiptype = bitstream->type;
-  const v4_col_type_t type = addr->type;
+	     const sw_far_t *addr) {
+  const id_vlx_t chiptype = bitstream->type;
+  const col_type_t type = addr->type;
 
   /* unlikely */
   if (_far_is_pad(bitstream, addr))
@@ -447,10 +440,10 @@ _type_of_far(const bitstream_parser_t *bitstream,
 
 static inline void
 _far_increment_mna(bitstream_parser_t *bitstream,
-		   sw_far_v4_t *addr) {
-  const id_v4vlx_t chiptype = bitstream->type;
+		   sw_far_t *addr) {
+  const id_vlx_t chiptype = bitstream->type;
   const unsigned *frame_count = bitdescr[chiptype].frame_count;
-  const v4_design_col_t col_type = _type_of_far(bitstream, addr);
+  const design_col_t col_type = _type_of_far(bitstream, addr);
   unsigned mna = addr->mna;
 
   mna += 1;
@@ -465,10 +458,10 @@ _far_increment_mna(bitstream_parser_t *bitstream,
 
 static inline void
 far_increment_mna(bitstream_parser_t *bitstream) {
-  sw_far_v4_t far;
-  fill_swfar_v4(&far, register_read(bitstream, FAR));
+  sw_far_t far;
+  fill_swfar(&far, register_read(bitstream, FAR));
   _far_increment_mna(bitstream, &far);
-  register_write(bitstream, FAR, get_hwfar_v4(&far));
+  register_write(bitstream, FAR, get_hwfar(&far));
 }
 
 static inline void
@@ -485,7 +478,8 @@ default_register_write(bitstream_parser_t *parser,
   xil_register_t *regp = &parser->registers[reg];
   unsigned i;
 
-  debit_log(L_BITSTREAM,"Writing %zd words to register %s", length, reg_names[reg]);
+  debit_log(L_BITSTREAM,"Writing %zd words to register %s",
+	    length, reg_names[reg]);
 
   for (i = 0; i < length; i++) {
     guint32 val = bytearray_get_uint32(ba);
@@ -499,7 +493,7 @@ default_register_write(bitstream_parser_t *parser,
     case LOUT: {
       gchar far_name[32];
       snprintf_far(far_name, sizeof(far_name), val);
-      g_print("LOUT: %08x ", val);
+      g_print("LOUT: %08x\n", val);
       g_print("LOUT as FAR is [%i], %s\n", val, far_name);
       /* Fall through */
     }
@@ -513,9 +507,9 @@ default_register_write(bitstream_parser_t *parser,
 
 static inline unsigned
 _typed_col_of_far(const bitstream_parser_t *bitstream,
-		  const sw_far_v4_t *addr) {
-  const id_v4vlx_t chiptype = bitstream->type;
-  const v4_col_type_t type = addr->type;
+		  const sw_far_t *addr) {
+  const id_vlx_t chiptype = bitstream->type;
+  const col_type_t type = addr->type;
   const unsigned col = addr->col;
 
   /* unlikely, move this out of main exec flow */
@@ -557,10 +551,10 @@ static inline const gchar **
 get_frameloc_from_far(const bitstream_parsed_t *parsed,
 		      const bitstream_parser_t *parser,
 		      const guint32 myfar) {
-  sw_far_v4_t far;
-  v4_design_col_t type;
+  sw_far_t far;
+  design_col_t type;
   unsigned typed_col;
-  fill_swfar_v4(&far, myfar);
+  fill_swfar(&far, myfar);
   type = _type_of_far(parser, &far);
   typed_col = _typed_col_of_far(parser, &far);
   return get_frame_loc(parsed, type, far.row, far.tb, typed_col, far.mna);
@@ -579,11 +573,12 @@ void record_frame(bitstream_parsed_t *parsed,
   /* Check the frame's Hamming Code */
   /* (void) check_hamming_frame(dataframe, myfar); */
 
-  /* record the framerec */
+  /* record the framerec, iif the frame is not a pad frame, as pad
+     frames are not present in compressed bitstreams, it seems... */
   if (far_is_pad(bitstream, myfar) == FALSE)
     g_array_append_val(parsed->frame_array, framerec);
 
-  /* record in the flat descriptor */
+  /* record the frame in the flat descriptor */
   {
     const gchar **framepos = get_frameloc_from_far(parsed, bitstream, myfar);
     if (*framepos)
@@ -596,9 +591,9 @@ void record_frame(bitstream_parsed_t *parsed,
 
 static unsigned
 frames_of_type(const chip_struct_t *chip_struct,
-	       const v4_design_col_t type) {
+	       const design_col_t type) {
   const unsigned *col_count = chip_struct->col_count;
-  return 2 * chip_struct->row_count * type_col_count(col_count,type) * v4_frame_count[type];
+  return 2 * chip_struct->row_count * type_col_count(col_count,type) * frame_count_v[type];
 }
 
 static void
@@ -606,11 +601,11 @@ alloc_indexer(bitstream_parsed_t *parsed) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
   gsize total_size = 0;
   gsize type_offset = 0;
-  v4_design_col_t type;
+  design_col_t type;
   const gchar ***type_lut, **frame_array;
 
   /* The frame array is a triple-lookup array:
-     - first index is index type (v4_design_col_t, length V4C__NB_CFG)
+     - first index is index type (design_col_t, length VC__NB_CFG)
      - second index is y-location (length 2*rows)
      - third index is x-location (complex length, to be computed from the frame type)
      - fourth index is mna sublocation (complex length too, from the v4_frame_count)
@@ -619,19 +614,19 @@ alloc_indexer(bitstream_parsed_t *parsed) {
   */
 
   /* We need room for control of the type lookup */
-  total_size += V4C__NB_CFG * sizeof(gchar **);
+  total_size += VC__NB_CFG * sizeof(gchar **);
 
   /* We need room for the frames themselves */
-  for (type = 0; type < V4C__NB_CFG; type++)
+  for (type = 0; type < VC__NB_CFG; type++)
     total_size += frames_of_type(chip_struct, type) * sizeof(gchar *);
 
   /* We allocate only one big array with the type_lut at the beginning
      and the frame_array at the end */
   type_lut = g_new0(const gchar **, total_size);
-  frame_array = (const gchar **) &type_lut[V4C__NB_CFG];
+  frame_array = (const gchar **) &type_lut[VC__NB_CFG];
 
   /* fill in the control data */
-  for (type = 0; type < V4C__NB_CFG; type++) {
+  for (type = 0; type < VC__NB_CFG; type++) {
     type_lut[type] = &frame_array[type_offset];
     type_offset += frames_of_type(chip_struct, type);
   }
@@ -723,7 +718,7 @@ handle_cmd_write(bitstream_parsed_t *parsed,
   cmd_code_t cmd = register_read(parser, CMD);
 
   switch(cmd) {
-  case C_MFWR:
+  case MFW:
     debit_log(L_BITSTREAM,"Executing multi-frame write");
     record_frame(parsed, parser, register_read(parser, FAR));
     break;
@@ -747,7 +742,7 @@ idcode_write(bitstream_parsed_t *parsed,
   guint32 idcode = register_read(parser, IDCODE);
   int i;
 
-  for (i = 0; i < XC4VLX__NUM; i++)
+  for (i = 0; i < XC_VLX__NUM; i++)
     if (bitdescr[i].idcode == idcode) {
       parser->type = i;
       parsed->chip_struct = &bitdescr[i];
@@ -938,7 +933,7 @@ read_next_token(bitstream_parsed_t *parsed,
       /* post-processing */
       switch(reg) {
       case FDRI:
-	/* no AutoCRC processing in v4 */
+	/* no AutoCRC processing */
 	break;
       case FAR:
 	print_far(parser);
