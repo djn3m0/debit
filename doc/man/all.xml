@@ -7,14 +7,34 @@
 
 
 <article>
+  <articleinfo>
+    <title>Debit project documentation</title>
 
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="debit.xml" />
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="bit2pdf.xml" />
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="xiledit.xml" />
+    <author>
+      <firstname>Jean-Baptiste</firstname>
+      <surname>Note</surname>
+      <affiliation>
+	<address><email>jean-baptiste.note@m4x.org</email></address>
+      </affiliation>
+    </author>
 
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="altera.xml" />
+    <copyright>
+      <year>2007</year>
+      <holder>Jean-Baptiste Note</holder>
+    </copyright>
 
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="bitisolation.xml" />
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="diff_bin_pos.xml" />
+    <abstract>
+      <para>This crude documentation is just a compilation of the Unix manual pages.</para>
+    </abstract>
+  </articleinfo>
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="debit.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="bit2pdf.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="xiledit.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="altera.xml" />
+
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="bitisolation.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="diff_bin_pos.xml" />
 
 </article>
