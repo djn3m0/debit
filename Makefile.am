@@ -31,9 +31,9 @@ debit_CFLAGS	= $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@
 debit_LDADD	= @GLIB_LIBS@
 
 debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
-			bitstream_v4.c sites_v4.h \
-			design_common.h \
-			bitstream_parser_v4.c design_v4.h \
+			bitstream_parser_common.c \
+			_far_v4.h bitstream_v4.c sites_v4.h \
+			design_v4.h design_common.h \
 			codes/crc32-c.c codes/crc32-c.h \
 			codes/xhamming.c codes/xhamming.h \
 			config.h
@@ -41,9 +41,9 @@ debit_v4_CFLAGS	= $(AM_CFLAGS) -DVIRTEX4 @GLIB_CFLAGS@
 debit_v4_LDADD	= @GLIB_LIBS@
 
 debit_v5_SOURCES	= $(SHARED_SRC)	debit.c \
-			sites_v5.h bitstream_parser_v5.c \
-			bitstream_v5.h design_v5.h \
-			design_common.h \
+			bitstream_parser_common.c \
+			_far_v5.h bitstream_v5.h sites_v5.h \
+			design_v5.h design_common.h \
 			codes/crc32-c.c codes/crc32-c.h \
 			bitstream_v4.c bitstream.h \
 			codes/xhamming.c codes/xhamming.h \
