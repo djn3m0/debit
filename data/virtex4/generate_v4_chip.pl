@@ -191,6 +191,7 @@ sub print_clb_width
     #possibly interrupted by brams again, after the DSP
     if ($nbrams >= 6) {
 	print_interval($output, $running_start, $running_start+4);
+	print_sep($output);
 	$running_start = $running_start + 5;
     }
 
@@ -206,7 +207,7 @@ sub print_clb_width
 
 	print_interval($output, $endcol - 19, $endcol - 15);
 	print_sep($output);
-
+	$running_start = $endcol - 15 + 1;
     } elsif ($nbrams >= 5) {
 	print_interval($output,$running_start,$endcol - 15);
 	print_sep($output);

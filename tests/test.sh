@@ -1,5 +1,7 @@
 #! /bin/bash
 
+. log-functions
+
 function get_dirs() {
     DIRS=`find $1 -mindepth 1 -maxdepth 1 -type d`
 }
@@ -30,15 +32,20 @@ function check_suffix() {
     local design=$1;
     local suffix=$2;
 
-    echo -n " $suffix"
+    echo -ne "$suffix\t\t\t"
 
     if [ -e $design.$suffix.golden ]; then
 	make -s --no-print-directory -f $MAKEFILE $design.$suffix && \
+	    diff -q $design.$suffix $design.$suffix.golden || \
+	    log_failure_msg "COMPRESSED BITSTREAM FAILED";
+
 	make -s --no-print-directory -f $MAKEFILE ${design}_u.$suffix && \
-	diff -q $design.$suffix ${design}_u.$suffix || exit 1
-	diff -q $design.$suffix $design.$suffix.golden || exit 1
+	    diff -q $design.$suffix ${design}_u.$suffix || \
+	    log_failure_msg "UNCOMPRESSED BITSTREAM FAILED";
+
+	log_success_msg "PASSED";
     else
-	echo -n " (no ref)"
+        log_warning_msg "NO REFERENCE";
     fi
 }
 
@@ -46,40 +53,34 @@ function produce_suffix() {
     local design=$1;
     local suffix=$2;
 
-    echo -n "$suffix "
-
+    echo -ne "$suffix\t\t\t"
     make -s --no-print-directory -f $MAKEFILE $design.$suffix && \
-    make -s --no-print-directory -f $MAKEFILE ${design}_u.$suffix && \
-    diff -q $design.$suffix ${design}_u.$suffix || exit 1
-    mv -f $design.$suffix $design.$suffix.golden || exit 1
-    echo -n "generated\n"
+    mv -f $design.$suffix $design.$suffix.golden || \
+	log_failure_msg "GENERATION FAILED"
+
+    log_warning_msg "GENERATED";
 }
 
 function test_design() {
     local DESIGN_NAME=$1;
-    echo "Testing design $DESIGN_NAME"
+    echo -ne "Testing design\t\t";
+    log_fancy_msg "$DESIGN_NAME";
 
-    echo "Checking uncompressed/compressed frame consistency"
-    #Test that the frames are identical for uncompressed and compressed bitstreams
-    make -s --no-print-directory -f $MAKEFILE ${DESIGN_NAME}.frames && \
-    make -s --no-print-directory -f $MAKEFILE ${DESIGN_NAME}_u.frames && \
-    diff -q ${DESIGN_NAME}.frames ${DESIGN_NAME}_u.frames || exit 1
-
-    echo -n "Checking"
     #Test that the debit output is similar for uncompressed and compressed bitstreams
+    check_suffix ${DESIGN_NAME} frames
     check_suffix ${DESIGN_NAME} bram
     check_suffix ${DESIGN_NAME} lut
     check_suffix ${DESIGN_NAME} pip
-    echo " OK, cleaning up."
 
     make -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
 }
 
 function force_design() {
     local DESIGN_NAME=$1;
-    echo "Generating cases for design $DESIGN_NAME"
+    echo -ne "Generating for design\t";
+    log_fancy_msg "$DESIGN_NAME";
 
-    #Test that the debit output is similar for uncompressed and compressed bitstreams
+    produce_suffix ${DESIGN_NAME} frames
     produce_suffix ${DESIGN_NAME} bram
     produce_suffix ${DESIGN_NAME} lut
     produce_suffix ${DESIGN_NAME} pip
