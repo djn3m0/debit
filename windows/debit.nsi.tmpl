@@ -87,6 +87,8 @@ Section "Debitting graphical tools" SecDisplay
 
   SetOutPath "$INSTDIR\bin"
   File ..\xiledit\xiledit.exe
+  File ..\xiledit\xiledit_v4.exe
+  File ..\xiledit\xiledit_v5.exe
 
 ; xiledit pixmaps
   SetOutPath "$INSTDIR\data\pixmaps"
@@ -112,6 +114,8 @@ Section "Debitting shell tools" SecXilinx
   File ..\utils\correlation\bitisolation.exe
   File ..\utils\diff_bin_pos.exe
   File ..\debit.exe
+  File ..\debit_v4.exe
+  File ..\debit_v5.exe
   File ..\bit2pdf.exe
 
   DetailPrint "Installing debitting .bat helper files..."
@@ -162,23 +166,31 @@ Section "File type and context menus" SecCtx
   DetailPrint "Registering default browser for Xilinx bitstreams"
   ClearErrors
   ReadRegStr $0 HKCR ".bit" ""
-  WriteRegStr HKCR "$0\shell\edit" "" "Browse bitstream file"
+  WriteRegStr HKCR "$0\shell\edit" "" "Browse bitstream (Virtex-II)"
   WriteRegStr HKCR "$0\shell\edit\command" "" '"$INSTDIR\bin\xiledit.exe" "-d" "$INSTDIR\data" "-i" "%1"'
 ;  ReadRegStr $0 HKCR ".sof" ""
 ;  WriteRegStr HKCR "$0\shell\edit\command" "" '"$INSTDIR\bin\altedit.exe" "%1"'
   IfErrors 0 +2
      DetailPrint "Error creating default browser"
 
+  DetailPrint "Registering browsers for Xilinx bitstreams"
+  ClearErrors
+  ReadRegStr $0 HKCR ".bit" ""
+  WriteRegStr HKCR "$0\shell\virtex4" "" "Browse bitstream (Virtex-4)"
+  WriteRegStr HKCR "$0\shell\virtex4\command" "" '"$INSTDIR\bin\xiledit_v4.exe" "-d" "$INSTDIR\data" "-i" "%1"'
+  WriteRegStr HKCR "$0\shell\virtex5" "" "Browse bitstream (Virtex-5)"
+  WriteRegStr HKCR "$0\shell\virtex5\command" "" '"$INSTDIR\bin\xiledit_v5.exe" "-d" "$INSTDIR\data" "-i" "%1"'
+
   DetailPrint "Creating context menu entries for debit"
   ClearErrors
   ReadRegStr $0 HKCR ".bit" ""
-  WriteRegStr HKCR "$0\shell\x_pdf" "" "Convert to PDF"
+  WriteRegStr HKCR "$0\shell\x_pdf" "" "Convert to PDF (V-II)"
   WriteRegStr HKCR "$0\shell\x_pdf\command" "" '"$INSTDIR\bit2pdf.bat" "%1"'
-  WriteRegStr HKCR "$0\shell\y_pips" "" "Extract PIPs"
+  WriteRegStr HKCR "$0\shell\y_pips" "" "Extract PIPs (V-II)"
   WriteRegStr HKCR "$0\shell\y_pips\command" "" '"$INSTDIR\bit2pips.bat" "%1"'
-  WriteRegStr HKCR "$0\shell\y_bram" "" "Extract BRAM data"
+  WriteRegStr HKCR "$0\shell\y_bram" "" "Extract BRAM data (V-II)"
   WriteRegStr HKCR "$0\shell\y_bram\command" "" '"$INSTDIR\bit2bram.bat" "%1"'
-  WriteRegStr HKCR "$0\shell\y_lut" "" "Extract LUT data"
+  WriteRegStr HKCR "$0\shell\y_lut" "" "Extract LUT data (V-II)"
   WriteRegStr HKCR "$0\shell\y_lut\command" "" '"$INSTDIR\bit2luts.bat" "%1"'
   IfErrors 0 +2
      DetailPrint "Error creating custom actions"
@@ -215,6 +227,8 @@ Section "Uninstall"
   ;; Data files deletion
 
   Delete "$INSTDIR\bin\xiledit.exe"
+  Delete "$INSTDIR\bin\xiledit_v4.exe"
+  Delete "$INSTDIR\bin\xiledit_v5.exe"
   Delete "$INSTDIR\data\pixmaps\ulogic_icon_32.png"
   RMDir "$INSTDIR\data\pixmaps"
 
@@ -227,6 +241,8 @@ Section "Uninstall"
   Delete "$INSTDIR\bin\bitisolation.exe"
   Delete "$INSTDIR\bin\diff_bin_pos.exe"
   Delete "$INSTDIR\bin\debit.exe"
+  Delete "$INSTDIR\bin\debit_v4.exe"
+  Delete "$INSTDIR\bin\debit_v5.exe"
   Delete "$INSTDIR\bin\bit2pdf.exe"
   RMDir "$INSTDIR\bin"
 
