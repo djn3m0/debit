@@ -44,7 +44,7 @@ $(WIRES_RAW_DB): $(DATDATA) $(DBGENSCRIPT)
 	| sed -e 's/\[ *\([^ ]*\) *\]/\1/' \
 	| sed -e 's/\([^=]*\)=.*$$/\1/' \
 	| grep -v '^$$' \
-	| sort -n | uniq | $(DBGENSCRIPT) > $@
+	| sort -n | uniq | $(DBGENSCRIPT) 0 > $@
 
 $(WIRES_DB): $(WIRES_M4_SCRIPT) $(WIRES_RAW_DB)
 	m4 $^ > $@

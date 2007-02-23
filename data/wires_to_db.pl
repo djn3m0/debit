@@ -7,7 +7,7 @@
 use strict;
 use integer;
 
-my $prefix = shift @ARGV;
+my $invert_y_axis = shift @ARGV;
 
 # We must fill in some things
 my %dx;
@@ -293,7 +293,13 @@ sub array_to_hash() {
 sub dump_ini {
     my $output;
     for $output (@wires) {
-	print "_WIRE_ENTRY($output, $nums{$output}, $dx{$output}, $dy{$output}, ";
+	my $mydy = $dy{$output};
+	if ($invert_y_axis) {
+	    $mydy = - $mydy;
+	}
+
+	print "_WIRE_ENTRY($output, $nums{$output}, $dx{$output}, $mydy, ";
+
 	if (defined $nums{$otherend{$output}}) {
 	    print "$nums{$otherend{$output}}, ";
 	}

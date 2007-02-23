@@ -26,7 +26,7 @@ $(WIRES_RAW_DB): $(DATDATA) $(DBGENSCRIPT)
 	cat $(DATDATA) \
 	| sed -e 's/\[\(.*\)\]/\1/' \
 	| sed -e 's/\([^=]*\)=.*$$/\1/' \
-	| sort -n | uniq | $(DBGENSCRIPT) > $@
+	| sort -n | uniq | $(DBGENSCRIPT) 1 > $@
 
 $(WIRES_DB): $(WIRES_M4_SCRIPT) $(WIRES_RAW_DB)
 	m4 $^ > $@
