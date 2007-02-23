@@ -92,6 +92,7 @@ load_wire_atom(const wire_db_t *db, GKeyFile *keyfile,
     goto out_err;
 
   /* Insert the wirename */
+  debit_log(L_WIRES, "Inserting wire %s, id %i\n", wirename, id);
   db->names[id] = g_string_chunk_insert_const(db->wirenames, wirename);
 
 #define GET_STRUCT_MEMBER(structname, structmem, strname) \
@@ -144,6 +145,8 @@ load_db_from_file(GKeyFile* db, wire_db_t *wires) {
   gchar** wirenames;
 
   wirenames = g_key_file_get_groups(db, &nwires);
+
+  debit_log(L_WIRES, "Wiring database contains %zd wires\n", nwires);
 
   /* Allocate the array */
   wires->dblen = nwires;

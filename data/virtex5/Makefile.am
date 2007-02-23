@@ -12,7 +12,7 @@ V5GENSCRIPT=generate_v5_chip.pl
 WIRES_RAW_DB=wires.m4
 WIRES_DB=wires.db
 
-DBGENSCRIPT=$(srcdir)/../wires_to_db.pl
+DBGENSCRIPT=$(srcdir)/../wires_to_db_v5.pl
 WIRES_M4_SCRIPT=$(srcdir)/../dbtoini.m4
 
 ALLDATA=$(DATCONTROL) $(DATDATA) $(WIRES_DB) $(V5CHIPDB)
