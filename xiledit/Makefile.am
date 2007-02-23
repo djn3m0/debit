@@ -4,29 +4,42 @@ AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
 glade_sources   = xiledit.glade xiledit.gladep
 glade_generated = interface.c interface.h support.c support.h
 
-SHARED_SRC	= ../bitarray.c ../bitheader.c ../bitstream_parser.c ../filedump.c \
-		../localpips.c ../bitstream.c ../wiring.c ../keyfile.c \
-		../analysis.c ../connexity.c ../codes/crc-ibm.c
-#SHARED_COUCOU	= $(addprefix ../,$(SHARED_SRC))
+DRAWING_SRC	= xiledit.c xildraw.c xildraw.h callbacks.c callbacks.h \
+		../sites.c ../sites_draw.c ../wiring_draw.c
+SHARED_SRC	= ../bitarray.c ../bitheader.c ../filedump.c \
+		../localpips.c  ../wiring.c ../keyfile.c \
+		../analysis.c ../connexity.c
+V2_SRC		= ../bitstream.c ../bitstream_parser.c ../codes/crc-ibm.c
+V4_SRC		= ../bitstream_v4.c ../bitstream_parser_common.c ../codes/crc32-c.c
 
 bin_PROGRAMS	=
 
 if BUILD_GUI
-  bin_PROGRAMS += xiledit
+  bin_PROGRAMS += xiledit xiledit_v5 xiledit_v4
 endif
 
 if BUILD_GUI_DIRECTFB
   bin_PROGRAMS += xiledit_direct
 endif
 
-xiledit_SOURCES	= xiledit.c xildraw.c xildraw.h callbacks.c callbacks.h \
-		  ../sites.c ../sites_draw.c ../wiring_draw.c $(SHARED_SRC) $(glade_generated)
-xiledit_CFLAGS	= $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@ @GTK_CFLAGS@
+xiledit_SOURCES	= $(DRAWING_SRC) $(SHARED_SRC) $(V2_SRC) $(glade_generated)
+xiledit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ @GTK_CFLAGS@ -DVIRTEX2
 xiledit_LDADD	= @GLIB_LIBS@ @GTK_LIBS@
 
+#This should just be a flag in configure
 xiledit_direct_SOURCES	= $(xiledit_SOURCES)
-xiledit_direct_CFLAGS	= $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@ @GTK_DIRECTFB_CFLAGS@
+xiledit_direct_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ @GTK_DIRECTFB_CFLAGS@ -DVIRTEX2
 xiledit_direct_LDADD	= @GLIB_LIBS@ @GTK_DIRECTFB_LIBS@
+
+#Xiledit, virtex-5 version
+xiledit_v5_SOURCES	= $(DRAWING_SRC) $(SHARED_SRC) $(V4_SRC) $(glade_generated)
+xiledit_v5_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ @GTK_CFLAGS@ -DVIRTEX5
+xiledit_v5_LDADD	= $(xiledit_LDADD)
+
+#Xiledit, virtex-4 version
+xiledit_v4_SOURCES	= $(DRAWING_SRC) $(SHARED_SRC) $(V4_SRC) $(glade_generated)
+xiledit_v4_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ @GTK_CFLAGS@ -DVIRTEX4
+xiledit_v4_LDADD	= $(xiledit_LDADD)
 
 BUILT_SOURCES	= $(glade_generated)
 EXTRA_DIST = $(glade_sources)
