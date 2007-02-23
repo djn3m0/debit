@@ -28,7 +28,7 @@ static inline unsigned
 net_offset_of(const wire_db_t *wiredb,
 	      const sited_pip_t *spip) {
   unsigned site_offset = site_index(spip->site);
-  unsigned net_offset = spip->pip.source + site_offset * wiredb->dblen;
+  unsigned net_offset = spip->pip.target + site_offset * wiredb->dblen;
   debit_log(L_CONNEXITY, "returning net_offset value %i, site_offset %i", net_offset, site_offset);
   return net_offset;
 }
@@ -139,7 +139,7 @@ build_net_from(nets_t *nets,
     /* ask for the startpoint */
     found = get_interconnect_startpoint(pipdat, &spip.pip.source, spip.pip.target, spip.site);
     if (!found) {
-      debit_log(L_CONNEXITY, "leaving build_net_from, for lack of drivet at copper startpoint");
+      debit_log(L_CONNEXITY, "leaving build_net_from, for lack of driver at copper startpoint");
       return g_node_prepend(nets->head, father);
     }
 
