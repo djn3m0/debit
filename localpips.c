@@ -71,7 +71,8 @@ __pips_of_site_append(const pip_db_t *pipdb,
 		      const csite_descr_t *site,
 		      GArray *pips_array) {
   const wire_db_t *wiredb = pipdb->wiredb;
-  const pipdb_control_t *memorydb = &pipdb->memorydb[site->type];
+  const switch_type_t sw = sw_of_type(site->type);
+  const pipdb_control_t *memorydb = &pipdb->memorydb[sw];
 
   const pip_control_t *head = memorydb->pipctrl;
   const pip_control_t *head_end = head + memorydb->pipctrl_len;
@@ -637,23 +638,12 @@ examine_groupnode (GNode *node, gpointer data) {
 }
 
 static void
-__pips_of_switchbox_append(const pip_db_t *pipdb,
-			   const examine_endpoint_memory_t *exam_arg,
-			   const switch_type_t swbox) {
-  GNode *head = pipdb->memorydb[swbox];
-
-  if (!head)
-    return;
-
-  iterate_over_groups_memory(head, examine_groupnode, (void *)exam_arg);
-}
-
-static void
 __pips_of_site_append(const pip_db_t *pipdb,
 		      const bitstream_parsed_t *bitstream,
 		      const csite_descr_t *site,
 		      GArray *pips_array) {
-  switch_type_t swbox = 0;
+  switch_type_t swbox = sw_of_type(site->type);
+  GNode *head = pipdb->memorydb[swbox];
   const examine_endpoint_memory_t exam_arg = {
     .bitstream = bitstream,
     .site = site,
@@ -661,9 +651,10 @@ __pips_of_site_append(const pip_db_t *pipdb,
     .wiredb = pipdb->wiredb,
   };
 
-  for (swbox = 0; swbox < NR_SWITCH_TYPE; swbox++)
-    if (site_has_switch(site->type, swbox))
-      __pips_of_switchbox_append(pipdb, &exam_arg, swbox);
+  if (!head)
+    return;
+
+  iterate_over_groups_memory(head, examine_groupnode, (void *)&exam_arg);
 }
 
 #endif /* __COMPILED_PIPSDB */
@@ -726,19 +717,8 @@ __pips_of_site_append_index(const pip_db_t *pipdb,
   unsigned *site_index = data->site_index;
   GArray *pips_array = data->array;
 
-  switch_type_t swbox = 0;
-  const examine_endpoint_memory_t exam_arg = {
-    .bitstream = bitstream,
-    .site = site,
-    .array = pips_array,
-    .wiredb = pipdb->wiredb,
-  };
-
-  for (swbox = 0; swbox < NR_SWITCH_TYPE; swbox++) {
-    site_index[data->site_idx++] = pips_array->len;
-    if (site_has_switch(site->type, swbox))
-      __pips_of_switchbox_append(pipdb, &exam_arg, swbox);
-  }
+  site_index[data->site_idx++] = pips_array->len;
+  __pips_of_site_append(pipdb, bitstream, site, pips_array);
 }
 
 static void
@@ -762,7 +742,7 @@ _pips_of_bitstream(const pip_db_t *pipdb, const chip_descr_t *chipdb,
   gsize nsites = chipdb->width * chipdb->height;
   /* XXX This is obviously we bigger than needed. We need to redo this
      part */
-  unsigned array_len = nsites * NR_SWITCH_TYPE;
+  unsigned array_len = nsites;
   unsigned *site_index = g_new0(unsigned, array_len + 1);
 
   allpips_iter_t arg = {
@@ -820,9 +800,9 @@ get_interconnect_startpoint(const pip_parsed_dense_t *pipdat,
 			    wire_atom_t *wire,
 			    const wire_atom_t orig,
 			    const site_ref_t site) {
-  unsigned stidx = site_index(site) * NR_SWITCH_TYPE;
+  unsigned stidx = site_index(site);
   unsigned *indexes = pipdat->site_index;
-  unsigned start = indexes[stidx], end = indexes[stidx+NR_SWITCH_TYPE];
+  unsigned start = indexes[stidx], end = indexes[stidx+1];
 
   /* Do a run over the set of points for a site */
   while (start < end) {
@@ -839,9 +819,9 @@ pip_t *
 pips_of_site_dense(const pip_parsed_dense_t *pipdat,
 		   const site_ref_t site,
 		   gsize *size) {
-  unsigned stidx = site_index(site) * NR_SWITCH_TYPE;
+  unsigned stidx = site_index(site);
   unsigned *indexes = pipdat->site_index;
-  unsigned start = indexes[stidx], end = indexes[stidx+NR_SWITCH_TYPE];
+  unsigned start = indexes[stidx], end = indexes[stidx+1];
 
   *size = (end - start);
   return &pipdat->bitpips[start];
@@ -859,36 +839,14 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
   unsigned *indexes = pipdat->site_index;
   unsigned start = 0, i;
 
-  for (i = 0; i < nsites * NR_SWITCH_TYPE; i+=NR_SWITCH_TYPE) {
-      unsigned end = indexes[i+NR_SWITCH_TYPE];
+  for (i = 0; i < nsites; i++) {
+      unsigned end = indexes[i+1];
       for ( ; start < end; start++) {
 	pip_t *pip = &pipdat->bitpips[start];
 	debit_log(L_PIPS, "calling iterator for site #%i", site);
 	fun(data, pip->source, pip->target, site);
       }
       site++;
-  }
-}
-
-void
-iterate_over_switch_bitpips(const pip_parsed_dense_t *pipdat,
-			    const chip_descr_t *chip,
-			    switchpip_iterator_t fun, gpointer data) {
-  unsigned nsites = chip->width * chip->height;
-  site_ref_t site = 0;
-  unsigned *indexes = pipdat->site_index;
-  unsigned start = 0, i, sw;
-
-  for (i = 0; i < nsites * NR_SWITCH_TYPE; i+=NR_SWITCH_TYPE) {
-    for (sw = 0; sw < NR_SWITCH_TYPE; sw++) {
-      unsigned end = indexes[i+sw+1];
-      for ( ; start < end; start++) {
-	pip_t *pip = &pipdat->bitpips[start];
-	debit_log(L_PIPS, "calling iterator for site #%i[%i]", site, sw);
-	fun(data, pip->source, pip->target, switched_site(site, sw));
-      }
-    }
-    site++;
   }
 }
 
@@ -912,8 +870,8 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
   unsigned *indexes = pipdat->site_index;
   unsigned start = 0, i;
 
-  for (i = 0; i < nsites * NR_SWITCH_TYPE; i+=NR_SWITCH_TYPE) {
-      unsigned end = indexes[i+NR_SWITCH_TYPE];
+  for (i = 0; i < nsites; i++) {
+      unsigned end = indexes[i+1];
       for ( ; start < end; start++) {
 	pip_t *pip = &pipdat->bitpips[start];
 	debit_log(L_PIPS, "calling iterator for site #%i", site);

@@ -428,13 +428,12 @@ sprint_csite(gchar *data, const csite_descr_t *site,
 
 void
 sprint_switch(gchar *data, const chip_descr_t *chip,
-	      const switch_ref_t swb) {
-  const site_ref_t site_ref = site_of(swb);
-  const switch_type_t switch_ref = switch_of(swb);
+	      const site_ref_t site_ref) {
+  const csite_descr_t *site = get_site(chip, site_ref);
+  const switch_type_t switch_ref = sw_of_type(site->type);
   const char *str = sw_str[switch_ref];
   const site_print_t strtype = sw_type[switch_ref];
 
-  const csite_descr_t *site = get_site(chip, site_ref);
   const guint x = site->type_coord.x + 1;
   const guint y = site->type_coord.y + 1;
 

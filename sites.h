@@ -52,32 +52,6 @@ typedef struct site_area {
   unsigned height;
 } site_area_t;
 
-typedef uint32_t switch_ref_t;
-#define SWITCH_LEN 8
-#define SWITCH_MASK ((1 << SWITCH_LEN) - 1)
-
-static inline site_ref_t
-site_of(const switch_ref_t ref) {
-  return (ref >> SWITCH_LEN);
-}
-
-static inline switch_type_t
-switch_of(const switch_ref_t ref) {
-  return (ref & SWITCH_MASK);
-}
-
-static inline switch_ref_t
-switched_site(const site_ref_t site,
-	      const switch_type_t sw) {
-  return (site << SWITCH_LEN) | sw;
-}
-
-static inline int
-site_has_switch(const site_type_t site,
-		const switch_type_t sw) {
-  return (sw_of_type[site] & (1 << sw));
-}
-
 /* get a site index, in-order WRT iterate_over_sites */
 static inline unsigned
 site_index(const site_ref_t site) {
@@ -117,7 +91,7 @@ translate_global_site(const chip_descr_t *chip,
 void sprint_csite(gchar *data, const csite_descr_t *site,
 		  unsigned gx, unsigned gy);
 void sprint_switch(gchar *data, const chip_descr_t *chip,
-		   const switch_ref_t swb);
+		   const site_ref_t swb);
 
 typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
 				csite_descr_t *site, gpointer dat);

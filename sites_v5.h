@@ -20,14 +20,18 @@ typedef enum _site_type {
   NR_SITE_TYPE,
 } __attribute__((packed)) site_type_t;
 
-#define SIMPLE_SITE(x) [x] = (1ULL << SW_ ## x) | (1ULL << SW_INT)
-static const uint64_t sw_of_type[NR_SITE_TYPE] = {
-  [SITE_TYPE_NEUTRAL] = 0,
-  SIMPLE_SITE(CLB),
-  SIMPLE_SITE(IOB),
-  SIMPLE_SITE(DSP48),
+/* XXX duplicated wherever included */
+static const switch_type_t sw_of_type_table[NR_SITE_TYPE] = {
+  [SITE_TYPE_NEUTRAL] = SW_NONE,
+  [CLB] = SW_INT,
+  [IOB] = SW_INT,
+  [DSP48] = SW_INT,
 };
-#undef SIMPLE_SITE
+
+static inline
+switch_type_t sw_of_type(const site_type_t site) {
+  return sw_of_type_table[site];
+}
 
 typedef enum _wire_direction {
   WIRE_DIRECTION_NEUTRAL = 0,
