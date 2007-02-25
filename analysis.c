@@ -205,7 +205,7 @@ dump_site_iter(unsigned site_x, unsigned site_y,
 void dump_sites(const bitstream_analyzed_t *nlz,
 		const gchar *odir, const gchar *suffix) {
   dump_site_t dump = { .parsed = nlz->bitstream, .odir = odir, .suffix = suffix };
-#if defined(VIRTEX2)
+#if defined(VIRTEX2) || defined(SPARTAN3)
   site_type_t types[] =
 	  { CLB,
 	    TTERM, LTERM, BTERM, RTERM,

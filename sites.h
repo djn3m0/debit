@@ -9,7 +9,7 @@
 #include <glib.h>
 #include "bitstream_parser.h"
 
-#if defined(VIRTEX2)
+#if defined(VIRTEX2) || defined(SPARTAN3)
 #include "sites_v2.h"
 #elif defined(VIRTEX4)
 #include "sites_v4.h"

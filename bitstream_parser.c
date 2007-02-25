@@ -17,6 +17,17 @@
 #include "codes/crc-ibm.h"
 
 /* This is nothing but a key-value file */
+#if defined(VIRTEX2)
+static const
+unsigned v2_frame_count[V2C__NB_CFG] = {
+  [V2C_IOB] = 4,
+  [V2C_IOI] = 22,
+  [V2C_CLB] = 22,
+  [V2C_BRAM] = 64,
+  [V2C_BRAM_INT] = 22,
+  [V2C_GCLK] = 4,
+};
+
 static const
 chip_struct_t bitdescr[XC2__NUM] = {
   [XC2V40] = {
@@ -31,14 +42,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 2,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
   [XC2V80] = {
     .chip = XC2V80,
@@ -52,14 +56,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 2,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
   [XC2V250] = {
     .chip = XC2V250,
@@ -73,14 +70,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 4,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
   [XC2V500] = {
     .chip = XC2V500,
@@ -94,14 +84,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 4,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
   [XC2V1000] = {
     .chip = XC2V1000,
@@ -115,14 +98,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 4,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
   [XC2V1500] = {
     .chip = XC2V1500,
@@ -136,14 +112,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 4,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
   [XC2V2000] = {
     .chip = XC2V2000,
@@ -157,14 +126,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 4,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
   [XC2V3000] = {
     .chip = XC2V3000,
@@ -178,14 +140,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 6,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
   [XC2V4000] = {
     .chip = XC2V4000,
@@ -199,14 +154,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 6,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
   [XC2V6000] = {
     .chip = XC2V6000,
@@ -220,14 +168,7 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 6,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
   [XC2V8000] = {
     .chip = XC2V8000,
@@ -241,16 +182,144 @@ chip_struct_t bitdescr[XC2__NUM] = {
       [V2C_BRAM_INT] = 6,
       [V2C_GCLK] = 1,
     },
-    .frame_count = {
-      [V2C_IOB] = 4,
-      [V2C_IOI] = 22,
-      [V2C_CLB] = 22,
-      [V2C_BRAM] = 64,
-      [V2C_BRAM_INT] = 22,
-      [V2C_GCLK] = 4,
-    },
+    .frame_count = v2_frame_count,
   },
 };
+
+#define CHIPS__NUM XC2__NUM
+
+#elif defined(SPARTAN3)
+
+static const unsigned
+s3_frame_count[V2C__NB_CFG] = {
+  [V2C_IOB] = 4,
+  [V2C_IOI] = 19,
+  [V2C_CLB] = 19,
+  [V2C_BRAM] = 76,
+  [V2C_BRAM_INT] = 19,
+  [V2C_GCLK] = 3,
+};
+
+/* Spartan-3 */
+static const
+chip_struct_t bitdescr[XC3__NUM] = {
+  [XC3S50] = {
+    .chip = XC3S50,
+    .idcode = 0x0140D093U,
+    .framelen = 37,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 12,
+      [V2C_BRAM] = 1,
+      [V2C_BRAM_INT] = 1,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = s3_frame_count,
+  },
+  [XC3S200] = {
+    .chip = XC3S200,
+    .idcode = 0x01414093U,
+    .framelen = 53,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 20,
+      [V2C_BRAM] = 2,
+      [V2C_BRAM_INT] = 2,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = s3_frame_count,
+  },
+  [XC3S400] = {
+    .chip = XC3S400,
+    .idcode = 0x0141C093U,
+    .framelen = 69,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 28,
+      [V2C_BRAM] = 4,
+      [V2C_BRAM_INT] = 4,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = s3_frame_count,
+  },
+  [XC3S1000] = {
+    .chip = XC3S1000,
+    .idcode = 0x11428093U,
+    .framelen = 101,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 40,
+      [V2C_BRAM] = 2,
+      [V2C_BRAM_INT] = 2,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = s3_frame_count,
+  },
+  [XC3S1500] = {
+    .chip = XC3S1500,
+    .idcode = 0x01434093,
+    .framelen = 137,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 52,
+      [V2C_BRAM] = 2,
+      [V2C_BRAM_INT] = 2,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = s3_frame_count,
+  },
+  [XC3S2000] = {
+    .chip = XC3S2000,
+    .idcode = 0x01440093,
+    .framelen = 165,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 64,
+      [V2C_BRAM] = 2,
+      [V2C_BRAM_INT] = 2,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = s3_frame_count,
+  },
+  [XC3S4000] = {
+    .chip = XC3S4000,
+    .idcode = 0x01448093U,
+    .framelen = 197,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 72,
+      [V2C_BRAM] = 4,
+      [V2C_BRAM_INT] = 4,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = s3_frame_count,
+  },
+  [XC3S5000] = {
+    .chip = XC3S4000,
+    .idcode = 0x01450093U,
+    .framelen = 213,
+    .col_count = {
+      [V2C_IOB] = 2,
+      [V2C_IOI] = 2,
+      [V2C_CLB] = 80,
+      [V2C_BRAM] = 4,
+      [V2C_BRAM_INT] = 4,
+      [V2C_GCLK] = 1,
+    },
+    .frame_count = s3_frame_count,
+  },
+};
+
+#define CHIPS__NUM XC3__NUM
+
+#endif
 
 typedef enum parser_state {
   STATE_IDLE = 0,
@@ -258,6 +327,8 @@ typedef enum parser_state {
   STATE_WAITING_CTRL,
   STATE_WAITING_DATA,
 } parser_state_t;
+
+#if defined(VIRTEX2)
 
 typedef enum _registers_index {
   /* from xilinx ug002.pdf */
@@ -317,6 +388,76 @@ char *cmd_names[__NUM_CMD_CODE] = {
 };
 #endif
 
+#define chip_id_t v2_id_t
+
+#elif defined(SPARTAN3)
+/* Spartan-3, from xapp352 */
+typedef enum _registers_index {
+  /* from xilinx ug002.pdf */
+  CRC = 0, FAR, FDRI, FDRO,
+  CMD, CTL, MASK,
+  STAT, LOUT, COR,
+  MFWR, FLR, RESERVED1,
+  RESERVED2, IDCODE,
+  SNOWPLOW,
+  __NUM_REGISTERS,
+} register_index_t;
+
+/* This is the same as virtex-2 */
+typedef enum _cmd_code {
+  C_NULL = 0, WCFG,
+  C_MFWR,
+  DGHIGH_LFRM, RCFG, START, RCAP, RCRC,
+  AGHIGH, SWITCH, GRESTORE,
+  SHUTDOWN, GCAPTURE,
+  DESYNCH,
+  __NUM_CMD_CODE,
+} cmd_code_t;
+
+#if DEBIT_DEBUG > 0
+static const
+char *reg_names[__NUM_REGISTERS] = {
+  [CRC] = "CRC",
+  [FAR] = "FAR",
+  [FDRI] = "FDRI",
+  [FDRO] = "FDRO",
+  [CMD] = "CMD",
+  [CTL] = "CTL",
+  [MASK] = "MASK",
+  [STAT] = "STAT",
+  [LOUT] = "LOUT",
+  [COR] = "COR",
+  [MFWR] = "MFWR",
+  [FLR] = "FLR",
+  [RESERVED1] = "RESERVED1",
+  [RESERVED2] = "RESERVED2",
+  [IDCODE] = "IDCODE",
+};
+
+/* This is the same as virtex2 */
+static const
+char *cmd_names[__NUM_CMD_CODE] = {
+  [C_NULL] = "NULL",
+  [WCFG] = "WCFG",
+  [C_MFWR] = "MFWR",
+  [DGHIGH_LFRM] = "LFRM",
+  [RCFG] = "RCFG",
+  [START] = "START",
+  [RCAP] = "RCAP",
+  [RCRC] = "RCRC",
+  [AGHIGH] = "AGHIGH",
+  [SWITCH] = "SWITCH",
+  [GRESTORE] = "GRESTORE",
+  [SHUTDOWN] = "SHUTDOWN",
+  [GCAPTURE] = "GCAPTURE",
+  [DESYNCH] = "DESYNCH",
+};
+
+#define chip_id_t s3_id_t
+
+#endif /* DEBIT_DEBUG > 0 */
+#endif /* SPARTAN3 */
+
 /* This structure contains the internal structure of the parser */
 typedef struct _bitstream_parser {
   /* state of the parser */
@@ -330,7 +471,7 @@ typedef struct _bitstream_parser {
   xil_register_t registers[__NUM_REGISTERS];
 
   /* detailed view of some registers */
-  v2_id_t type;
+  chip_id_t type;
 
   /* Specific FDRI quirks */
   const void *last_frame;
@@ -446,7 +587,7 @@ _type_of_far(const bitstream_parser_t *bitstream,
   /* See ug002, page 322, 340 */
   switch(ba) {
   case BA_TYPE_CLB: {
-    v2_id_t chiptype = bitstream->type;
+    chip_id_t chiptype = bitstream->type;
     const unsigned *col_count = bitdescr[chiptype].col_count;
     int nclb = col_count[V2C_CLB];
     int mja = addr->mja;
@@ -475,7 +616,7 @@ _type_of_far(const bitstream_parser_t *bitstream,
 static inline int
 _col_of_far(const bitstream_parser_t *bitstream,
 	    const sw_far_t *addr) {
-  v2_id_t chiptype = bitstream->type;
+  chip_id_t chiptype = bitstream->type;
   int nclb = bitdescr[chiptype].col_count[V2C_CLB];
 
   int type = _type_of_far(bitstream, addr);
@@ -515,7 +656,7 @@ _col_of_far(const bitstream_parser_t *bitstream,
 static inline void
 _far_increment_mja(bitstream_parser_t *bitstream,
 		   sw_far_t *addr, int type) {
-  v2_id_t chiptype = bitstream->type;
+  chip_id_t chiptype = bitstream->type;
   const unsigned *col_count = bitdescr[chiptype].col_count;
   guint mja;
 
@@ -532,7 +673,7 @@ _far_increment_mja(bitstream_parser_t *bitstream,
 static inline void
 _far_increment_mna(bitstream_parser_t *bitstream,
 		   sw_far_t *addr) {
-  v2_id_t chiptype = bitstream->type;
+  chip_id_t chiptype = bitstream->type;
   const unsigned *frame_count = bitdescr[chiptype].frame_count;
   int type;
 
@@ -760,7 +901,7 @@ handle_cmd_write(bitstream_parsed_t *parsed,
 }
 
 static inline gint
-flr_check(const bitstream_parser_t *parser, v2_id_t chip) {
+flr_check(const bitstream_parser_t *parser, chip_id_t chip) {
   guint32 flr = register_read(parser, FLR);
   guint32 chipflr = bitdescr[chip].framelen;
 
@@ -779,7 +920,7 @@ idcode_write(bitstream_parsed_t *parsed,
   guint32 idcode = register_read(parser, IDCODE);
   int i;
 
-  for (i = 0; i < XC2__NUM; i++)
+  for (i = 0; i < CHIPS__NUM; i++)
     if (bitdescr[i].idcode == idcode) {
       parser->type = i;
       parsed->chip_struct = &bitdescr[i];

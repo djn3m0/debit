@@ -8,6 +8,8 @@
 
 #if defined(VIRTEX2)
 #include "design_v2.h"
+#elif defined(SPARTAN3)
+#include "design_s3.h"
 #elif defined(VIRTEX4)
 #include "design_v4.h"
 #elif defined(VIRTEX5)

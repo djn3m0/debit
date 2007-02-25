@@ -44,6 +44,20 @@ chipfiles[XC2__NUM] = {
   [XC2V8000] = "xc2v8000",
 };
 
+#elif defined(SPARTAN3)
+
+static const gchar *
+chipfiles[XC3__NUM] = {
+  [XC3S50] = "xc3s50",
+  [XC3S200] = "xc3s200",
+  [XC3S400] = "xc3s400",
+  [XC3S1000] = "xc3s1000",
+  [XC3S1500] = "xc3s1500",
+  [XC3S2000] = "xc3s2000",
+  [XC3S4000] = "xc3s4000",
+  [XC3S5000] = "xc3s5000",
+};
+
 #elif defined(VIRTEX4)
 
 static const gchar *
@@ -325,7 +339,7 @@ typedef enum _site_print_type {
   PRINT_BOTH_INVERT,
 } site_print_t;
 
-#if defined(VIRTEX2)
+#if defined(VIRTEX2) || defined(SPARTAN3)
 
 static const site_print_t print_type[NR_SITE_TYPE] = {
   [TIOI] = PRINT_X,
