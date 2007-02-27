@@ -213,33 +213,39 @@ typedef struct _wire_iter_limited {
 } wire_iter_limited_t;
 
 static void
+switch_to_site(unsigned site_x, unsigned site_y,
+	       csite_descr_t *site, gpointer data) {
+  wire_iter_limited_t *iter = data;
+  cairo_t *cr = iter->ctx->cr;
+  double dx = site_x * SITE_WIDTH, dy = site_y * SITE_HEIGHT;
+
+  cairo_restore (cr);
+
+  cairo_save (cr);
+  (void) site;
+  cairo_translate (cr, dx, dy);
+  /* Don't restore */
+}
+
+static void
 draw_wire_iter_limited(gpointer data,
 		       wire_atom_t start, wire_atom_t end,
 		       site_ref_t site) {
   wire_iter_limited_t *iter = data;
   pip_t pip = { .source = start,
 		.target = end, };
-  cairo_t *cr = iter->ctx->cr;
   const chip_descr_t *chip = iter->chip;
   const site_area_t *area = iter->area;
   unsigned width = chip->width;
   unsigned index = site_index(site);
-  double dx = (index % width) * SITE_WIDTH, dy = (index / width) * SITE_HEIGHT;
 
   /* if we're not in range, skip it */
   if (index % width - area->x > area->width ||
       index / width - area->y > area->height)
     return;
 
-  /* These save / restore could be balanced so that we don't do them too
-     many times, which is currently the case */
-  cairo_save (cr);
-
-  cairo_translate (cr, dx, dy);
   _draw_pip (iter->ctx, iter->wdb, pip);
   iter->drawn_pips++;
-
-  cairo_restore (cr);
 
 }
 
@@ -266,8 +272,11 @@ draw_all_wires_limited(drawing_context_t *ctx,
 
   cairo_translate (cr, -ctx->x_offset, -ctx->y_offset);
 
-  iterate_over_bitpips(pipdat, chip, draw_wire_iter_limited, &iter);
+
+  cairo_save (cr);
+  iterate_over_bitpips_complex(pipdat, chip, switch_to_site, draw_wire_iter_limited, &iter);
   g_print("%i pips drawn\n",iter.drawn_pips);
+  cairo_restore (cr);
 
   cairo_restore (cr);
 }

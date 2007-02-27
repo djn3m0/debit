@@ -111,4 +111,10 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
 		     const chip_descr_t *chip,
 		     bitpip_iterator_t fun, gpointer data);
 
+void
+iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
+			     const chip_descr_t *chip,
+			     site_iterator_t fun1, bitpip_iterator_t fun2,
+			     gpointer data);
+
 #endif /* _LOCALPIPS_H */

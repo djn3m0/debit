@@ -864,18 +864,22 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
 void
 iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
 			     const chip_descr_t *chip,
-			     bitpip_iterator_t fun, gpointer data) {
-  unsigned nsites = chip->width * chip->height;
+			     site_iterator_t fun1, bitpip_iterator_t fun2,
+			     gpointer data) {
+  const unsigned width = chip->width;
+  const unsigned nsites = width * chip->height;
   site_ref_t site = 0;
   unsigned *indexes = pipdat->site_index;
   unsigned start = 0, i;
 
   for (i = 0; i < nsites; i++) {
       unsigned end = indexes[i+1];
+      csite_descr_t *csite = get_site(chip, site);
+      fun1(site % width, site / width, csite, data);
       for ( ; start < end; start++) {
 	pip_t *pip = &pipdat->bitpips[start];
 	debit_log(L_PIPS, "calling iterator for site #%i", site);
-	fun(data, pip->source, pip->target, site);
+	fun2(data, pip->source, pip->target, site);
       }
     site++;
   }
