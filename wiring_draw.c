@@ -212,19 +212,27 @@ typedef struct _wire_iter_limited {
   unsigned drawn_pips;
 } wire_iter_limited_t;
 
-static void
+static int
 switch_to_site(unsigned site_x, unsigned site_y,
-	       csite_descr_t *site, gpointer data) {
+	       gpointer data) {
   wire_iter_limited_t *iter = data;
   cairo_t *cr = iter->ctx->cr;
+  const site_area_t *area = iter->area;
   double dx = site_x * SITE_WIDTH, dy = site_y * SITE_HEIGHT;
+
+  /* if we're not in range, skip the site */
+  if (site_x - area->x > area->width ||
+      site_y - area->y > area->height)
+    return 0;
 
   cairo_restore (cr);
 
   cairo_save (cr);
-  (void) site;
   cairo_translate (cr, dx, dy);
-  /* Don't restore */
+
+  /* Should draw the site here */
+
+  return 1;
 }
 
 static void
@@ -232,21 +240,13 @@ draw_wire_iter_limited(gpointer data,
 		       wire_atom_t start, wire_atom_t end,
 		       site_ref_t site) {
   wire_iter_limited_t *iter = data;
+  /* XXX Bitpip iterator should natively pass this as argument */
   pip_t pip = { .source = start,
 		.target = end, };
-  const chip_descr_t *chip = iter->chip;
-  const site_area_t *area = iter->area;
-  unsigned width = chip->width;
-  unsigned index = site_index(site);
 
-  /* if we're not in range, skip it */
-  if (index % width - area->x > area->width ||
-      index / width - area->y > area->height)
-    return;
-
+  (void) site;
   _draw_pip (iter->ctx, iter->wdb, pip);
   iter->drawn_pips++;
-
 }
 
 void

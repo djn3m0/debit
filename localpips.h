@@ -106,6 +106,8 @@ get_interconnect_startpoint(const pip_parsed_dense_t *pipdat,
 typedef void (*bitpip_iterator_t)(gpointer, wire_atom_t, wire_atom_t,
 				  site_ref_t);
 
+typedef int (*sitepip_iterator_t)(unsigned site_x, unsigned site_y, gpointer dat);
+
 void
 iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
 		     const chip_descr_t *chip,
@@ -114,7 +116,7 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
 void
 iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
 			     const chip_descr_t *chip,
-			     site_iterator_t fun1, bitpip_iterator_t fun2,
+			     sitepip_iterator_t fun1, bitpip_iterator_t fun2,
 			     gpointer data);
 
 #endif /* _LOCALPIPS_H */
