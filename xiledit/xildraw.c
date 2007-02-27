@@ -93,6 +93,8 @@ static void egg_xildraw_face_finalize (EggXildrawFace *self)
 static void
 egg_xildraw_face_init (EggXildrawFace *xildraw)
 {
+  GtkWidget *widget = GTK_WIDGET (xildraw);
+
   /* should we do the whole bunch of initialization here ?
      This would be cool, as we would only need code xilinx code here,
      not in the editor itself */
@@ -101,17 +103,20 @@ egg_xildraw_face_init (EggXildrawFace *xildraw)
   xildraw->pixmap = NULL;
 
   /* gtk initialization */
-  GTK_WIDGET_SET_FLAGS(GTK_WIDGET (xildraw), GTK_CAN_FOCUS);
-  /*   gtk_widget_set_flags(GTK_WIDGET (xildraw), GTK_CAN_FOCUS); */
+  GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
+  /*   gtk_widget_set_flags(widget, GTK_CAN_FOCUS); */
   /*   drawing_area.grab_focus() */
-  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_KEY_PRESS_MASK);
-  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON_PRESS_MASK);
-  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON_RELEASE_MASK);
+  gtk_widget_add_events (widget, GDK_KEY_PRESS_MASK);
+  gtk_widget_add_events (widget, GDK_BUTTON_PRESS_MASK);
+  gtk_widget_add_events (widget, GDK_BUTTON_RELEASE_MASK);
 
   /* For smooth dragging, we use the MOTION_HINT */
-  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_POINTER_MOTION_HINT_MASK);
-  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_BUTTON2_MOTION_MASK);
-  gtk_widget_add_events (GTK_WIDGET (xildraw), GDK_SCROLL_MASK);
+  gtk_widget_add_events (widget, GDK_POINTER_MOTION_HINT_MASK);
+  gtk_widget_add_events (widget, GDK_BUTTON2_MOTION_MASK);
+  gtk_widget_add_events (widget, GDK_SCROLL_MASK);
+
+  /* We're doing custom double-buffering */
+  gtk_widget_set_double_buffered(widget, FALSE);
 
   debit_log(L_GUI, "xildraw init");
 }
@@ -240,13 +245,14 @@ compute_sites_from_area(site_area_t *range, double zoom,
   unsigned uheight = height / zoom;
 
   /* FIBWWYW */
-#define GET_NUM(x, vx) (x) / (vx)
+#define GET_RANK(x, vx) (x) / (vx)
+#define GET_WIDTH(x, width, vx) (GET_RANK(x + width, vx) - GET_RANK(x, vx) + 1)
 
   /* Yes, we should go further than this */
-  range->x = GET_NUM(ux, SITE_WIDTH);
-  range->width = GET_NUM(uwidth, SITE_WIDTH);
-  range->y = GET_NUM(uy, SITE_HEIGHT);
-  range->height = GET_NUM(uheight, SITE_HEIGHT);
+  range->x = GET_RANK(ux, SITE_WIDTH);
+  range->width = GET_WIDTH(ux, uwidth, SITE_WIDTH);
+  range->y = GET_RANK(uy, SITE_HEIGHT);
+  range->height = GET_WIDTH(uy, uheight, SITE_HEIGHT);
 }
 
 static void
