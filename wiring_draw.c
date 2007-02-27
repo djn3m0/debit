@@ -168,7 +168,6 @@ draw_wire_iter(gpointer data,
   _draw_pip (iter->ctx, iter->wdb, pip);
 
   cairo_restore (cr);
-
 }
 
 /* \brief Draw all pips in a bitstream
@@ -210,6 +209,7 @@ typedef struct _wire_iter_limited {
   const wire_db_t *wdb;
   const chip_descr_t *chip;
   const site_area_t *area;
+  unsigned drawn_pips;
 } wire_iter_limited_t;
 
 static void
@@ -237,6 +237,7 @@ draw_wire_iter_limited(gpointer data,
 
   cairo_translate (cr, dx, dy);
   _draw_pip (iter->ctx, iter->wdb, pip);
+  iter->drawn_pips++;
 
   cairo_restore (cr);
 
@@ -254,6 +255,7 @@ draw_all_wires_limited(drawing_context_t *ctx,
 			       .chip = nlz->chip,
 			       .wdb = nlz->pipdb->wiredb,
 			       .area = area,
+			       .drawn_pips = 0,
   };
 
   cairo_set_line_width (ctx->cr, 1.0);
@@ -263,7 +265,9 @@ draw_all_wires_limited(drawing_context_t *ctx,
   cairo_scale (cr, zoom, zoom);
 
   cairo_translate (cr, -ctx->x_offset, -ctx->y_offset);
+
   iterate_over_bitpips(pipdat, chip, draw_wire_iter_limited, &iter);
+  g_print("%i pips drawn\n",iter.drawn_pips);
 
   cairo_restore (cr);
 }

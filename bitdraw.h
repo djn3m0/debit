@@ -35,6 +35,7 @@ typedef struct _drawing_context {
   double zoom;
 
   /* structural information */
+
 } drawing_context_t;
 
 /* Initialize the structure to default value. cairo_t is passed
