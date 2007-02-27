@@ -837,16 +837,15 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
   unsigned nsites = chip->width * chip->height;
   site_ref_t site = 0;
   unsigned *indexes = pipdat->site_index;
-  unsigned start = 0, i;
+  unsigned start = 0;
 
-  for (i = 0; i < nsites; i++) {
-      unsigned end = indexes[i+1];
+  for (site = 0; site < nsites; site++) {
+      unsigned end = indexes[site+1];
       for ( ; start < end; start++) {
 	pip_t *pip = &pipdat->bitpips[start];
 	debit_log(L_PIPS, "calling iterator for site #%i", site);
 	fun(data, pip->source, pip->target, site);
       }
-      site++;
   }
 }
 
