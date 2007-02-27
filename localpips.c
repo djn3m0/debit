@@ -873,11 +873,9 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
 
   for (site = 0; site < nsites; site++) {
     unsigned end = indexes[site+1];
+    csite_descr_t *csite = get_site(chip, site);
 
-    if (end == start)
-      continue;
-
-    if (!fun1(site % width, site / width, data))
+    if (!fun1(site % width, site / width, csite, data))
       start = end;
 
     for ( ; start < end; start++) {

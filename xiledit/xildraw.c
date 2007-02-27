@@ -259,8 +259,6 @@ draw_limited (EggXildrawFace *draw, cairo_t *cr,
   GTimeVal start, end;
   g_get_current_time(&start);
 
-  /* How to specify the limits */
-  draw_chip_limited(ctx, nlz->chip);
   draw_all_wires_limited(ctx, nlz, sites);
 
   g_get_current_time(&end);
@@ -296,15 +294,19 @@ egg_xildraw_pixmap_recompute (EggXildrawFace *xildraw)
   cairo_rectangle (cr, 0, 0, width, height);
   cairo_clip (cr);
 
+  /* paint the clip region */
+  cairo_set_source_rgb (cr, 0., 0., 0.);
+  cairo_paint (cr);
+
   cairo_translate (cr, -x_offset, -y_offset);
 
   /* Restrict drawing to the pixmap region */
-
   compute_sites_from_area(&range, zoom,
 			  x_offset, width,
 			  y_offset, height);
   print_site_area(&range);
 
+  cairo_set_source_rgb (cr, 1., 1., 1.);
   draw_limited (xildraw, cr, &range);
   destroy_patterns (ctx);
   cairo_destroy (cr);

@@ -70,7 +70,9 @@ void destroy_patterns(drawing_context_t *ctx);
 /* draw the chip layout */
 //void draw_surface_chip(cairo_surface_t *sr, const chip_descr_t *chip);
 void draw_cairo_chip(cairo_t *cr, const chip_descr_t *chip);
-void draw_chip_limited(drawing_context_t *ctx, const chip_descr_t *chip);
+
+/* draw individual site */
+void _draw_site_compose(const drawing_context_t *ctx, const csite_descr_t *site);
 
 /* wire drawing primitives -- this is where the real work happens */
 void draw_all_wires(drawing_context_t *ctx, const bitstream_analyzed_t *nlz);

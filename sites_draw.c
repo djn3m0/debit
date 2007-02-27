@@ -57,7 +57,7 @@ _draw_luts(cairo_t *cr) {
 }
 
 static inline void
-_draw_name(cairo_t *cr, csite_descr_t *site) {
+_draw_name(cairo_t *cr, const csite_descr_t *site) {
   gchar name[32];
   /* XXX */
   sprint_csite(name, site, 0, 0);
@@ -75,7 +75,8 @@ _draw_clb_pattern(cairo_t *cr) {
 }
 
 static void
-_draw_clb(drawing_context_t *ctx, csite_descr_t *site) {
+_draw_clb(const drawing_context_t *ctx,
+	  const csite_descr_t *site) {
   cairo_t *cr = ctx->cr;
 
   _draw_clb_pattern(cr);
@@ -117,7 +118,8 @@ draw_clb_pattern(drawing_context_t *ctx) {
 }
 
 void
-_draw_clb_compose(drawing_context_t *ctx, csite_descr_t *site) {
+_draw_clb_compose(const drawing_context_t *ctx,
+		  const csite_descr_t *site) {
   cairo_t *cr = ctx->cr;
   cairo_pattern_t *site_pattern = ctx->site_sing_patterns[CLB];
 
@@ -139,57 +141,39 @@ _draw_clb_compose(drawing_context_t *ctx, csite_descr_t *site) {
     _draw_name(cr, site);
 }
 
-static void
-draw_clb_vector(drawing_context_t *ctx,
-		unsigned x, unsigned y,
-		csite_descr_t *site) {
-  cairo_t *cr = ctx->cr;
-  /* can be computed incrementally with only one addition */
-  double dx = x * SITE_WIDTH, dy = y * SITE_HEIGHT;
-  /* move to the right place */
-  cairo_translate(cr, dx, dy);
-  _draw_clb(ctx, site);
-  cairo_translate(cr, -dx, -dy);
-}
-
-void
-draw_clb_compose(drawing_context_t *ctx,
-		 unsigned x, unsigned y,
-		 csite_descr_t *site) {
-  cairo_t *cr = ctx->cr;
-  /* can be computed incrementally with only one addition */
-  double dx = x * SITE_WIDTH, dy = y * SITE_HEIGHT;
-
-  /* don't draw, do a compositing operation */
-  cairo_save (cr);
-  cairo_translate(cr, dx, dy);
-  _draw_clb_compose(ctx, site);
-  cairo_restore (cr);
-  //cairo_translate(cr, -dx, -dy);
-}
-
 /* Drawing of regular LUT */
-typedef void (*site_draw_t)(drawing_context_t *ctx,
-			    unsigned x, unsigned y,
-			    csite_descr_t *);
+typedef void (*site_draw_t)(const drawing_context_t *ctx,
+			    const csite_descr_t *site);
 
 static site_draw_t
 draw_table_compositing[NR_SITE_TYPE] = {
-  [CLB] = draw_clb_compose,
+  [CLB] = _draw_clb_compose,
 };
+
+void
+_draw_site_compose(const drawing_context_t *ctx,
+		   const csite_descr_t *site) {
+  site_draw_t fun = draw_table_compositing[site->type];
+  if (fun) {
+    fun(ctx, site);
+  }
+}
 
 static void
 draw_site_compose(unsigned x, unsigned y,
 		  csite_descr_t *site, gpointer data) {
   drawing_context_t *ctx = data;
-  site_draw_t fun = draw_table_compositing[site->type];
-  if (fun)
-    fun(ctx, x, y, site);
+  cairo_t *cr = ctx->cr;
+  double dx = x * SITE_WIDTH, dy = y * SITE_HEIGHT;
+  cairo_save (cr);
+  cairo_translate(cr, dx, dy);
+  _draw_site_compose(ctx, site);
+  cairo_restore (cr);
 }
 
 static site_draw_t
 draw_table_vectorized[NR_SITE_TYPE] = {
-  [CLB] = draw_clb_vector,
+  [CLB] = _draw_clb,
 };
 
 static void
@@ -197,8 +181,14 @@ draw_site_vector(unsigned x, unsigned y,
 		 csite_descr_t *site, gpointer data) {
   drawing_context_t *ctx = data;
   site_draw_t fun = draw_table_vectorized[site->type];
-  if (fun)
-    fun(ctx, x, y, site);
+  if (fun) {
+    cairo_t *cr = ctx->cr;
+    double dx = x * SITE_WIDTH, dy = y * SITE_HEIGHT;
+    /* move to the right place */
+    cairo_translate(cr, dx, dy);
+    fun(ctx, site);
+    cairo_translate(cr, -dx, -dy);
+  }
 }
 
 cairo_pattern_t *
@@ -309,12 +299,6 @@ draw_chip(drawing_context_t *ctx, const chip_descr_t *chip) {
   draw_chip_for_window(ctx, chip);
 
   debit_log(L_DRAW, "End of draw chip");
-}
-
-void
-draw_chip_limited(drawing_context_t *ctx, const chip_descr_t *chip) {
-/*   cairo_t *cr = ctx->cr; */
-  draw_chip(ctx, chip);
 }
 
 /* create a context from all of a parsed bitstream */

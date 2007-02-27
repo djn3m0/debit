@@ -214,9 +214,10 @@ typedef struct _wire_iter_limited {
 
 static int
 switch_to_site(unsigned site_x, unsigned site_y,
-	       gpointer data) {
+	       csite_descr_t *site, gpointer data) {
   wire_iter_limited_t *iter = data;
-  cairo_t *cr = iter->ctx->cr;
+  const drawing_context_t *ctx = iter->ctx;
+  cairo_t *cr = ctx->cr;
   const site_area_t *area = iter->area;
   double dx = site_x * SITE_WIDTH, dy = site_y * SITE_HEIGHT;
 
@@ -230,7 +231,7 @@ switch_to_site(unsigned site_x, unsigned site_y,
   cairo_save (cr);
   cairo_translate (cr, dx, dy);
 
-  /* Should draw the site here */
+  _draw_site_compose(ctx, site);
 
   return 1;
 }
