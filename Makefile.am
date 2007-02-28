@@ -30,7 +30,7 @@ debit_SOURCES	= $(SHARED_SRC) $(SHARED_SRC_V2) debit.c config.h
 debit_CFLAGS	= $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@
 debit_LDADD	= @GLIB_LIBS@
 
-debit_s3_SOURCES	= $(SHARED_SRC) $(SHARED_SRC_V2) debit.c config.h
+debit_s3_SOURCES	= $(SHARED_SRC) $(SHARED_SRC_V2) design_s3.h debit.c config.h
 debit_s3_CFLAGS	= $(AM_CFLAGS) -DSPARTAN3 @GLIB_CFLAGS@
 debit_s3_LDADD	= @GLIB_LIBS@
 
