@@ -518,6 +518,13 @@ update_crc(bitstream_parser_t *parser,
   xil_register_t *crcreg = &parser->registers[CRC];
   guint32 bcc = crcreg->value;
 
+  switch (reg) {
+  case LOUT:
+    return;
+  default:
+    break;
+  }
+
   /* first go through the value bits */
   bcc = crc_ibm_byte(bcc, val);
   bcc = crc_ibm_byte(bcc, val >> 8);
