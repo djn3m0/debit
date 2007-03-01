@@ -190,9 +190,10 @@ chip_struct_t bitdescr[XC2__NUM] = {
 
 #elif defined(SPARTAN3)
 
+/* xapp452 */
 static const unsigned
 s3_frame_count[V2C__NB_CFG] = {
-  [V2C_IOB] = 4,
+  [V2C_IOB] = 2,
   [V2C_IOI] = 19,
   [V2C_CLB] = 19,
   [V2C_BRAM] = 76,
