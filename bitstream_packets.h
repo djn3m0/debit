@@ -133,4 +133,27 @@ typedef struct _xil_register {
   guint32 value;
 } xil_register_t;
 
+/* Building packets */
+
+static inline uint32_t
+build_pkt2(const unsigned wordc, const unsigned rd, const unsigned wr) {
+  return (
+    ((TYPE_V2 << V2_PKT_TYPE_OFFSET) & V2_PKT_TYPE_MASK) |
+    ((wr << V2_PKT_WR_OFFSET) & V2_PKT_WR_MASK) |
+    ((rd << V2_PKT_RD_OFFSET) & V2_PKT_RD_MASK) |
+    ((wordc << V2_PKT_WORDC_OFFSET) & V2_PKT_WORDC_MASK)
+    );
+}
+
+static inline uint32_t
+build_pkt1(const unsigned wordc, const unsigned rega, const unsigned rd, const unsigned wr) {
+  return (
+    ((TYPE_V1 << V1_PKT_TYPE_OFFSET) & V1_PKT_TYPE_MASK) |
+    ((wr << V1_PKT_WR_OFFSET) & V1_PKT_WR_MASK) |
+    ((rd << V1_PKT_RD_OFFSET) & V1_PKT_RD_MASK) |
+    ((rega << V1_PKT_REGA_OFFSET) & V1_PKT_REGA_MASK) |
+    ((wordc << V1_PKT_WORDC_OFFSET) & V1_PKT_WORDC_MASK)
+    );
+}
+
 #endif /* _BITSTREAM_PACKETS_H */
