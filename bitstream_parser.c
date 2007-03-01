@@ -561,10 +561,12 @@ typed_frame_name(char *buf, unsigned buf_len,
 int
 snprintf_far(char *buf, const size_t buf_len,
 	     const uint32_t hwfar) {
-  (void) buf;
-  (void) buf_len;
-  (void) hwfar;
-  return 0;
+  return snprintf(buf, buf_len,
+		  "%i_%i_%i_%i",
+		  ba_of_far(hwfar),
+		  mja_of_far(hwfar),
+		  mna_of_far(hwfar),
+		  bn_of_far(hwfar));
 }
 
 static inline void
@@ -728,8 +730,23 @@ default_register_write(bitstream_parser_t *parser,
   for (i = 0; i < length; i++) {
     guint32 val = bytearray_get_uint32(ba);
     update_crc(parser, reg, val);
-    /* XXX writes to the CRC registers may only be crc updates */
-    regp->value = val;
+
+    switch (reg) {
+    case CRC:
+      /* CRC write does not really write the crc register, only updates
+	 it as a side-effect. On v2 this does not mean anything, as the
+         CRC check is triggered by an auto-CRC word */
+      break;
+    case LOUT: {
+      gchar far_name[32];
+      snprintf_far(far_name, sizeof(far_name), val);
+      g_print("LOUT: %08x\n", val);
+      g_print("LOUT as FAR is [%i], %s\n", val, far_name);
+      /* Fall through */
+    }
+    default:
+      regp->value = val;
+    }
   }
   parser->active_length -= length;
 
