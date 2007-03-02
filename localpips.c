@@ -837,14 +837,14 @@ iterate_over_bitpips(const pip_parsed_dense_t *pipdat,
   unsigned nsites = chip->width * chip->height;
   site_ref_t site = 0;
   unsigned *indexes = pipdat->site_index;
+  pip_t *bitpips = pipdat->bitpips;
   unsigned start = 0;
 
   for (site = 0; site < nsites; site++) {
       unsigned end = indexes[site+1];
       for ( ; start < end; start++) {
-	pip_t *pip = &pipdat->bitpips[start];
 	debit_log(L_PIPS, "calling iterator for site #%i", site);
-	fun(data, pip->source, pip->target, site);
+	fun(data, bitpips[start], site);
       }
   }
 }
@@ -869,6 +869,7 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
   const unsigned nsites = width * chip->height;
   site_ref_t site = 0;
   unsigned *indexes = pipdat->site_index;
+  pip_t *bitpips = pipdat->bitpips;
   unsigned start = 0;
 
   for (site = 0; site < nsites; site++) {
@@ -879,9 +880,8 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
       start = end;
 
     for ( ; start < end; start++) {
-      pip_t *pip = &pipdat->bitpips[start];
       debit_log(L_PIPS, "calling iterator for site #%i", site);
-      fun2(data, pip->source, pip->target, site);
+      fun2(data, bitpips[start], site);
     }
   }
 }

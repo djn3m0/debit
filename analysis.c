@@ -60,9 +60,8 @@ print_lut_data(const csite_descr_t *site, const guint16 data[]) {
 }
 
 static void
-print_switchpip_iter(gpointer data,
-		     wire_atom_t start, wire_atom_t end,
-		     site_ref_t site_ref) {
+print_switchpip_iter(gpointer data, const pip_t pip,
+		     const site_ref_t site_ref) {
   bitstream_analyzed_t *bitstream = data;
   const wire_db_t *wiredb = bitstream->pipdb->wiredb;
   const chip_descr_t *chip = bitstream->chip;
@@ -70,7 +69,8 @@ print_switchpip_iter(gpointer data,
 
   sprint_switch(site_buf, chip, site_ref);
   g_printf("pip %s %s -> %s\n", site_buf,
-	   wire_name(wiredb,start), wire_name(wiredb,end));
+	   wire_name(wiredb,pip.source),
+	   wire_name(wiredb,pip.target));
 }
 
 static void

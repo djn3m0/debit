@@ -103,8 +103,7 @@ get_interconnect_startpoint(const pip_parsed_dense_t *pipdat,
 			    const wire_atom_t orig,
 			    const site_ref_t site);
 
-typedef void (*bitpip_iterator_t)(gpointer, wire_atom_t, wire_atom_t,
-				  site_ref_t);
+typedef void (*bitpip_iterator_t)(gpointer, const pip_t, const site_ref_t);
 
 typedef int (*sitepip_iterator_t)(unsigned site_x, unsigned site_y,
 				  csite_descr_t *site, gpointer dat);

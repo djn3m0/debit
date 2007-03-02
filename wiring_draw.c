@@ -116,7 +116,7 @@ draw_wire_buffered(const drawing_context_t *ctx, const wire_db_t *wdb, wire_atom
 static inline void
 _draw_interconnect(const drawing_context_t *ctx,
 		   const wire_db_t *wdb,
-		   pip_t pip) {
+		   const pip_t pip) {
   cairo_t *cr = ctx->cr;
   double x = 0.0, y = 0.0;
 
@@ -130,7 +130,8 @@ _draw_interconnect(const drawing_context_t *ctx,
 }
 
 static void
-_draw_pip(const drawing_context_t *ctx, const wire_db_t *wdb, pip_t pip) {
+_draw_pip(const drawing_context_t *ctx, const wire_db_t *wdb,
+	  const pip_t pip) {
   _draw_interconnect(ctx, wdb, pip);
   /* The source is not always needed --
      sometimes the pip is connected directly by the
@@ -148,12 +149,8 @@ typedef struct _wire_iter {
 } wire_iter_t;
 
 static void
-draw_wire_iter(gpointer data,
-	       wire_atom_t start, wire_atom_t end,
-	       site_ref_t site) {
+draw_wire_iter(gpointer data, const pip_t pip, const site_ref_t site) {
   wire_iter_t *iter = data;
-  pip_t pip = { .source = start,
-		.target = end, };
   cairo_t *cr = iter->ctx->cr;
   const chip_descr_t *chip = iter->chip;
   unsigned width = chip->width;
@@ -237,14 +234,8 @@ switch_to_site(unsigned site_x, unsigned site_y,
 }
 
 static void
-draw_wire_iter_limited(gpointer data,
-		       wire_atom_t start, wire_atom_t end,
-		       site_ref_t site) {
+draw_wire_iter_limited(gpointer data, const pip_t pip, const site_ref_t site) {
   wire_iter_limited_t *iter = data;
-  /* XXX Bitpip iterator should natively pass this as argument */
-  pip_t pip = { .source = start,
-		.target = end, };
-
   (void) site;
   _draw_pip (iter->ctx, iter->wdb, pip);
   iter->drawn_pips++;
