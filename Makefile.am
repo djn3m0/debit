@@ -20,7 +20,7 @@ SHARED_SRC_V2	= codes/crc-ibm.c codes/crc-ibm.h \
 		bitstream_parser.c bitstream_parser.h \
 		design_v2.h virtex2_config.h cfgbit.h
 
-bin_PROGRAMS	= debit debit_s3 debit_v4 debit_v5
+bin_PROGRAMS	= debit debit_v4 debit_v5 #debit_s3
 
 if BUILD_BIT2PDF
   bin_PROGRAMS += bit2pdf

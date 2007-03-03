@@ -35,6 +35,12 @@
 /* The data */
 #if defined(VIRTEX2)
 #include "data/virtex2/pips.h"
+#elif defined(VIRTEX4)
+#include "data/virtex4/pips.h"
+#elif defined(VIRTEX5)
+#include "data/virtex5/pips.h"
+#else
+#error "Could not compile in pip db"
 #endif
 
 /* The initialization functions */
@@ -47,13 +53,7 @@ get_pipdb(const gchar *datadir) {
     g_free(ret);
     return NULL;
   }
-
-#if defined(VIRTEX2)
   ret->memorydb = &dbrefs[0];
-#else
-  ret->memorydb = 0;
-#endif
-
   return ret;
 }
 

@@ -25,12 +25,17 @@
 #define WIREDB "data/virtex2/wires.m4"
 #elif defined(VIRTEX4)
 #define WIREDB "data/virtex4/wires.m4"
+#elif defined(VIRTEX5)
+#define WIREDB "data/virtex5/wires.m4"
+#else
+#error "Unable to compile wiredb in"
 #endif
 
 #include "data/wiring_compiled.h"
 
 wire_db_t *get_wiredb(const gchar *datadir) {
   wire_db_t *wiredb = g_new0(wire_db_t, 1);
+  (void) datadir;
   wiredb->details = details;
   wiredb->wires = wires;
   wiredb->wirenames = wirestr.str;
