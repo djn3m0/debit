@@ -42,6 +42,7 @@ WIRES_H_DB=wires.h
 WIRES_DB=wires.db
 
 DBGENSCRIPT ?= $(srcdir)/../wires_to_db.pl
+FLIPCHIP    ?= 0
 WIRES_M4_SCRIPT=$(srcdir)/../dbtoini.m4
 WIRES_H_M4_SCRIPT=$(srcdir)/../dbtoh.m4
 
@@ -50,7 +51,7 @@ $(WIRES_RAW_DB): $(DATDATA) $(DBGENSCRIPT)
 	| sed -e 's/\[ *\([^ ]*\) *\]/\1/' \
 	| sed -e 's/\([^=]*\)=.*$$/\1/' \
 	| grep -v '^$$' \
-	| sort -n | uniq | $(DBGENSCRIPT) 0 > $@
+	| sort -n | uniq | $(DBGENSCRIPT) $(FLIPCHIP) > $@
 
 $(WIRES_DB): $(WIRES_M4_SCRIPT) $(WIRES_RAW_DB)
 	m4 $^ > $@
