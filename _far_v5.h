@@ -15,6 +15,7 @@ static const
 chip_struct_t bitdescr[XC5VLX__NUM] = {
   /* FLR is always 41 for virtex-5 */
   [XC5VLX30] = { .idcode = 0x286E093,
+		 .chip = XC5VLX30,
 		 .framelen = 41,
 		 .frame_count = v5_frame_count,
 		 .col_count = {
@@ -25,6 +26,7 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
 		 .row_count = 2,
   },
   [XC5VLX50] = { .idcode = 0x2896093,
+		 .chip = XC5VLX50,
 		 .framelen = 41,
 		 .frame_count = v5_frame_count,
 		 .col_count = {
@@ -35,6 +37,7 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
 		 .row_count = 3,
   },
   [XC5VLX85] = { .idcode = 0x28AE093,
+		 .chip = XC5VLX85,
 		 .framelen = 41,
 		 .frame_count = v5_frame_count,
 		 .col_count = {
@@ -45,6 +48,7 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
 		 .row_count = XC5VLX85_NROWS,
   },
   [XC5VLX110] = { .idcode = 0x28D6093,
+		  .chip = XC5VLX110,
 		  .framelen = 41,
 		  .frame_count = v5_frame_count,
 		  .col_count = {
@@ -55,6 +59,7 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
 		  .row_count = XC5VLX85_NROWS + 1,
   },
   [XC5VLX220] = { .idcode = 0x290C093,
+		  .chip = XC5VLX220,
 		  .framelen = 41,
 		  .frame_count = v5_frame_count,
 		  .col_count = {
@@ -66,6 +71,7 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
   },
   /* not verified, I cannot synthetize for this chip */
   [XC5VLX330] = { .idcode = 0x295C093,
+		  .chip = XC5VLX330,
 		  .framelen = 41,
 		  .frame_count = v5_frame_count,
 		  .col_count = {
