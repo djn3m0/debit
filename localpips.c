@@ -134,7 +134,7 @@ static int build_datatree_from_keyfiles(GKeyFile *data, GKeyFile *control,
 					const site_type_t type);
 static void destroy_datatree(GNode *head);
 
-#if defined(VIRTEX2) || defined(SPARTAN3)
+#if defined(VIRTEX2)
 
 static const gchar *basedbnames[NR_SWITCH_TYPE] = {
   [SW_CLB] = "clb",
@@ -150,6 +150,12 @@ static const gchar *basedbnames[NR_SWITCH_TYPE] = {
   [SW_BTERMBRAM] = "btermbram",
   [SW_BIOIBRAM] = "bioibram",
   [SW_TIOIBRAM] = "tioibram",
+};
+
+#elif defined(SPARTAN3)
+
+static const gchar *basedbnames[NR_SWITCH_TYPE] = {
+  [SW_CLB] = "clb",
 };
 
 #elif defined(VIRTEX4)

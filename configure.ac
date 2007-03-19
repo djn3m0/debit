@@ -88,6 +88,7 @@ fi
 
 AC_CONFIG_FILES([Makefile tests/Makefile \
 		data/Makefile \
+		data/spartan3/Makefile \
 		data/virtex2/Makefile \
 		data/virtex4/Makefile \
 		data/virtex5/Makefile \

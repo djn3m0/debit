@@ -31,7 +31,10 @@
  * Describes the layout of the configuration bits of a site in the bitstream.
  */
 
+#if defined(VIRTEX2)
+
 const type_bits_t type_bits[NR_SITE_TYPE] = {
+  /* XXX remove row count and SITE_PER_COL which are not used at all */
   /* CLB Group */
   [CLB] = {
     .col_type = V2C_CLB,
@@ -144,6 +147,101 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
        CLKT, CLKB, GCLKC, GCLKH, GCLKHBRAM,
   */
 };
+
+#elif defined(SPARTAN3) /* VIRTEX2 */
+
+#define CLB_HEIGHT 8
+
+const type_bits_t type_bits[NR_SITE_TYPE] = {
+  /* CLB Group */
+  [CLB] = {
+    .col_type = V2C_CLB,
+    .x_type_off = 0,
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
+  },
+  [LTERM] = {
+    .col_type = V2C_IOB,
+    .x_type_off = 0,
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
+  },
+  [RTERM] = {
+    .col_type = V2C_IOB,
+    .x_type_off = 1,
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
+  },
+  [LIOI] = {
+    .col_type = V2C_IOI,
+    .x_type_off = 0,
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
+  },
+  [RIOI] = {
+    .col_type = V2C_IOI,
+    .x_type_off = 1,
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
+  },
+  [TTERM] = {
+    .col_type = V2C_CLB,
+    .x_type_off = 0,
+    .y_offset = 0,
+    .y_width = 2,
+  },
+  [BTERM] = {
+    .col_type = V2C_CLB,
+    .x_type_off = 0,
+    .y_offset = -2,
+    .y_width = 2,
+  },
+  [TIOI] = {
+    .col_type = V2C_CLB,
+    .x_type_off = 0,
+    .y_offset = 2,
+    .y_width = CLB_HEIGHT,
+  },
+  [BIOI] = {
+    .col_type = V2C_CLB,
+    .x_type_off = 0,
+    .y_offset = - (CLB_HEIGHT + 2),
+    .y_width = CLB_HEIGHT,
+  },
+  /* BRAM Group */
+  [BRAM] = {
+    .col_type = V2C_BRAM_INT,
+    .x_type_off = 0,
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
+  },
+  [TTERMBRAM] = {
+    .col_type = V2C_BRAM_INT,
+    .x_type_off = 0,
+    .y_offset = 0,
+    .y_width = 2,
+  },
+  [BTERMBRAM] = {
+    .col_type = V2C_BRAM_INT,
+    .x_type_off = 0,
+    .y_offset = -2,
+    .y_width = 2,
+  },
+  [TIOIBRAM] = {
+    .col_type = V2C_BRAM_INT,
+    .x_type_off = 0,
+    .y_offset = 2,
+    .y_width = CLB_HEIGHT,
+  },
+  [BIOIBRAM] = {
+    .col_type = V2C_BRAM_INT,
+    .x_type_off = 0,
+    .y_offset = - (CLB_HEIGHT + 2),
+    .y_width = CLB_HEIGHT,
+  },
+};
+
+#endif /* SPARTAN3 */
 
 /*
  * Untyped query functions
