@@ -15,7 +15,7 @@ V4_SRC		= ../bitstream_v4.c ../bitstream_parser_common.c ../codes/crc32-c.c
 bin_PROGRAMS	=
 
 if BUILD_GUI
-  bin_PROGRAMS += xiledit xiledit_v5 xiledit_v4
+  bin_PROGRAMS += xiledit xiledit_v5 xiledit_v4 xiledit_s3
 endif
 
 if BUILD_GUI_DIRECTFB
@@ -30,6 +30,11 @@ xiledit_LDADD	= @GLIB_LIBS@ @GTK_LIBS@
 xiledit_direct_SOURCES	= $(xiledit_SOURCES)
 xiledit_direct_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ @GTK_DIRECTFB_CFLAGS@ -DVIRTEX2
 xiledit_direct_LDADD	= @GLIB_LIBS@ @GTK_DIRECTFB_LIBS@
+
+#Xiledit, Spartan-3 verstion
+xiledit_s3_SOURCES	= $(DRAWING_SRC) $(SHARED_SRC) $(V2_SRC) $(glade_generated)
+xiledit_s3_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ @GTK_CFLAGS@ -DSPARTAN3
+xiledit_s3_LDADD	= @GLIB_LIBS@ @GTK_LIBS@
 
 #Xiledit, virtex-5 version
 xiledit_v5_SOURCES	= $(DRAWING_SRC) $(SHARED_SRC) $(V4_SRC) $(glade_generated)
