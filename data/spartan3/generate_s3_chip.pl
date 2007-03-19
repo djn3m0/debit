@@ -210,12 +210,12 @@ sub print_clb_width
 	print_sep( $output );
 	print_interval($output,$x_offset+$inter+1,$x_offset+$ncols+1);
     } elsif ($nbrams == 2) {
-	my $inter = $ncols / 4;
-	print_interval($output,$x_offset,$x_offset+$inter);
+	my $inter = $ncols - 4;
+	print_interval($output,$x_offset,$x_offset+2);
 	print_sep( $output );
-	print_interval($output,$x_offset+$inter+1,$x_offset+3*$inter+1);
+	print_interval($output,$x_offset+3,$x_offset+3+$inter);
 	print_sep( $output );
-	print_interval($output,$x_offset+3*$inter+2,$x_offset+4*$inter+2);
+	print_interval($output,$x_offset+4+$inter,$x_offset+$inter+6);
     } elsif ($nbrams == 4) {
 	my $inter = ($ncols - 8) / 2;
 	#first small col
@@ -266,10 +266,10 @@ sub print_bram_width
 	my $inter = 2;
 	print_interval($output,$x_offset+$inter,$x_offset+$inter+1);
     } elsif ($nbrams == 2) {
-	my $inter = $ncols / 4;
-	print_interval($output,$x_offset+$inter,$x_offset+$inter+1);
+	my $inter = $ncols - 4;
+	print_interval($output,$x_offset+2,$x_offset+3);
 	print_sep( $output );
-	print_interval($output,$x_offset+3*$inter+1,$x_offset+3*$inter+2);
+	print_interval($output,$x_offset+3+$inter,$x_offset+4+$inter);
     } elsif ($nbrams == 4) {
 	my $inter = ($ncols - 8) / 2;
 	#first small col
