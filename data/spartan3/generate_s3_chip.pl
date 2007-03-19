@@ -1,6 +1,7 @@
 #! /usr/bin/perl -w
 
 use strict;
+use integer;
 
 # This script generates chip_control and chip_data databases for the
 # spartan3 family
@@ -217,7 +218,8 @@ sub print_clb_width
 	print_sep( $output );
 	print_interval($output,$x_offset+4+$inter,$x_offset+$inter+6);
     } elsif ($nbrams == 4) {
-	my $inter = ($ncols - 8) / 2;
+	my $inter = ((($ncols - 4) / 2) / 3) * 2;
+	my $middle = $ncols - 4 - 2 * $inter;
 	#first small col
 	print_interval($output,$x_offset,$x_offset+2);
 	print_sep( $output );
@@ -225,13 +227,13 @@ sub print_clb_width
 	print_interval($output,$x_offset+3,$x_offset+$inter+3);
 	print_sep( $output );
 	#the middle
-	print_interval($output,$x_offset+$inter+4,$x_offset+$inter+8);
+	print_interval($output,$x_offset+$inter+4,$x_offset+$middle+$inter+4);
 	print_sep( $output );
 	#the second big
-	print_interval($output,$x_offset+$inter+9,$x_offset+2*$inter+9);
+	print_interval($output,$x_offset+$middle+$inter+5,$x_offset+$middle+2*$inter+5);
 	print_sep( $output );
 	#the last small
-	print_interval($output,$x_offset+2*$inter+10,$x_offset+2*$inter+12);
+	print_interval($output,$x_offset+$middle+2*$inter+6,$x_offset+$middle+2*$inter+8);
     } else {
 	#nbrams on colomns
 	my $inter = ($ncols - 8) / 4;
@@ -271,7 +273,8 @@ sub print_bram_width
 	print_sep( $output );
 	print_interval($output,$x_offset+3+$inter,$x_offset+4+$inter);
     } elsif ($nbrams == 4) {
-	my $inter = ($ncols - 8) / 2;
+	my $inter = ((($ncols - 4) / 2) / 3) * 2;
+	my $middle = $ncols - 4 - 2 * $inter;
 	#first small col
 	print_interval($output,$x_offset+2,$x_offset+3);
 	print_sep( $output );
@@ -279,10 +282,10 @@ sub print_bram_width
 	print_interval($output,$x_offset+$inter+3,$x_offset+$inter+4);
 	print_sep( $output );
 	#the middle
-	print_interval($output,$x_offset+$inter+8,$x_offset+$inter+9);
+	print_interval($output,$x_offset+$inter+$middle+4,$x_offset+$middle+$inter+5);
 	print_sep( $output );
 	#the second big
-	print_interval($output,$x_offset+2*$inter+9,$x_offset+2*$inter+10);
+	print_interval($output,$x_offset+2*$inter+$middle+5,$x_offset+2*$inter+$middle+6);
     } else {
 	#nbrams on 6 columns
 	my $inter = ($ncols - 8) / 4;

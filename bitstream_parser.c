@@ -303,7 +303,7 @@ chip_struct_t bitdescr[XC3__NUM] = {
     .frame_count = s3_frame_count,
   },
   [XC3S5000] = {
-    .chip = XC3S4000,
+    .chip = XC3S5000,
     .idcode = 0x01450093U,
     .framelen = 213,
     .col_count = {
