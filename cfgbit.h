@@ -102,7 +102,6 @@ typedef struct _type_bits {
   /** Bytes to skip at the beginning of the type array */
   gint y_offset;
   guint y_width;
-  guint row_count;
 } type_bits_t;
 
 const type_bits_t type_bits[NR_SITE_TYPE];

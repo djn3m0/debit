@@ -88,6 +88,7 @@ translate_global_site(const chip_descr_t *chip,
   return SITE_NULL;
 }
 
+#define MAX_SITE_NLEN 20
 void sprint_csite(gchar *data, const csite_descr_t *site,
 		  unsigned gx, unsigned gy);
 void sprint_switch(gchar *data, const chip_descr_t *chip,

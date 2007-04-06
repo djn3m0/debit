@@ -1,3 +1,5 @@
+top_srcdir	?= ..
+top_builddir	?= $(top_srcdir)
 DEBIT		?= $(top_builddir)/debit
 DUMPARG		?= --fakearg
 DATADIR		?= $(top_srcdir)/data

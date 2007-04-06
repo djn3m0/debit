@@ -50,12 +50,15 @@ print_bram_data(const csite_descr_t *site, const guint16 *data) {
 }
 
 static void
-print_lut_data(const csite_descr_t *site, const guint16 data[]) {
+print_lut_data(const csite_descr_t *site,
+	       const unsigned x, const unsigned y,
+	       const guint16 data[]) {
+  gchar sname[MAX_SITE_NLEN];
   guint i;
-  g_printf("CLB_%02x_%02x\n",
-	   site->type_coord.x,
-	   site->type_coord.y);
-  for (i = 0; i < 4; i++)
+
+  sprint_csite(sname, site, x, y);
+  g_printf("%s\n", sname);
+  for (i = 0; i < 8; i++)
     g_printf("LUT%01x:%04x\n",i,data[i]);
 }
 
@@ -84,11 +87,9 @@ static void
 print_lut_iter(unsigned site_x, unsigned site_y,
 	       csite_descr_t *site, gpointer dat) {
   bitstream_parsed_t *bitstream = dat;
-  (void) site_x;
-  (void) site_y;
-  guint16 luts[4];
+  guint16 luts[8];
   query_bitstream_luts(bitstream, site, luts);
-  print_lut_data(site,luts);
+  print_lut_data(site,site_x,site_y,luts);
 }
 
 static void

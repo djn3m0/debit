@@ -34,70 +34,60 @@
 #if defined(VIRTEX2)
 
 const type_bits_t type_bits[NR_SITE_TYPE] = {
-  /* XXX remove row count and SITE_PER_COL which are not used at all */
   /* CLB Group */
   [CLB] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
   },
   [LTERM] = {
     .col_type = V2C_IOB,
     .x_type_off = 0,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
   },
   [RTERM] = {
     .col_type = V2C_IOB,
     .x_type_off = 1,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
   },
   [LIOI] = {
     .col_type = V2C_IOI,
     .x_type_off = 0,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
   },
   [RIOI] = {
     .col_type = V2C_IOI,
     .x_type_off = 1,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
   },
   [TTERM] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
     .y_offset = 0,
     .y_width = 2,
-    .row_count = 1,
   },
   [BTERM] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
     .y_offset = -2,
     .y_width = 2,
-    .row_count = 1,
   },
   [TIOI] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
     .y_offset = 2,
     .y_width = sizeof(site_descr_t),
-    .row_count = 1,
   },
   [BIOI] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
     .y_offset = - ((int)sizeof(site_descr_t) + 2),
     .y_width = sizeof(site_descr_t),
-    .row_count = 1,
   },
   /* BRAM Group */
   [BRAM] = {
@@ -105,35 +95,30 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
     .x_type_off = 0,
     .y_offset = sizeof(site_descr_t) + 2,
     .y_width = sizeof(site_descr_t),
-    .row_count = SITE_PER_COL,
   },
   [TTERMBRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
     .y_offset = 0,
     .y_width = 2,
-    .row_count = 1,
   },
   [BTERMBRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
     .y_offset = -2,
     .y_width = 2,
-    .row_count = 1,
   },
   [TIOIBRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
     .y_offset = 2,
     .y_width = sizeof(site_descr_t),
-    .row_count = 1,
   },
   [BIOIBRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
     .y_offset = - ((int)sizeof(site_descr_t) + 2),
     .y_width = sizeof(site_descr_t),
-    .row_count = 1,
   },
   /* Still todo:
      these nothing:
@@ -393,6 +378,8 @@ guint16 reverse_bits(guint16 input) {
   return res;
 }
 
+#define BITAT(x,off) ((x >> off) & 1)
+
 /** \brief Get the LUT configuration bits from the bitstream
  *
  * @param bitstream the bitstream data
@@ -407,16 +394,19 @@ query_bitstream_luts(const bitstream_parsed_t *bitstream,
 		     const csite_descr_t *site, guint16 luts[]) {
   guint i;
 
-  /* query four luts. Bits are MSB first, but in reverse order */
-  for (i=0; i < 4; i++) {
-    unsigned byte_lut_offset = bitpos_invert(2 * i + ((i & 2) >> 1), sizeof(site_descr_t));
-    guint first_byte = assemble_cfgbit(1, byte_lut_offset);
+  /* query height luts. Bits are MSB first, but in reverse order */
+  for (i=0; i < 8; i++) {
+    unsigned byte_lut_offset = bitpos_invert(5 * BITAT(i,1) + 3 * BITAT(i,0), sizeof(site_descr_t));
+    guint first_byte = assemble_cfgbit(1+BITAT(i,2), byte_lut_offset);
+    /* minus height, to account for the reverse occuring in
+       bitpos_invert */
     guint cfgbytes[2] = { first_byte, first_byte-8 };
     guint32 result;
 
     result = query_bitstream_site_bytes(bitstream, site, cfgbytes, 2);
     result = ~result;
-    luts[i] = reverse_bits(result);
+    /* Mirroring... of G-luts */
+    luts[i] = BITAT(i,0) ? result : reverse_bits(result);
   }
 
   return;
