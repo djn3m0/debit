@@ -440,6 +440,26 @@ sprint_csite(gchar *data, const csite_descr_t *site,
   }
 }
 
+/* Print the slice name. At some point, the site should be embedded into
+   the site maybe ? */
+void
+snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
+	      const csite_descr_t *site, const slice_index_t slice) {
+  /* Only works for slices for now */
+  const char *str = "SLICE_X%iY%i";
+  const site_print_t strtype = PRINT_BOTH;
+  const guint x = site->type_coord.x * 2 + BITAT(slice,1);
+  /* Invert the y coordinate */
+  const unsigned clb_h = (chip->height - 4);
+  const guint y = 2 * (clb_h - 1 - site->type_coord.y) + BITAT(slice,0);
+
+  switch (strtype) {
+    case PRINT_BOTH:
+      snprintf(buf, buf_len, str, x, y);
+      break;
+  }
+}
+
 void
 sprint_switch(gchar *data, const chip_descr_t *chip,
 	      const site_ref_t site_ref) {

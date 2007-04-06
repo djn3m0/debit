@@ -51,15 +51,22 @@ print_bram_data(const csite_descr_t *site, const guint16 *data) {
 
 static void
 print_lut_data(const csite_descr_t *site,
+	       const chip_descr_t *chip,
 	       const unsigned x, const unsigned y,
 	       const guint16 data[]) {
   gchar sname[MAX_SITE_NLEN];
-  guint i;
+  guint i,j;
 
   sprint_csite(sname, site, x, y);
   g_printf("%s\n", sname);
-  for (i = 0; i < 8; i++)
-    g_printf("LUT%01x:%04x\n",i,data[i]);
+  for (j = 0; j < 4; j++) {
+    gchar slicen[MAX_SITE_NLEN];
+    snprint_slice(slicen, MAX_SITE_NLEN, chip, site, j);
+    g_printf("%s\n", slicen);
+    for (i = 0; i < 2; i++) {
+      g_printf("%s::#ROM:D=0x%04x\n", i ? "G" : "F", data[i|j<<1]);
+    }
+  }
 }
 
 static void
@@ -86,16 +93,15 @@ print_all_pips(const bitstream_analyzed_t *bitstream,
 static void
 print_lut_iter(unsigned site_x, unsigned site_y,
 	       csite_descr_t *site, gpointer dat) {
-  bitstream_parsed_t *bitstream = dat;
+  bitstream_analyzed_t *analysis = dat;
   guint16 luts[8];
-  query_bitstream_luts(bitstream, site, luts);
-  print_lut_data(site,site_x,site_y,luts);
+  query_bitstream_luts(analysis->bitstream, site, luts);
+  print_lut_data(site,analysis->chip,site_x,site_y,luts);
 }
 
 static void
-print_all_luts(const chip_descr_t *chip,
-	       const bitstream_parsed_t *bitstream) {
-  iterate_over_typed_sites(chip, CLB, print_lut_iter, (gpointer)bitstream);
+print_all_luts(const bitstream_analyzed_t *bitstream) {
+  iterate_over_typed_sites(bitstream->chip, CLB, print_lut_iter, (gpointer)bitstream);
 }
 
 static void
@@ -146,7 +152,7 @@ void dump_bram(bitstream_analyzed_t *bitstream) {
  */
 
 void dump_luts(bitstream_analyzed_t *bitstream) {
-  print_all_luts(bitstream->chip, bitstream->bitstream);
+  print_all_luts(bitstream);
 }
 
 typedef struct _dump_site {

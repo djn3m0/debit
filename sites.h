@@ -38,6 +38,9 @@ typedef struct _site_descr {
 typedef uint16_t site_ref_t;
 #define SITE_NULL ((site_ref_t)-1)
 
+typedef uint8_t  slice_index_t;
+#define BITAT(x,off) ((x >> off) & 1)
+
 typedef struct _chip_descr {
   unsigned width;
   unsigned height;
@@ -93,6 +96,8 @@ void sprint_csite(gchar *data, const csite_descr_t *site,
 		  unsigned gx, unsigned gy);
 void sprint_switch(gchar *data, const chip_descr_t *chip,
 		   const site_ref_t swb);
+void snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
+		   const csite_descr_t *site, const slice_index_t slice);
 
 typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
 				csite_descr_t *site, gpointer dat);

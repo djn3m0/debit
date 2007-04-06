@@ -378,8 +378,6 @@ guint16 reverse_bits(guint16 input) {
   return res;
 }
 
-#define BITAT(x,off) ((x >> off) & 1)
-
 /** \brief Get the LUT configuration bits from the bitstream
  *
  * @param bitstream the bitstream data
