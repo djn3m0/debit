@@ -49,6 +49,33 @@ print_bram_data(const csite_descr_t *site, const guint16 *data) {
   }
 }
 
+/*
+ * Get whether or not the input wire is significant
+ */
+typedef uint16_t lut_t;
+
+static const lut_t array[4] = {
+  0xAAAA, 0xCCCC, 0xf0f0, 0xff00,
+};
+
+static inline int
+get_input_wire(const lut_t lut,
+	       const unsigned wire) {
+  const lut_t mask = array[wire];
+  return ((lut & mask) >> (1<<wire)) ^ (lut & ~mask);
+}
+
+static void
+print_lut_inputs(const lut_t lut) {
+  int i;
+
+  for(i = 0; i < 4; i++) {
+    if (get_input_wire(lut,i))
+      g_printf("A%i ",i+1);
+  }
+  g_printf("\n");
+}
+
 static void
 print_lut_data(const csite_descr_t *site,
 	       const chip_descr_t *chip,
@@ -64,7 +91,9 @@ print_lut_data(const csite_descr_t *site,
     snprint_slice(slicen, MAX_SITE_NLEN, chip, site, j);
     g_printf("%s\n", slicen);
     for (i = 0; i < 2; i++) {
-      g_printf("%s::#ROM:D=0x%04x\n", i ? "G" : "F", data[i|j<<1]);
+      lut_t lut = data[i|j<<1];
+      g_printf("%s::#ROM:D=0x%04x\n", i ? "G" : "F", lut);
+      print_lut_inputs(lut);
     }
   }
 }
