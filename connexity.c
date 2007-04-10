@@ -236,9 +236,106 @@ print_wire(GNode *net,
   return FALSE;
 }
 
+#ifdef VIRTEX2
+
+static const gchar *typenames[NR_WIRE_TYPE] = {
+  [BX] = "BX",
+  [BY] = "BY",
+  [X] = "X",
+  [XB] = "XB",
+  [XQ] = "XQ",
+  [Y] = "Y",
+  [YB] = "YB",
+  [YQ] = "YQ",
+  [F1] = "F1",
+  [F2] = "F2",
+  [F3] = "F3",
+  [F4] = "F4",
+  [G1] = "G1",
+  [G2] = "G2",
+  [G3] = "G3",
+  [G4] = "G4",
+  [CE] = "CE",
+  [SR] = "SR",
+};
+
+static inline
+const char *typename(const wire_type_t wt) {
+  const gchar *name = typenames[wt];
+  return name ? name : "unknown";
+}
+
+typedef enum iopin_dir {
+  IO_INPUT,
+  IO_OUTPUT,
+  IO_END,
+} iopin_dir_t;
+
+const char *ioname[IO_END] = {
+  [IO_INPUT] = "inpin",
+  [IO_OUTPUT] = "outpin",
+};
+
+static void
+print_iopin(const iopin_dir_t iodir,
+	    const sited_pip_t *spip,
+	    const wire_db_t *wiredb,
+	    const chip_descr_t *chip) {
+  /* Use type to get the name of the wire in the instance */
+  const wire_t *wire = get_wire(wiredb, iodir == IO_INPUT ? spip->pip.target : spip->pip.source);
+  const csite_descr_t *site = get_site(chip, spip->site);
+  gchar slicen[MAX_SITE_NLEN];
+  snprint_slice(slicen, MAX_SITE_NLEN, chip, site, wire->situation - ZERO);
+  /* Combine the situation and site to get the location */
+  g_print("%s \"%s\" %s,\n", ioname[iodir], slicen, typename(wire->type));
+}
+
+static gboolean
+print_inpin(GNode *net,
+	    gpointer data) {
+  const sited_pip_t *spip = net->data;
+  struct _print_net *arg = data;
+  print_iopin(IO_INPUT, spip, arg->wiredb, arg->chipdb);
+  return FALSE;
+}
+
+static gboolean
+print_outpin(GNode *net,
+	     gpointer data) {
+  const sited_pip_t *spip = net->data;
+  struct _print_net *arg = data;
+  print_iopin(IO_OUTPUT, spip, arg->wiredb, arg->chipdb);
+  return FALSE;
+}
+
+#else
+
+static gboolean
+print_inpin(GNode *net,
+	    gpointer data) {
+  (void) net;
+  (void) data;
+  return FALSE;
+}
+
+static gboolean
+print_outpin(GNode *net,
+	     gpointer data) {
+  (void) net;
+  (void) data;
+  return FALSE;
+}
+
+#endif
+
 static void
 print_net(GNode *net, gpointer data) {
-  g_print("net %p {\n", net);
+  static unsigned netnum = 0;
+  g_print("net %i {\n", netnum++);
+  /* print input -- this should be the output pin of a logical bloc */
+  print_outpin(net, data);
+  /* print outputs -- these should be input pins to some logical blocs */
+  g_node_traverse (net, G_IN_ORDER, G_TRAVERSE_LEAVES, -1, print_inpin, data);
   g_node_traverse (net, G_PRE_ORDER, G_TRAVERSE_ALL, -1, print_wire, data);
   g_print("}\n");
 }

@@ -54,6 +54,7 @@ typedef enum _wire_direction {
 typedef enum _wire_situation {
   WIRE_SITUATION_NEUTRAL = 0,
   BEG, A, B, MID, C, D, END,
+  ZERO, ONE, TWO, THREE,
   NR_WIRE_SITUATION,
 } __attribute__((packed)) wire_situation_t;
 
@@ -78,6 +79,8 @@ typedef enum _wire_type {
   GCLKH_GCLK_B,
   GCLKH_GCLK, // with dir DN and UP
   LH, LV,
+  /* these are used too */
+/*   O0, 01, 02, 03, 04, 05, 06, 07, */
   SHIFTIN, SHIFTOUT, SR,
   TBUF, TBUS,
   TI, TOUT, TS,

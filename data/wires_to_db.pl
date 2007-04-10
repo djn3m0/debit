@@ -29,7 +29,8 @@ my @det_dir = ( "WIRE_DIRECTION_NEUTRAL",
 		"ES",  "E",   "EN",   "NE",  "DN",   "UP" );
 
 my @det_sit = ( "WIRE_SITUATION_NEUTRAL",
-		"BEG", "A", "B", "MID", "C", "D", "END" );
+		"BEG", "A", "B", "MID", "C", "D", "END",
+		"ZERO", "ONE", "TWO", "THREE");
 
 my @det_type = ( "WIRE_TYPE_NEUTRAL",
 		 "DOUBLE", "HEX",    "OMUX",    "BX", "BY",
@@ -174,22 +175,50 @@ while (<STDIN>) {
 	next;
     }
 
+    my @coucou = ( "ZERO", "ONE", "TWO", "THREE" );
     #many others
     if (m/^([FG])([1-4])_B([0-3])/) {
 	#local wires
-	&register_wire($wire, 0, 0, $wire, $wtype, $wsit, $wdir);
+	my $wiretype = $1 . $2;
+	my $index = $3;
+	my $wiresit = $coucou[$index];
+#	print STDERR "Warning, wiresit $wiresit\n";
+	# Direction; input, output
+	&register_wire($wire, 0, 0, $wire, $wiretype, $wiresit, $wdir);
+	next;
+    }
+
+    if (m/^(CE)_B([0-3])/) {
+	#local wires
+	my $wiretype = $1;
+	my $index = $2;
+	my $wiresit = $coucou[$index];
+	# Direction; input, output
+	&register_wire($wire, 0, 0, $wire, $wiretype, $wiresit, $wdir);
+	next;
+    }
+
+    if (m/^(SR)([0-3])/) {
+	#local wires
+	my $wiretype = $1;
+	my $index = $2;
+	my $wiresit = $coucou[$index];
+	# Direction; input, output
+	&register_wire($wire, 0, 0, $wire, $wiretype, $wiresit, $wdir);
 	next;
     }
 
     if (m/^([XY])([BQ]?)([0-3])/) {
 	#local wires
-	&register_wire($wire, 0, 0, $wire, $wtype, $wsit, $wdir);
+	my $wiretype = $1 . $2;
+	&register_wire($wire, 0, 0, $wire, $wiretype, $wsit, $wdir);
 	next;
     }
 
     if (m/^B([XY])([0-3])/) {
 	#local wires
-	&register_wire($wire, 0, 0, $wire, $wtype, $wsit, $wdir);
+	my $wiretype = "B" . $1;
+	&register_wire($wire, 0, 0, $wire, $wiretype , $wsit, $wdir);
 	next;
     }
 

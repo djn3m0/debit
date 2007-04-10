@@ -441,7 +441,7 @@ sprint_csite(gchar *data, const csite_descr_t *site,
 }
 
 /* Print the slice name. At some point, the site should be embedded into
-   the site maybe ? */
+   the site maybe ? XXX *site redundant with chip */
 void
 snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
 	      const csite_descr_t *site, const slice_index_t slice) {
