@@ -25,6 +25,8 @@ typedef struct _wire {
 
 typedef guint16 wire_atom_t;
 
+#define WIRE_EP_END ((wire_atom_t) -1)
+
 typedef struct _wire_simple {
   gint8 dx;
   gint8 dy;

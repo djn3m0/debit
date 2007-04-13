@@ -59,6 +59,35 @@ net_register(GNode **db,
  */
 
 /*
+ * Register a wire
+ */
+
+static inline gboolean
+register_spip(GNode **added,
+	      const sited_pip_t *spip,
+	      GNode *driven,
+	      GNode **nodetable,
+	      const wire_db_t *wiredb) {
+  gboolean present = TRUE;
+  GNode *father = net_of(nodetable, wiredb, spip);
+
+  /* in case the pip is not yet present in the table,
+     add it */
+  if (!father) {
+    present = FALSE;
+    father = net_register(nodetable, wiredb, spip);
+  }
+
+  if (driven) {
+    debit_log(L_CONNEXITY, "linking to previous pip");
+    g_node_prepend(father, driven);
+  }
+
+  *added = father;
+  return present;
+}
+
+/*
  * Try to reach all pips from an endpoint and site,
  * and to reconstruct a 'net' from there, for as long as we can.
  *
@@ -82,7 +111,7 @@ build_net_from(nets_t *nets,
 	       const chip_descr_t *cdb,
 	       const pip_parsed_dense_t *pipdat,
 	       const sited_pip_t *spip_arg) {
-  GNode *father, *child = NULL;
+  GNode *newnode = NULL;
   wire_db_t *wiredb = pipdb->wiredb;
   sited_pip_t spip = *spip_arg;
   gboolean found;
@@ -91,65 +120,44 @@ build_net_from(nets_t *nets,
 
   do {
     wire_atom_t pip_source = spip.pip.source;
-
-#if 0 //DEBIT_DEBUG > 0
-    gchar pipname[64];
-    sprint_spip(pipname, pipdb->wiredb, &spip);
-    debit_log(L_CONNEXITY, "iterating on spip %s", pipname);
-#endif
+    gboolean exists;
 
     /* make a node out of the sited pip and register it, if needed */
-    father = net_of(nodetable, wiredb, &spip);
-    if (father) {
-      debit_log(L_CONNEXITY, "GNode was already present");
-      if (child) {
-	debit_log(L_CONNEXITY, "linking to previous pipnode");
-	g_node_prepend(father, child);
-      }
-      return father;
-    }
+    exists = register_spip(&newnode, &spip, newnode, nodetable, wiredb);
+    if (exists)
+      return newnode;
 
-    /* the pip is not yet present in the table, so we add it */
-    father = net_register(nodetable, wiredb, &spip);
-    if (child) {
-      debit_log(L_CONNEXITY, "linking to previous pip");
-      g_node_prepend(father, child);
-    }
+    /* Try to find the next pip */
+    spip.pip.target = pip_source;
 
     /* We need the copper endpoint of the pip, which can be local with a
        pip locally driving the wire, or remote, when the wire startpoint
        is driven by a pip at the site startpoint of the wire */
-    /* First, check that the wire is not locally-driven */
-    /* Warning ! we're heavily relying on the fact that spip won't be
-       touched if !found */
+    /* First, check that the wire is not locally-driven -- that is,
+       the source of the pip is driven locally by another pip at the
+       same site */
     found = get_interconnect_startpoint(pipdat, &spip.pip.source, pip_source, spip.site);
-    if (found) {
-      debit_log(L_CONNEXITY, "pip is locally driven");
-      spip.pip.target = pip_source;
-      goto end_loop;
-    }
+    if (found)
+      continue;
 
-    /* Second, check for a driver remotely */
-    found = get_wire_startpoint(wiredb, cdb, &spip.site, &spip.pip.target, spip.site, spip.pip.source);
-    if (!found) {
-      debit_log(L_CONNEXITY, "leaving build_net_from, for lack of copper startpoint");
-      return g_node_prepend(nets->head, father);
-    }
+    /* The source wire is not driven by another pip at the local
+       site. Then we consult the wiring database to first get to another
+       site, and then check the pips there. */
 
-    /* ask for the startpoint */
-    found = get_interconnect_startpoint(pipdat, &spip.pip.source, spip.pip.target, spip.site);
-    if (!found) {
-      debit_log(L_CONNEXITY, "leaving build_net_from, for lack of driver at copper startpoint");
-      return g_node_prepend(nets->head, father);
-    }
+    /* Get to the other site -- replace site and targets in the spip
+       structure with values found. */
+    found =
+      get_wire_startpoint(wiredb, cdb, &spip.site, &spip.pip.target, spip.site, pip_source) &&
+      get_interconnect_startpoint(pipdat, &spip.pip.source, spip.pip.target, spip.site);
 
-    /* prepare to loop */
-  end_loop:
-    child = father;
-  } while (father != NULL);
+  } while (found);
 
-  g_assert_not_reached();
-  return NULL;
+  /* Add a dummy pip to record the absence of driver */
+  spip.pip.source = WIRE_EP_END;
+  if (!register_spip(&newnode, &spip, newnode, nodetable, wiredb))
+    return g_node_prepend(nets->head, newnode);
+
+  return newnode;
 }
 
 /*
@@ -224,18 +232,6 @@ struct _print_net {
   const chip_descr_t *chipdb;
 };
 
-static gboolean
-print_wire(GNode *net,
-	   gpointer data) {
-  struct _print_net *arg = data;
-  const wire_db_t *wiredb = arg->wiredb;
-  const chip_descr_t *chip = arg->chipdb;
-  gchar buf[64];
-  sprint_spip(buf, wiredb, chip, net->data);
-  g_print("%s ,\n", buf);
-  return FALSE;
-}
-
 #ifdef VIRTEX2
 
 static const gchar *typenames[NR_WIRE_TYPE] = {
@@ -282,7 +278,7 @@ print_iopin(const iopin_dir_t iodir,
 	    const wire_db_t *wiredb,
 	    const chip_descr_t *chip) {
   /* Use type to get the name of the wire in the instance */
-  const wire_t *wire = get_wire(wiredb, iodir == IO_INPUT ? spip->pip.target : spip->pip.source);
+  const wire_t *wire = get_wire(wiredb, spip->pip.target);
   const csite_descr_t *site = get_site(chip, spip->site);
   gchar slicen[MAX_SITE_NLEN];
   snprint_slice(slicen, MAX_SITE_NLEN, chip, site, wire->situation - ZERO);
@@ -327,6 +323,25 @@ print_outpin(GNode *net,
 }
 
 #endif
+
+static gboolean
+print_wire(GNode *net,
+	   gpointer data) {
+  struct _print_net *arg = data;
+  const wire_db_t *wiredb = arg->wiredb;
+  const chip_descr_t *chip = arg->chipdb;
+  const sited_pip_t *spip = net->data;
+  gchar buf[64];
+
+  /* This is how wire start are indicated -- this is actually redundant
+     with positioning in the tree... */
+  if (spip->pip.source == WIRE_EP_END)
+    return FALSE;
+
+  sprint_spip(buf, wiredb, chip, net->data);
+  g_print("%s ,\n", buf);
+  return FALSE;
+}
 
 static void
 print_net(GNode *net, gpointer data) {
