@@ -52,6 +52,12 @@ typedef struct _wire_db {
 #endif
 } wire_db_t;
 
+static inline
+wire_type_t
+wire_type(const wire_db_t *db, const wire_atom_t wire) {
+  return db->details[wire].type;
+}
+
 #ifdef __COMPILED_WIREDB
 
 static inline

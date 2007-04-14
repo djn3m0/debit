@@ -88,6 +88,46 @@ register_spip(GNode **added,
 }
 
 /*
+ * Try to find a remote drive for the wire at hand.
+ *
+ * There's a problem here for wires which can be set from multiple
+ * locations -- we'll need to iterate on all possible locations and see
+ * who's driving. Sometimes this can be simply put in a database. In our
+ * first example, though -- long wires --, this cannot be handled simply.
+ */
+
+static inline gboolean
+get_wire_driver(const wire_db_t *wiredb,
+		const chip_descr_t *cdb,
+		const pip_parsed_dense_t *pipdat,
+		sited_pip_t *driver) {
+  gboolean found;
+  wire_type_t wtype = wire_type(wiredb,driver->pip.source);
+
+  /*
+   * Long wires -- do something clever !
+   */
+  switch(wtype) {
+  case LH:
+  case LV:
+    {
+      return FALSE;
+    }
+  /*
+   * Standard wire: get the remote endpoing, which is read from the
+   * database, then the pip driving the endpoint
+   */
+  default:
+    break;
+  }
+  found =
+    get_wire_startpoint(wiredb, cdb, &driver->site, &driver->pip.target, driver->site, driver->pip.source) &&
+    get_interconnect_startpoint(pipdat, &driver->pip.source, driver->pip.target, driver->site);
+
+  return found;
+}
+
+/*
  * Try to reach all pips from an endpoint and site,
  * and to reconstruct a 'net' from there, for as long as we can.
  *
@@ -146,9 +186,7 @@ build_net_from(nets_t *nets,
 
     /* Get to the other site -- replace site and targets in the spip
        structure with values found. */
-    found =
-      get_wire_startpoint(wiredb, cdb, &spip.site, &spip.pip.target, spip.site, pip_source) &&
-      get_interconnect_startpoint(pipdat, &spip.pip.source, spip.pip.target, spip.site);
+    found = get_wire_driver(wiredb, cdb, pipdat, &spip);
 
   } while (found);
 

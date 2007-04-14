@@ -53,6 +53,7 @@ typedef enum _wire_type {
   WIRE_TYPE_NEUTRAL = 0,
   DOUBLE, HEX,
   OMUX,
+  LH, LV,
   NR_WIRE_TYPE,
 } __attribute__((packed)) wire_type_t;
 
