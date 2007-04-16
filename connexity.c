@@ -14,6 +14,13 @@
  * Connexity analysis
  */
 
+typedef struct _connexion {
+  /* GNode table, for gathering pips in an organized fashion */
+  GNode **nodetable;
+  /* GNode table, for gathering pips at long wires */
+  GNode **lv, **lh;
+} connexion_t;
+
 /* For now be dumb */
 static inline GNode **
 alloc_wire_table(const pip_db_t *pipdb, const chip_descr_t *chip) {
@@ -21,6 +28,40 @@ alloc_wire_table(const pip_db_t *pipdb, const chip_descr_t *chip) {
   /* we could divide the size by two by only storing startpoint
      in this table */
   return g_new0(GNode *, size);
+}
+
+#define LONGS_PER_SITE 24
+
+static inline GNode **
+alloc_lv(const pip_db_t *pipdb, const chip_descr_t *chip) {
+  size_t size = chip->width * LONGS_PER_SITE;
+  (void) pipdb;
+  return g_new0(GNode *, size);
+}
+
+static inline GNode **
+alloc_lh(const pip_db_t *pipdb, const chip_descr_t *chip) {
+  size_t size = chip->height * LONGS_PER_SITE;
+  (void) pipdb;
+  return g_new0(GNode *, size);
+}
+
+static connexion_t *
+alloc_connexions(const pip_db_t *pipdb, const chip_descr_t *chip) {
+  connexion_t *connexions = g_new(connexion_t, 1);
+  connexions->nodetable = alloc_wire_table(pipdb, chip);
+  connexions->lv = alloc_lv(pipdb, chip);
+  connexions->lh = alloc_lh(pipdb, chip);
+  return connexions;
+}
+
+static void
+free_connexions(connexion_t *connexions) {
+  g_free(connexions->nodetable);
+  g_free(connexions->lv);
+  g_free(connexions->lh);
+  g_free(connexions);
+  return;
 }
 
 /* Be dumb again */
@@ -108,11 +149,12 @@ get_wire_driver(const wire_db_t *wiredb,
    * Long wires -- do something clever !
    */
   switch(wtype) {
-  case LH:
-  case LV:
-    {
-      return FALSE;
-    }
+  case LH: {
+    return FALSE;
+  }
+  case LV: {
+    return FALSE;
+  }
   /*
    * Standard wire: get the remote endpoing, which is read from the
    * database, then the pip driving the endpoint
@@ -146,14 +188,15 @@ get_wire_driver(const wire_db_t *wiredb,
 
 static GNode *
 build_net_from(nets_t *nets,
-	       GNode **nodetable,
+	       connexion_t *connexions,
 	       const pip_db_t *pipdb,
 	       const chip_descr_t *cdb,
 	       const pip_parsed_dense_t *pipdat,
 	       const sited_pip_t *spip_arg) {
-  GNode *newnode = NULL;
+  GNode **nodetable = connexions->nodetable;
   wire_db_t *wiredb = pipdb->wiredb;
   sited_pip_t spip = *spip_arg;
+  GNode *newnode = NULL;
   gboolean found;
 
   debit_log(L_CONNEXITY, "entering build_net_from");
@@ -204,7 +247,7 @@ build_net_from(nets_t *nets,
 
 typedef struct _net_iterator {
   nets_t *nets;
-  GNode **nodetable;
+  connexion_t *connexions;
   const pip_db_t *pipdb;
   const chip_descr_t *cdb;
   const pip_parsed_dense_t *pipdat;
@@ -218,7 +261,7 @@ build_net_iter(gpointer data, const pip_t pip, const site_ref_t site) {
     .pip = pip,
   };
 
-  build_net_from(arg->nets, arg->nodetable,
+  build_net_from(arg->nets, arg->connexions,
 		 arg->pipdb, arg->cdb, arg->pipdat, &spip);
 }
 
@@ -227,10 +270,10 @@ _build_nets(nets_t *nets,
 	    const pip_db_t *pipdb,
 	    const chip_descr_t *cdb,
 	    const pip_parsed_dense_t *pipdat) {
-  GNode **nodetable = alloc_wire_table(pipdb, cdb);
+  connexion_t *connex = alloc_connexions(pipdb, cdb);
   net_iterator_t net_iter = {
     .nets = nets,
-    .nodetable = nodetable,
+    .connexions = connex,
     .pipdb = pipdb,
     .cdb = cdb,
     .pipdat = pipdat,
@@ -238,7 +281,7 @@ _build_nets(nets_t *nets,
 
   iterate_over_bitpips(pipdat, cdb, build_net_iter, &net_iter);
 
-  g_free(nodetable);
+  free_connexions(connex);
   return 0;
 }
 
