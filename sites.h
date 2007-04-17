@@ -77,6 +77,12 @@ get_site(const chip_descr_t *chip,
   return &chip->data[ref];
 }
 
+static inline site_type_t
+site_type(const chip_descr_t *chip,
+	  const site_ref_t site) {
+  return get_site(chip, site)->type;
+}
+
 static inline site_ref_t
 translate_global_site(const chip_descr_t *chip,
 		      site_ref_t site, int dx, int dy) {

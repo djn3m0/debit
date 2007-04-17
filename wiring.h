@@ -58,6 +58,12 @@ wire_type(const wire_db_t *db, const wire_atom_t wire) {
   return db->details[wire].type;
 }
 
+static inline
+unsigned
+wire_situation(const wire_db_t *db, const wire_atom_t wire) {
+  return db->details[wire].situation;
+}
+
 #ifdef __COMPILED_WIREDB
 
 static inline

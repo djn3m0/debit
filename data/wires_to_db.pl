@@ -223,8 +223,13 @@ while (<STDIN>) {
     }
 
     if (m/^.*_?L([VH])([0-9]*)/) {
-	&register_wire($wire, 0, 0, $wire, $wtype, $wsit, $wdir);
+	my $mydir = $1;
+	my $mysit = $2;
+	my $mytype= "L" . $mydir;
+	&register_wire($wire, 0, 0, $wire, $mytype, $wsit, $wdir);
 	#long wires. Not sure what to do: fall through
+	#Patch situation, which encodes the index
+	$sit{$wire} = $mysit;
 	next;
     }
 

@@ -32,16 +32,26 @@ alloc_wire_table(const pip_db_t *pipdb, const chip_descr_t *chip) {
 
 #define LONGS_PER_SITE 24
 
+static inline
+size_t lv_len(const chip_descr_t *chip) {
+  return chip->width * LONGS_PER_SITE;
+}
+
+static inline
+size_t lh_len(const chip_descr_t *chip) {
+  return chip->height * LONGS_PER_SITE;
+}
+
 static inline GNode **
 alloc_lv(const pip_db_t *pipdb, const chip_descr_t *chip) {
-  size_t size = chip->width * LONGS_PER_SITE;
+  size_t size = lv_len(chip);
   (void) pipdb;
   return g_new0(GNode *, size);
 }
 
 static inline GNode **
 alloc_lh(const pip_db_t *pipdb, const chip_descr_t *chip) {
-  size_t size = chip->height * LONGS_PER_SITE;
+  size_t size = lh_len(chip);
   (void) pipdb;
   return g_new0(GNode *, size);
 }
@@ -64,6 +74,156 @@ free_connexions(connexion_t *connexions) {
   return;
 }
 
+/*
+ * LH, LV hooks
+ */
+static inline unsigned
+v_twists(const chip_descr_t *cdb,
+	 const sited_wire_t swire) {
+  const unsigned width = cdb->width;
+  const unsigned v_index = site_index(swire.site) / width;
+  const site_type_t type = site_type(cdb, swire.site);
+  switch(type) {
+  case BTERM:
+    return v_index - 1;
+  case TTERM:
+    return v_index + 1;
+  default:
+    return v_index;
+  }
+}
+
+static inline unsigned
+h_twists(const chip_descr_t *cdb,
+	 const sited_wire_t swire) {
+  const unsigned width = cdb->width;
+  const unsigned h_index = site_index(swire.site)%width;
+  const site_type_t type = site_type(cdb, swire.site);
+  switch(type) {
+  case RTERM:
+    return h_index - 1;
+  case LTERM:
+    return h_index + 1;
+  default:
+    return h_index;
+  }
+}
+
+static inline unsigned
+lv_offset_of(const wire_db_t *wiredb,
+	     const chip_descr_t *cdb,
+	     const sited_wire_t swire) {
+  /* offset is the x index of site */
+  const unsigned width = cdb->width;
+  const unsigned v_offset = (v_twists(cdb, swire) + LONGS_PER_SITE
+			     - wire_situation(wiredb, swire.wire)) % LONGS_PER_SITE;
+  const unsigned offset = ((site_index(swire.site) % width) * LONGS_PER_SITE) + v_offset;
+  g_warning("LV offset of %i is %i", swire.wire, offset);
+  return offset;
+}
+
+static inline unsigned
+lh_offset_of(const wire_db_t *wiredb,
+	     const chip_descr_t *cdb,
+	     const sited_wire_t swire) {
+  /* offset is the y index of site */
+  const unsigned width = cdb->width;
+  const unsigned h_offset = (h_twists(cdb, swire) + LONGS_PER_SITE
+			     - wire_situation(wiredb, swire.wire)) % LONGS_PER_SITE;
+  const unsigned offset = ((site_index(swire.site) / width) * LONGS_PER_SITE) + h_offset;
+  g_warning("LH offset of %i is %i", swire.wire, offset);
+  return offset;
+}
+
+static inline void
+long_register(GNode *driver,
+	      const wire_type_t target_type,
+	      const sited_wire_t swire,
+	      const connexion_t *connexions,
+	      const wire_db_t *wiredb,
+	      const chip_descr_t *cdb) {
+  unsigned index;
+
+  switch (target_type) {
+  case LV:
+    index = lv_offset_of(wiredb, cdb, swire);
+    connexions->lv[index] = driver;
+    break;
+  case LH:
+    index = lh_offset_of(wiredb, cdb, swire);
+    connexions->lh[index] = driver;
+    break;
+  default:
+    g_assert_not_reached();
+  }
+}
+
+static inline GNode *
+long_register_fake(const wire_type_t target_type,
+		   const sited_wire_t swire,
+		   const connexion_t *connexions,
+		   const wire_db_t *wiredb,
+		   const chip_descr_t *cdb) {
+  GNode *added = g_node_new(NULL);
+  long_register(added, target_type, swire, connexions, wiredb, cdb);
+  return added;
+}
+
+static inline GNode *
+long_of(const wire_type_t target_type,
+	const sited_wire_t swire,
+	const connexion_t *connexions,
+	const wire_db_t *wiredb,
+	const chip_descr_t *cdb) {
+  unsigned index;
+  switch (target_type) {
+  case LV:
+    index = lv_offset_of(wiredb, cdb, swire);
+    return connexions->lv[index];
+  case LH:
+    index = lh_offset_of(wiredb, cdb, swire);
+    return connexions->lh[index];
+  default:
+    g_assert_not_reached();
+  }
+  return NULL;
+}
+
+static inline unsigned
+gather(GNode **array, size_t array_len,
+       GNode *head) {
+  unsigned i, found = 0;
+  for(i = 0; i < array_len; i++) {
+    GNode *dummynet = array[i];
+    if (dummynet && G_NODE_IS_ROOT(dummynet)) {
+      GNode *net;
+      while( (net = g_node_first_child(dummynet)) ) {
+	g_node_unlink(net);
+	g_node_prepend(head, net);
+      }
+      g_node_destroy(dummynet);
+      found++;
+    }
+  }
+  return found;
+}
+
+static unsigned
+gather_longs(nets_t *nets,
+	     const chip_descr_t *cdb,
+	     const connexion_t *connexions) {
+  GNode *head = nets->head;
+  unsigned found = 0;
+
+  found += gather(connexions->lv, lv_len(cdb), head);
+  found += gather(connexions->lh, lh_len(cdb), head);
+
+  if (found)
+    g_warning("There were %i lonely longs found", found);
+
+  return found;
+}
+
 /* Be dumb again */
 static inline unsigned
 net_offset_of(const wire_db_t *wiredb,
@@ -83,13 +243,13 @@ net_of(GNode **db,
 }
 
 static inline GNode *
-net_register(GNode **db,
+net_register(GNode **db, GNode *allocd,
 	     const wire_db_t *wiredb,
 	     const sited_pip_t *pip) {
-  //  sited_wire_t *newwire = g_new(sited_wire_t, 1);
   sited_pip_t *newpip = g_slice_new(sited_pip_t);
-  GNode *added = g_node_new(newpip);
+  GNode *added = allocd ? allocd : g_node_new(newpip);
   unsigned index = net_offset_of(wiredb, pip);
+  added->data = newpip;
   *newpip = *pip;
   db[index] = added;
   return added;
@@ -107,21 +267,65 @@ static inline gboolean
 register_spip(GNode **added,
 	      const sited_pip_t *spip,
 	      GNode *driven,
-	      GNode **nodetable,
-	      const wire_db_t *wiredb) {
+	      const connexion_t *connexions,
+	      const wire_db_t *wiredb,
+	      const chip_descr_t *cdb) {
   gboolean present = TRUE;
-  GNode *father = net_of(nodetable, wiredb, spip);
+  wire_type_t target_type = wire_type(wiredb, spip->pip.target);
+  sited_wire_t swire = { .wire = spip->pip.target, .site = spip->site };
+  GNode **nodetable = connexions->nodetable;
+  GNode *cached = NULL, *father = net_of(nodetable, wiredb, spip);
 
-  /* in case the pip is not yet present in the table,
-     add it */
-  if (!father) {
-    present = FALSE;
-    father = net_register(nodetable, wiredb, spip);
+  switch (target_type) {
+  case LH:
+  case LV: {
+    /* A GNode may already have been allocated while visiting the wires
+       driven by the long. We use it if present -- and we should also do
+       some checks there in fact */
+    /* lookup source ! */
+    if (spip->pip.source != WIRE_EP_END)
+      cached = long_of(target_type, swire, connexions, wiredb, cdb);
+    else
+      cached = NULL;
+
+    break;
+  }
+  default:
+    cached = NULL;
   }
 
-  if (driven) {
-    debit_log(L_CONNEXITY, "linking to previous pip");
+  /* In case the pip is not yet present in the table, add it */
+  if (!father) {
+    present = FALSE;
+    father = net_register(nodetable, cached, wiredb, spip);
+  }
+
+  if (driven)
     g_node_prepend(father, driven);
+
+  switch (target_type) {
+  case LH:
+  case LV: {
+    /* This wire should also be registered as driven by the correct LV/LH
+       We'll creating the GNode if not already present */
+    GNode *driver = long_of(target_type, swire, connexions, wiredb, cdb);
+
+    if (spip->pip.source != WIRE_EP_END) {
+      long_register(father, target_type, swire, connexions, wiredb, cdb);
+      break;
+    }
+
+    if (driver == NULL)
+      driver = long_register_fake(target_type, swire, connexions, wiredb, cdb);
+
+    if (!present) {
+      g_node_prepend(driver, father);
+      present = TRUE;
+    }
+    break;
+  }
+  default:
+    break;
   }
 
   *added = father;
@@ -150,6 +354,10 @@ get_wire_driver(const wire_db_t *wiredb,
    */
   switch(wtype) {
   case LH: {
+    /* Register the wire in the table, and end the search. We're betting
+       on the wire being driven from another place. We'll lose the wire
+       end if the long wire has no driver. This could be detected
+       *after* all operations, in a kind of DRC check */
     return FALSE;
   }
   case LV: {
@@ -193,7 +401,6 @@ build_net_from(nets_t *nets,
 	       const chip_descr_t *cdb,
 	       const pip_parsed_dense_t *pipdat,
 	       const sited_pip_t *spip_arg) {
-  GNode **nodetable = connexions->nodetable;
   wire_db_t *wiredb = pipdb->wiredb;
   sited_pip_t spip = *spip_arg;
   GNode *newnode = NULL;
@@ -206,7 +413,7 @@ build_net_from(nets_t *nets,
     gboolean exists;
 
     /* make a node out of the sited pip and register it, if needed */
-    exists = register_spip(&newnode, &spip, newnode, nodetable, wiredb);
+    exists = register_spip(&newnode, &spip, newnode, connexions, wiredb, cdb);
     if (exists)
       return newnode;
 
@@ -235,7 +442,7 @@ build_net_from(nets_t *nets,
 
   /* Add a dummy pip to record the absence of driver */
   spip.pip.source = WIRE_EP_END;
-  if (!register_spip(&newnode, &spip, newnode, nodetable, wiredb))
+  if (!register_spip(&newnode, &spip, newnode, connexions, wiredb, cdb))
     return g_node_prepend(nets->head, newnode);
 
   return newnode;
@@ -280,6 +487,10 @@ _build_nets(nets_t *nets,
   };
 
   iterate_over_bitpips(pipdat, cdb, build_net_iter, &net_iter);
+
+  /* Gather unconnected LV / LH wires, and put them again into
+     the net structure */
+  gather_longs(nets, cdb, connex);
 
   free_connexions(connex);
   return 0;
