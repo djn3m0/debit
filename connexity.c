@@ -513,8 +513,19 @@ nets_t *build_nets(const pip_db_t *pipdb,
   return ret;
 }
 
+static
+gboolean free_net(GNode *node,
+		  gpointer data) {
+  (void) data;
+  if (node->data)
+    g_slice_free(sited_pip_t, node->data);
+  return FALSE;
+}
+
 void free_nets(nets_t *nets) {
-  g_node_destroy(nets->head);
+  GNode *root = nets->head;
+  g_node_traverse (root, G_IN_ORDER, G_TRAVERSE_ALL, -1, free_net, NULL);
+  g_node_destroy(root);
   g_free(nets);
 }
 
