@@ -84,10 +84,12 @@ v_twists(const chip_descr_t *cdb,
   const unsigned v_index = site_index(swire.site) / width;
   const site_type_t type = site_type(cdb, swire.site);
   switch(type) {
+#ifdef VIRTEX2
   case BTERM:
     return v_index - 1;
   case TTERM:
     return v_index + 1;
+#endif
   default:
     return v_index;
   }
@@ -100,10 +102,12 @@ h_twists(const chip_descr_t *cdb,
   const unsigned h_index = site_index(swire.site)%width;
   const site_type_t type = site_type(cdb, swire.site);
   switch(type) {
+#ifdef VIRTEX2
   case RTERM:
     return h_index - 1;
   case LTERM:
     return h_index + 1;
+#endif
   default:
     return h_index;
   }
@@ -118,7 +122,6 @@ lv_offset_of(const wire_db_t *wiredb,
   const unsigned v_offset = (v_twists(cdb, swire) + LONGS_PER_SITE
 			     - wire_situation(wiredb, swire.wire)) % LONGS_PER_SITE;
   const unsigned offset = ((site_index(swire.site) % width) * LONGS_PER_SITE) + v_offset;
-  g_warning("LV offset of %i is %i", swire.wire, offset);
   return offset;
 }
 
@@ -131,7 +134,6 @@ lh_offset_of(const wire_db_t *wiredb,
   const unsigned h_offset = (h_twists(cdb, swire) + LONGS_PER_SITE
 			     - wire_situation(wiredb, swire.wire)) % LONGS_PER_SITE;
   const unsigned offset = ((site_index(swire.site) / width) * LONGS_PER_SITE) + h_offset;
-  g_warning("LH offset of %i is %i", swire.wire, offset);
   return offset;
 }
 
@@ -537,26 +539,22 @@ struct _print_net {
 
 #ifdef VIRTEX2
 
+#define STDNAME(x) [x] = #x
+
 static const gchar *typenames[NR_WIRE_TYPE] = {
-  [BX] = "BX",
-  [BY] = "BY",
-  [X] = "X",
-  [XB] = "XB",
-  [XQ] = "XQ",
-  [Y] = "Y",
-  [YB] = "YB",
-  [YQ] = "YQ",
-  [F1] = "F1",
-  [F2] = "F2",
-  [F3] = "F3",
-  [F4] = "F4",
-  [G1] = "G1",
-  [G2] = "G2",
-  [G3] = "G3",
-  [G4] = "G4",
-  [CE] = "CE",
-  [SR] = "SR",
+  STDNAME(BX), STDNAME(BY),
+  STDNAME(X), STDNAME(XB), STDNAME(XQ),
+  STDNAME(Y), STDNAME(YB), STDNAME(YQ),
+  STDNAME(F1), STDNAME(F2), STDNAME(F3), STDNAME(F4),
+  STDNAME(G1), STDNAME(G2), STDNAME(G3), STDNAME(G4),
+  STDNAME(CE),
+  STDNAME(SR),
+  STDNAME(CLK),
+/*   STDNAME(O0), STDNAME(O1), STDNAME(O2), STDNAME(O3), STDNAME(O4), STDNAME(O5), STDNAME(O6), STDNAME(O7), */
+/*   STDNAME(I0), STDNAME(I1), STDNAME(I2), STDNAME(I3), STDNAME(I4), STDNAME(I5), STDNAME(I6), STDNAME(I7), */
 };
+
+#undef STDNAME
 
 static inline
 const char *typename(const wire_type_t wt) {
@@ -586,7 +584,7 @@ print_iopin(const iopin_dir_t iodir,
   gchar slicen[MAX_SITE_NLEN];
   snprint_slice(slicen, MAX_SITE_NLEN, chip, site, wire->situation - ZERO);
   /* Combine the situation and site to get the location */
-  g_print("%s \"%s\" %s,\n", ioname[iodir], slicen, typename(wire->type));
+  g_print("  %s \"%s\" %s ,\n", ioname[iodir], slicen, typename(wire->type));
 }
 
 static gboolean
@@ -642,20 +640,20 @@ print_wire(GNode *net,
     return FALSE;
 
   sprint_spip(buf, wiredb, chip, net->data);
-  g_print("%s ,\n", buf);
+  g_print("  %s ,\n", buf);
   return FALSE;
 }
 
 static void
 print_net(GNode *net, gpointer data) {
   static unsigned netnum = 0;
-  g_print("net %i {\n", netnum++);
+  g_print("net \"net_%i\" , \n", netnum++);
   /* print input -- this should be the output pin of a logical bloc */
   print_outpin(net, data);
   /* print outputs -- these should be input pins to some logical blocs */
   g_node_traverse (net, G_IN_ORDER, G_TRAVERSE_LEAVES, -1, print_inpin, data);
   g_node_traverse (net, G_PRE_ORDER, G_TRAVERSE_ALL, -1, print_wire, data);
-  g_print("}\n");
+  g_print("  ;\n");
 }
 
 void print_nets(nets_t *net,

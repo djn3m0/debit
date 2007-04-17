@@ -222,6 +222,12 @@ while (<STDIN>) {
 	next;
     }
 
+    if (m/^(CLK)([0-3])/) {
+	#local wires
+	&register_wire($wire, 0, 0, $wire, "CLK", $wsit, $wdir);
+	next;
+    }
+
     if (m/^.*_?L([VH])([0-9]*)/) {
 	my $mydir = $1;
 	my $mysit = $2;
