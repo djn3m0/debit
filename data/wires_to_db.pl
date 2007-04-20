@@ -42,6 +42,8 @@ my @det_type = ( "WIRE_TYPE_NEUTRAL",
 		 "G4_PINWIRE",    "GCLK",    "GCLKC_GCLKB",
 		 "GCLKC_GCLKL", "GCLKC_GCLKR", "GCLKC_GCLKT",
 		 "GCLKH_GCLK_B",    "GCLKH_GCLK",    "LH", "LV",
+		 "O0", "O1", "O2", "O3", "O4", "O5", "O6", "O7",
+		 "I0", "I1", "I2", "I3", "I4", "I5", "I6", "I7",
 		 "SHIFTIN", "SHIFTOUT", "SR",    "TBUF", "TBUS",
 		 "TI", "TOUT", "TS",    "VCC_PINWIRE",    "WF1_PINWIRE",
 		 "WF2_PINWIRE", "WF3_PINWIRE", "WF4_PINWIRE",
@@ -225,6 +227,13 @@ while (<STDIN>) {
     if (m/^(CLK)([0-3])/) {
 	#local wires
 	&register_wire($wire, 0, 0, $wire, "CLK", $wsit, $wdir);
+	next;
+    }
+
+    if (m/^(I|O)([0-7])(.*)/) {
+	#IO wires
+	my $wiretype = $1 . $2;
+	&register_wire($wire, 0, 0, $wire, $wiretype, $wsit, $wdir);
 	next;
     }
 
