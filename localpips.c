@@ -296,6 +296,14 @@ get_pipdb(const gchar *datadir) {
   return ret;
 }
 
+static inline
+void free_datadb(GNode **db) {
+  GNode *tree = *db;
+  if (tree)
+    destroy_datatree(tree);
+  *db = NULL;
+}
+
 /** \brief Free a filled pip database
  *
  * Free all structures allocated during the database loading
@@ -314,10 +322,8 @@ free_pipdb(pip_db_t *pipdb) {
     free_wiredb(pipdb->wiredb);
 
   for(i = 0; i < NR_SWITCH_TYPE; i++) {
-    GNode *tree = pipdb->memorydb[i];
-    if (tree)
-      destroy_datatree(tree);
-    pipdb->memorydb[i] = NULL;
+    free_datadb (&pipdb->memorydb[i]);
+    free_datadb (&pipdb->logicdb[i]);
   }
 
   g_free(pipdb);
@@ -768,7 +774,7 @@ _pips_of_bitstream_iter(unsigned site_x, unsigned site_y,
   __pips_of_site_append_index(data->pipdb, data->bitstream, site, data);
 }
 
-int
+static int
 _pips_of_bitstream(const pip_db_t *pipdb, const chip_descr_t *chipdb,
 		   const bitstream_parsed_t *bitstream,
 		   pip_parsed_dense_t *fill) {
