@@ -240,8 +240,8 @@ chip_struct_t bitdescr[XC3__NUM] = {
       [V2C_IOB] = 2,
       [V2C_IOI] = 2,
       [V2C_CLB] = 28,
-      [V2C_BRAM] = 4,
-      [V2C_BRAM_INT] = 4,
+      [V2C_BRAM] = 2,
+      [V2C_BRAM_INT] = 2,
       [V2C_GCLK] = 1,
     },
     .frame_count = s3_frame_count,
@@ -263,7 +263,7 @@ chip_struct_t bitdescr[XC3__NUM] = {
   [XC3S1500] = {
     .chip = XC3S1500,
     .idcode = 0x01434093,
-    .framelen = 137,
+    .framelen = 133,
     .col_count = {
       [V2C_IOB] = 2,
       [V2C_IOI] = 2,
@@ -932,7 +932,7 @@ flr_check(const bitstream_parser_t *parser, chip_id_t chip) {
 
   if (chipflr != flr + 1) {
     g_warning("written FLR value %i is inconsistent with expected value %i",
-	      flr, chipflr);
+	      flr, chipflr-1);
     return -1;
   }
 
