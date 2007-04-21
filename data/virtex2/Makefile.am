@@ -5,6 +5,7 @@
 #pips
 DATAPREFIX=clb tterm bterm rterm lterm lioi rioi tioi bioi \
 	   bram ttermbram btermbram bioibram tioibram
+LOGIPREFIX=clb
 
 #chip geometry
 CHIPS=40 80 250 500 1000 1500 2000 3000 4000 6000 8000

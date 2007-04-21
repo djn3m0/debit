@@ -36,6 +36,7 @@ typedef struct pip_db {
 
 typedef struct pip_db {
   GNode *memorydb[NR_SWITCH_TYPE];
+  GNode *logicdb[NR_SWITCH_TYPE];
   wire_db_t *wiredb;
 } pip_db_t;
 

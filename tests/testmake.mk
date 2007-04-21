@@ -30,7 +30,7 @@ DEBIT_CMD	=$(VALGRIND) $(DEBIT) $(DEBITDBG) --datadir=$(DATADIR)
 ############################
 
 %.pipdebit: %.bit $(DEBIT)
-	$(DEBIT_CMD) --pipdump --input $< > $@ 2> $@.log
+	$(DEBIT_CMD) --pipdump --input $< 2> $@.log | sort > $@
 
 #extract some information from the xdl
 %.pipxdl: %.xdl

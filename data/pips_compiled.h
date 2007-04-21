@@ -91,7 +91,7 @@ static const union CONTROLSTRUCTNAME(DBNAME) {
 #define DATASTRUCTNAME(x) STRUCTNAME(pips_data_, x)
 #define DATASTRUCTINSTANCE(x) INSTANCENAME(data_, x)
 #define DATA_STRUCT(name, len) DATASTRUCTTYPE name[len]
-#define DATA_STRUCT_FILL(vstartwire, vcfgdata) { .startwire = vstartwire, .cfgdata = vcfgdata }
+#define DATA_STRUCT_FILL(vstartwire, vcfgdata) { .startwire = DBWIRE_##vstartwire, .cfgdata = vcfgdata }
 
 static const union DATASTRUCTNAME(DBNAME) {
   struct {
@@ -133,7 +133,7 @@ static const union DATASTRUCTNAME(DBNAME) {
 #define ARRAYINSTANCE(x) INSTANCENAME(pipdb_, x)
 
 static const pip_control_t ARRAYINSTANCE(DBNAME)[] = {
-#define _PIP_CTRL_ENTRY(s, n, ctrllist...) s
+#define _PIP_CTRL_ENTRY(s, n, ctrllist...) DBWIRE_##s
 #define _PIP_CTRL_LIST(...)
 #define _PIP_DATA_LIST(...)
 #define _PIP_DATA_ENTRY(s, n)

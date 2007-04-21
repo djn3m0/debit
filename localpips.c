@@ -5,14 +5,17 @@
 
 /** \file
  *
- *  Idea to rewrite the DB:
- *  add one entry bitlist in the bitlist, which lists all the
- *  configuration bits. Then a pip is given as an integer (guint32).
- *  Fine, no ? Checking a bit is just getting the data into a
- *  guint32, and comparing it to the entry in the DB. Fine !
+ * Idea to rewrite the DB:
+ * Once the control bits are correctly ordered, the bit patterns (IE,
+ * pattern values to be checked against) are known. Therefore, one can
+ * record positionally the input wire without the bit pattern itself,
+ * which is implicit in the relative position of the record.
  *
- *  Also, as an optimisation we can get back the data as
- *  startpoint, length, width of the square.
+ * Thus we get rid of the guin32, and directly halve the database
+ * space. However, a small 8-bit index may be needed to indicate the
+ * type of the pip and associated patterns. This is, however, very
+ * small. The whole database (*for all sites*) will certainly fit well
+ * under 100KiB, which means it'll fit in L2 with room to spare.
  *
  */
 
@@ -39,6 +42,8 @@
 #include "data/virtex4/pips.h"
 #elif defined(VIRTEX5)
 #include "data/virtex5/pips.h"
+#elif defined(SPARTAN3)
+#include "data/spartan3/pips.h"
 #else
 #error "Could not compile in pip db"
 #endif
@@ -182,6 +187,39 @@ static const gchar *basedbnames[NR_SWITCH_TYPE] = {
 
 #endif
 
+static inline int
+read_switchdb(pip_db_t *pipdb,
+	      GNode *head, const site_type_t switchtype,
+	      const gchar *datadir, const gchar *base,
+	      const gchar *ctrlname, const gchar *dataname) {
+  int err = 0;
+  gchar *filename = NULL;
+  GKeyFile *control = NULL, *data = NULL;
+
+  filename = g_build_filename(datadir,CHIP,base,ctrlname,NULL);
+  err = read_keyfile(&control,filename);
+  g_free(filename);
+  if (err)
+    goto out_err_free;
+
+  filename = g_build_filename(datadir,CHIP,base,dataname,NULL);
+  err = read_keyfile(&data,filename);
+  g_free(filename);
+  if (err)
+    goto out_err_free;
+
+  err = build_datatree_from_keyfiles(data, control,
+				     pipdb->wiredb,
+				     head, switchtype);
+
+ out_err_free:
+  if (control)
+    g_key_file_free(control);
+  if (data)
+    g_key_file_free(data);
+  return err;
+}
+
 /** \brief Read a database from files
  *
  * Readback a set of files describing a pip database and fills in the
@@ -195,11 +233,10 @@ static const gchar *basedbnames[NR_SWITCH_TYPE] = {
  * @see pip_db_t
  */
 
+#include <string.h>
 static int
 read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
   int err = 0;
-  gchar *filename = NULL;
-  GKeyFile *control = NULL, *data = NULL;
   guint i;
 
   for (i = 0; i < NR_SWITCH_TYPE; i++) {
@@ -208,38 +245,30 @@ read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
     if (!base)
       continue;
 
-    filename = g_build_filename(datadir,CHIP,base,"control.db",NULL);
-    err = read_keyfile(&control,filename);
-    g_free(filename);
-    if (err)
-      goto out_err_free;
-
-    filename = g_build_filename(datadir,CHIP,base,"data.db",NULL);
-    err = read_keyfile(&data,filename);
-    g_free(filename);
-    if (err)
-      goto out_err_free;
-
     pipdb->memorydb[i] = g_node_new(NULL);
-    err = build_datatree_from_keyfiles(data, control,
-				       pipdb->wiredb,
-				       pipdb->memorydb[i], i);
+    err = read_switchdb(pipdb, pipdb->memorydb[i],
+			i, datadir, base,
+			"control.db", "data.db");
     if (err)
-      goto out_err_free;
+      goto out_err;
 
-    g_key_file_free(control);
-    g_key_file_free(data);
-    control = NULL;
-    data = NULL;
+    /* For now, only clb... */
+    if (strcmp(base, "clb"))
+      continue;
+
+    /* For now, the logic db is the same as the pipdb, pending further
+       modifications */
+    pipdb->logicdb[i] = g_node_new(NULL);
+    err = read_switchdb(pipdb, pipdb->logicdb[i],
+			i, datadir, base,
+			"lcontrol.db", "ldata.db");
+    if (err)
+      goto out_err;
   }
 
-  return 0;
+  return err;
 
- out_err_free:
-  if (control)
-    g_key_file_free(control);
-  if (data)
-    g_key_file_free(data);
+ out_err:
   free_pipdb (pipdb);
   return err;
 }
@@ -891,3 +920,33 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
     }
   }
 }
+
+/*
+ * Logic database implementation
+ *
+ * The logic database implementation is a three-level lookup table:
+ *
+ * First level, the wire which is driven (as in pips) and type of the
+ * pip (LUTs for instance need a special function to be called).  Along
+ * with the wire, the control bits for the programmable part.
+ *
+ * Second level, a bitpattern / value pair, which links the bit pattern
+ * to the XDL value of the configuration. Some pips have a "default"
+ * behaviour, which is a bit confusing, because the same bit pattern can
+ * yield two different values in the XDL file.
+ * - the bit pattern in question is usually ZERO (we assume this)
+ * - the configuration option can be #OFF or its default value in the
+ * XDL file. The safest way should be to set it to its default
+ * value. However, we may want to do things properly and use connexity
+ * analysis to put the correct XDL value in place. The active value at
+ * default level of the pip should be recorded in a fixed place for fast
+ * lookup.
+ *
+ * The third level, if type of the first level indicates that it is
+ * needed, is a bitpattern / input wires needed pair. This indicates
+ * which wires in the connexity analysis must be followed through, ie
+ * the FANIN at the site. This is, for now, not very well tested, and
+ * will be further explored when the code for this is written in
+ * connexity analysis.
+ *
+ */

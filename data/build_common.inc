@@ -24,6 +24,13 @@ $(PIPS_H_DB): $(PIPS_M4_SCRIPT) $(WIRES_H_DB) $(PIPS_ALL_DBS)
 	m4 -I$(top_srcdir) -DSITEDB=$(SITE_INCL) -DPIPSDB=$(PIPS_ALL_DBS) -DWIREDB=$(WIRES_H_DB) $< > $@
 
 ####
+# Logic database
+####
+LOGICONTROL=$(addsuffix /lcontrol.db,$(LOGIPREFIX))
+LOGIDATA=$(addsuffix /ldata.db,$(LOGIPREFIX))
+#DATGENERAL=$(addsuffix /all.db,$(LOGIPREFIX))
+
+####
 # Chip geometry database
 ####
 
@@ -46,8 +53,8 @@ FLIPCHIP    ?= 0
 WIRES_M4_SCRIPT=$(srcdir)/../dbtoini.m4
 WIRES_H_M4_SCRIPT=$(srcdir)/../dbtoh.m4
 
-$(WIRES_RAW_DB): $(DATDATA) $(DBGENSCRIPT)
-	cat $(DATDATA) \
+$(WIRES_RAW_DB): $(DATDATA) $(LOGIDATA) $(DBGENSCRIPT)
+	cat $(DATDATA) $(LOGIDATA) \
 	| sed -e 's/\[ *\([^ ]*\) *\]/\1/' \
 	| sed -e 's/\([^=]*\)=.*$$/\1/' \
 	| grep -v '^$$' \
@@ -63,7 +70,7 @@ $(WIRES_H_DB): $(WIRES_H_M4_SCRIPT) $(WIRES_RAW_DB)
 # Autotools tracing of all this stuff
 ####
 
-ALLDATA=$(DATCONTROL) $(DATDATA) $(WIRES_DB) $(CHIPDB)
+ALLDATA=$(DATCONTROL) $(DATDATA) $(LOGIDATA) $(LOGICONTROL) $(WIRES_DB) $(CHIPDB)
 ALLDDATA=$(WIRES_RAW_DB) $(WIRES_H_DB) $(PIPS_H_DB) $(PIPS_ALL_DBS) $(DATGENERAL)
 
 dist_noinst_SCRIPTS=$(GENSCRIPT)
@@ -72,4 +79,6 @@ virtex2_pkgdatadir=$(pkgdatadir)/virtex2
 nobase_dist_virtex2_pkgdata_DATA=$(ALLDATA)
 
 #Allow me to cleanup the mess
-MAINTAINERCLEANFILES = $(CHIPDB) $(DATCONTROL) $(DATDATA) $(WIRES_RAW_DB) $(WIRES_H_DB) $(PIPS_H_DB)
+MAINTAINERCLEANFILES = $(CHIPDB) $(WIRES_RAW_DB) $(WIRES_H_DB) \
+			$(DATCONTROL) $(DATDATA) $(PIPS_H_DB) \
+			$(LOGICONTROL) $(LOGIDATA)

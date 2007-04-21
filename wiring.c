@@ -27,6 +27,8 @@
 #define WIREDB "data/virtex4/wires.m4"
 #elif defined(VIRTEX5)
 #define WIREDB "data/virtex5/wires.m4"
+#elif defined(SPARTAN3)
+#define WIREDB "data/spartan3/wires.m4"
 #else
 #error "Unable to compile wiredb in"
 #endif

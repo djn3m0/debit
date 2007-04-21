@@ -86,4 +86,4 @@ function force_design() {
     produce_suffix ${DESIGN_NAME} pip
 }
 
-CALLED_FUN=force_design
+CALLED_FUN=test_design

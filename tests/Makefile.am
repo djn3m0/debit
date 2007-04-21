@@ -5,7 +5,7 @@ TESTS_ENVIRONMENT = top_srcdir=$(top_srcdir) \
 		    top_builddir=$(top_builddir) \
 		    $(SHELL)
 
-TESTS=test_v5.sh test_v2.sh test_v4.sh
+TESTS=test_v2.sh test_s3.sh test_v5.sh test_v4.sh
 
 FULL_ENVIRONMENT = srcdir=$(srcdir) $(TESTS_ENVIRONMENT)
 
