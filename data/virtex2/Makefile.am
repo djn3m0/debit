@@ -3,7 +3,7 @@
 ###
 
 #pips
-DATAPREFIX=clb tterm bterm rterm lterm lioi rioi tioi bioi \
+DATAPREFIX=clb tterm bterm rterm lterm lioi rioi tbioi \
 	   bram ttermbram btermbram bioibram tioibram
 LOGIPREFIX=clb
 

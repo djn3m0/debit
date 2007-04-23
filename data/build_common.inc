@@ -81,4 +81,4 @@ nobase_dist_virtex2_pkgdata_DATA=$(ALLDATA)
 #Allow me to cleanup the mess
 MAINTAINERCLEANFILES = $(CHIPDB) $(WIRES_RAW_DB) $(WIRES_H_DB) \
 			$(DATCONTROL) $(DATDATA) $(PIPS_H_DB) \
-			$(LOGICONTROL) $(LOGIDATA)
+			$(LOGICONTROL)
