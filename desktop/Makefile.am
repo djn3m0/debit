@@ -18,6 +18,10 @@ dist_desktop_DATA = debit.desktop
 MIMEdir = $(datadir)/mime/packages
 dist_MIME_DATA = debit.xml
 
+# Bash completion
+BASHdir = $(sysconfdir)/bash_completion.d
+dist_BASH_DATA = ulogic
+
 # Icons are in artwork
 
 # How to run this without the package integrating this ?

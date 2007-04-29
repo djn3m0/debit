@@ -1,0 +1,71 @@
+#-*- mode: shell-script;-*-
+
+# Ulogic tools completion.
+# Copyright 2007 Jean-Baptiste Note <jbnote@gmail.com>
+#
+
+_ulogic()
+{
+    local cur prev opts base
+    COMPREPLY=()
+    CMD=$1
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    #
+    #  Complete the arguments to some of the basic commands.
+    #
+    case "${prev}" in
+	--input|-i)
+    #  File completion -- postfixed with .bit
+	    COMPREPLY=( $(compgen -d -- "${cur}") \
+		        $(compgen -f -X "!*.bit" -- "${cur}") )
+	    return 0
+            ;;
+	--outdir|-o|--datadir|-d)
+    #  Directory completion
+	    COMPREPLY=( $(compgen -d -- ${cur}) )
+            return 0
+            ;;
+	--debug)
+    # Debug verbosity completion
+	    COMPREPLY=( $(out=1; for i in `seq 0 15`; do printf "0x%04x\n" $out; out=$(( $out + $out )); done) )
+	    return 0
+	    ;;
+        *)
+    # Try to complete as a command
+	    local opts=$(${CMD} --help | grep -- '--' | sed 's/.*\(--[^= ]*\).*/\1/')
+	    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+	    return 0
+	    ;;
+    esac
+
+   COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+   return 0
+}
+
+_debit()
+{
+    _ulogic debit
+    return 0
+}
+
+_xiledit()
+{
+    _ulogic xiledit
+    return 0
+}
+
+_bit2pdf()
+{
+    _ulogic bit2pdf
+    return 0
+}
+
+default="-o default"
+dirnames="-o dirnames"
+filenames="-o filenames"
+
+complete -F _debit $filenames debit
+complete -F _xiledit $filenames xiledit
+complete -F _bit2pdf $filenames bit2pdf
