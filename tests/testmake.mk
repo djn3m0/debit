@@ -25,6 +25,9 @@ DEBIT_CMD	=$(VALGRIND) $(DEBIT) $(DEBITDBG) --datadir=$(DATADIR)
 %.pip: %.bit $(DEBIT)
 	$(DEBIT_CMD) --pipdump --input $< > $@ 2> $@.log
 
+%.nets: %.bit $(DEBIT)
+	$(DEBIT_CMD) --netdump --input $< > $@ 2> $@.log
+
 ############################
 ### XDL/Debit comparison ###
 ############################

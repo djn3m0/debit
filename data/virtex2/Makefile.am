@@ -3,8 +3,8 @@
 ###
 
 #pips
-DATAPREFIX=clb tterm bterm rterm lterm lioi rioi tbioi \
-	   bram ttermbram btermbram bioibram tioibram
+DATAPREFIX=clb tterm bterm rterm lterm lrioi tbioi \
+	   bram ttermbram btermbram tbioibram
 LOGIPREFIX=clb
 
 #chip geometry

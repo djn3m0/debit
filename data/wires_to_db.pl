@@ -113,7 +113,19 @@ while (<STDIN>) {
 	$mdx = $mdx * $step;
 	$mdy = $mdy * $step;
 
-	$end = $prefix.$orientation.$length."BEG".$rank;
+	if ($prefix =~ /TBTERM_/) {
+	    if ($mdy < 0) {
+		$mdy -= 1;
+	    }
+	    else {
+		$mdy += 1;
+	    }
+	    $end = $orientation.$length."BEG".$rank;
+	} elsif ($prefix =~ /TB_IOIS_/) {
+	    $end = $orientation.$length."BEG".$rank;
+	} else {
+	    $end = $prefix.$orientation.$length."BEG".$rank;
+	}
 	&register_wire($wire, $mdx, $mdy, $end, $wtype, $wsit, $orientation);
 	next;
     }

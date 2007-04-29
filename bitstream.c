@@ -126,11 +126,31 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
      this one nothing:
        BM,
      these unknown:
-       TL, BL, BR, TR,
-       M,
-     these shitty, will need something specific:
-       CLKT, CLKB, GCLKC, GCLKH, GCLKHBRAM,
+       TL, BL, BR, TR, M,
+       these shitty, will need something specific:
+     GCLKH, GCLKHBRAM,
   */
+  /*
+  [CLKT] = {
+    .col_type = V2C_GCLK,
+    .x_type_off = 0,
+    .y_offset = - (),
+    .y_width = sizeof(site_descr_t),
+  },
+  [CLKB] = {
+    .col_type = V2C_GCLK,
+    .x_type_off = 0,
+    .y_offset = ,
+    .y_width = sizeof(site_descr_t),
+  },
+  [GCLKC] = {
+    .col_type = V2C_GCLK,
+    .x_type_off = 0,
+    .y_offset = ,
+    .y_width = sizeof(site_descr_t),
+  },
+  */
+  /* GCLKH are harder */
 };
 
 #elif defined(SPARTAN3) /* VIRTEX2 */

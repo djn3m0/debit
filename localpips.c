@@ -149,12 +149,13 @@ static const gchar *basedbnames[NR_SWITCH_TYPE] = {
   [SW_LTERM] = "lterm",
   [SW_BIOI] = "tbioi",
   [SW_TIOI] = "tbioi",
-  [SW_RIOI] = "rioi",
-  [SW_LIOI] = "lioi",
+  [SW_RIOI] = "lrioi",
+  [SW_LIOI] = "lrioi",
   [SW_BRAM] = "bram",
   [SW_BTERMBRAM] = "btermbram",
-  [SW_BIOIBRAM] = "bioibram",
-  [SW_TIOIBRAM] = "tioibram",
+  [SW_TTERMBRAM] = "ttermbram",
+  [SW_BIOIBRAM] = "tbioibram",
+  [SW_TIOIBRAM] = "tbioibram",
 };
 
 #elif defined(SPARTAN3)
