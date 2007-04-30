@@ -130,10 +130,11 @@ while (<STDIN>) {
 	}
 
 	#add endpoints in very special case for now
-	if ($wire =~ /S6BEG9/) {
-	    my @endpoints = ("TBTERM_S6BEG9", "TBTERM_S6A9", "TBTERM_S6B9",
-			     "TBTERM_S6MID9", "TBTERM_S6C9", "TBTERM_S6D9",
-			     "TBTERM_S6END9");
+	if ($wire =~ /S6BEG([0-9]*)/) {
+	    my $rank = $1;
+	    my @endpoints = ("TBTERM_S6A${rank}", "TBTERM_S6B${rank}",
+			     "TBTERM_S6MID${rank}", "TBTERM_S6C${rank}",
+			     "TBTERM_S6D${rank}", "TBTERM_S6END${rank}");
 	    &register_wire_corked($wire, $mdx, $mdy, $end, $wtype, $wsit,
 				  $orientation, \@endpoints);
 	} else {

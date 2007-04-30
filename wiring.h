@@ -31,8 +31,8 @@ typedef struct _wire_simple {
   gint8 dx;
   gint8 dy;
   wire_atom_t ep;
-
-  /* continuation of the wire at term locations */
+  /* continuation of the wire at term locations.
+     Could also be put in the details */
   unsigned fut_len;
   int *fut;
 } __attribute__((packed)) wire_simple_t;

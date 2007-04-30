@@ -584,7 +584,8 @@ print_iopin(const iopin_dir_t iodir,
   gchar slicen[MAX_SITE_NLEN];
   snprint_slice(slicen, MAX_SITE_NLEN, chip, site, wire->situation - ZERO);
   /* Combine the situation and site to get the location */
-  g_print("  %s \"%s\" %s ,\n", ioname[iodir], slicen, typename(wire->type));
+  g_print("  %s \"%s\" %s , #%s\n", ioname[iodir], slicen,
+	  typename(wire->type), wire_name(wiredb,spip->pip.target));
 }
 
 static gboolean

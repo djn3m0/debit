@@ -285,7 +285,9 @@ get_wire_startpoint(const wire_db_t *wiredb,
 		    const wire_atom_t worig) {
   const wire_simple_t *wo = &wiredb->wires[worig];
   wire_atom_t ep = wo->ep;
+  unsigned dx = 0, dy = 0;
   site_ref_t ep_site;
+  int ret;
 
   debit_log(L_WIRES, "getting startpoint of wire %s\n",
 	    wire_name(wiredb, worig));
@@ -294,9 +296,23 @@ get_wire_startpoint(const wire_db_t *wiredb,
   if (ep == worig)
     return FALSE;
 
-  ep_site = translate_global_site(chipdb, sorig, -wo->dx, -wo->dy);
-  if (ep_site == SITE_NULL)
+  ret = translate_global_site(chipdb, sorig, -wo->dx, -wo->dy,
+			      &ep_site, &dx, &dy);
+  if (ret) {
+    if (wiredb->wires[ep].fut) {
+      wire_atom_t target = wiredb->wires[ep].fut[dy];
+      char coucou[32];
+      sprint_switch(coucou, chipdb, ep_site);
+      g_warning("patching %s to %s at site %s\n",
+		wire_name(wiredb, worig),
+		wire_name(wiredb, target),
+		coucou);
+      *wtarget = target;
+      *starget = ep_site;
+      return TRUE;
+    }
     return FALSE;
+  }
 
   *wtarget = ep;
   *starget = ep_site;

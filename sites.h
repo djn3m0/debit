@@ -7,6 +7,7 @@
 #define _SITES_H
 
 #include <glib.h>
+#include <stdlib.h>
 #include "bitstream_parser.h"
 
 #if defined(VIRTEX2) || defined(SPARTAN3)
@@ -83,18 +84,33 @@ site_type(const chip_descr_t *chip,
   return get_site(chip, site)->type;
 }
 
-static inline site_ref_t
+static inline unsigned
+clip_val(const int delta, const unsigned clip) {
+  return delta < 0 ? 0 : ((unsigned)delta > clip ? clip : (unsigned)delta);
+}
+
+static inline int
 translate_global_site(const chip_descr_t *chip,
-		      site_ref_t site, int dx, int dy) {
+		      const site_ref_t site,
+		      const int dx, const int dy,
+		      site_ref_t *rsite,
+		      unsigned *offx, unsigned *offy) {
   unsigned width = chip->width;
   unsigned offset = site_index(site);
   unsigned x = offset % width;
   unsigned y = offset / width;
-  unsigned newx = x+dx, newy = y+dy;
+  int newx = x+dx, newy = y+dy;
   /* check that we stay within bound */
-  if (newx < chip->width && newy < chip->height)
-    return newx + width * newy;
-  return SITE_NULL;
+  if ((unsigned)newx < chip->width &&
+      (unsigned)newy < chip->height) {
+    *rsite = newx + width * newy;
+    return 0;
+  }
+  /* We quantify the overflow and return the site projection */
+  *offx = newx < 0 ? abs(newx) : newx - chip->width;
+  *offy = newy < 0 ? abs(newy) : newy - chip->width;
+  *rsite = clip_val(newx, chip->width) + width * clip_val(newy, chip->height);
+  return -1;
 }
 
 #define MAX_SITE_NLEN 20
