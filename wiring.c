@@ -91,6 +91,7 @@ load_wire_atom(const wire_db_t *db, GKeyFile *keyfile,
 	       const gchar *wirename)
 {
   GError *err = NULL;
+  int retval = 0;
   gint id = g_key_file_get_integer(keyfile, wirename, "ID", &err);
   wire_simple_t *wire = (void *) &db->wires[id];
   wire_t *detail = (void *) &db->details[id];
@@ -108,18 +109,28 @@ do { structname->structmem = g_key_file_get_integer(keyfile, wirename, #strname,
     goto out_err;\
 } while (0)
 
+#define GET_STRUCT_MEMBER_LIST(structname, structmem, structmemlen, strname) \
+do { structname->structmem = g_key_file_get_integer_list(keyfile, wirename, #strname, \
+                                                         &structname->structmemlen, &err);\
+  if (err)\
+    goto out_err;\
+} while (0)
+
   GET_STRUCT_MEMBER(wire, dx, DX);
   GET_STRUCT_MEMBER(wire, dy, DY);
   GET_STRUCT_MEMBER(wire, ep, EP);
+  GET_STRUCT_MEMBER_LIST(wire, fut, fut_len, FUT);
   GET_STRUCT_MEMBER(detail, type, TYPE);
   GET_STRUCT_MEMBER(detail, direction, DIR);
   GET_STRUCT_MEMBER(detail, situation, SIT);
 
-  return 0;
+  return retval;
 
  out_err:
   g_warning("%s", err->message);
-  return err->code;
+  retval = err->code;
+  g_error_free (err);
+  return retval;
 }
 
 static inline int

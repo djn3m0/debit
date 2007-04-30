@@ -12,7 +12,9 @@ my $invert_y_axis = shift @ARGV;
 # We must fill in some things
 my %dx;
 my %dy;
+# These will be merged at some point
 my %otherend;
+my %otherends;
 my %type;
 my %dir;
 my %sit;
@@ -126,7 +128,18 @@ while (<STDIN>) {
 	} else {
 	    $end = $prefix.$orientation.$length."BEG".$rank;
 	}
-	&register_wire($wire, $mdx, $mdy, $end, $wtype, $wsit, $orientation);
+
+	#add endpoints in very special case for now
+	if ($wire =~ /S6BEG9/) {
+	    my @endpoints = ("TBTERM_S6BEG9", "TBTERM_S6A9", "TBTERM_S6B9",
+			     "TBTERM_S6MID9", "TBTERM_S6C9", "TBTERM_S6D9",
+			     "TBTERM_S6END9");
+	    &register_wire_corked($wire, $mdx, $mdy, $end, $wtype, $wsit,
+				  $orientation, \@endpoints);
+	} else {
+	    &register_wire($wire, $mdx, $mdy, $end, $wtype, $wsit,
+	    $orientation);
+	}
 	next;
     }
 
@@ -301,7 +314,7 @@ foreach $wire (@wires) {
 
 &dump_ini;
 
-sub register_wire() {
+sub register_wire_corked() {
     my $wire = shift;
     my $dx = shift;
     my $dy = shift;
@@ -311,12 +324,21 @@ sub register_wire() {
     my $wsit = shift;
     my $wdir = shift;
 
-    # Type is not redundant
-    my $type = shift;
-    # dir is redundant with dx, dy
-    my $dir = shift;
-    # sit is redundant with type + dx, dy, I think
-    my $sit = shift;
+    my $ends = shift;
+
+    &register_wire($wire, $dx, $dy, $end, $wtype, $wsit, $wdir);
+    $otherends{$wire} = $ends;
+}
+
+sub register_wire() {
+    my $wire = shift;
+    my $dx = shift;
+    my $dy = shift;
+    my $end = shift;
+
+    my $wtype = shift;
+    my $wsit = shift;
+    my $wdir = shift;
 
     # in case we found nothing, only give a number to the thing and backoff
     push @wires, $wire;
@@ -328,7 +350,6 @@ sub register_wire() {
     $type{$wire} = $type_h{$wtype};
     $dir{$wire} = $dir_h{$wdir};
     $sit{$wire} = $sit_h{$wsit};
-
 }
 
 sub array_to_hash() {
@@ -351,22 +372,44 @@ sub array_to_hash() {
 #formatting-clever here, dump the data wrapped in a macro, and let CPP
 #or m4 handle the rest
 
+sub tonum {
+    my $val = shift;
+    if (defined $nums{$val}) {
+	return "$nums{$val}";
+    } else {
+	return "-1";
+    }
+}
+
 sub dump_ini {
     my $output;
     for $output (@wires) {
 	my $mydy = $dy{$output};
+	my $nwires = 0;
+
+	if (defined $otherends{$output}) {
+	    my @ends=@{$otherends{$output}};
+	    $nwires += $#ends;
+	}
+
 	if ($invert_y_axis) {
 	    $mydy = - $mydy;
 	}
 
-	print "_WIRE_ENTRY($output, $nums{$output}, $dx{$output}, $mydy, ";
+	print "_WIRE_ENTRY($output, $nums{$output}, $dx{$output}, ";
+	print "$mydy, ";
+	print "$nums{$otherend{$output}}, ";
+	print "$nwires, ";
 
-	if (defined $nums{$otherend{$output}}) {
-	    print "$nums{$otherend{$output}}, ";
+	print "_WIRE_ENDS(";
+	if (defined $otherends{$output}) {
+	    my @ends=@{$otherends{$output}};
+	    print join ", ", map { &tonum($_) } @ends;
 	}
-	else {
-	    print "$nums{$output}, ";
-	}
-	print "$type{$output}, $dir{$output}, $sit{$output})\n";
+	print "), ";
+
+	print "$type{$output}, $dir{$output}, $sit{$output}";
+
+	print ")\n";
     }
 }
