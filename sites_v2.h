@@ -82,6 +82,8 @@ typedef enum _wire_type {
   /* these are used too */
   O0, O1, O2, O3, O4, O5, O6, O7,
   I0, I1, I2, I3, I4, I5, I6, I7,
+  /* And these again */
+  IQ1, IQ2,
   SHIFTIN, SHIFTOUT, SR,
   TBUF, TBUS,
   TI, TOUT, TS,
