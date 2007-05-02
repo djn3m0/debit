@@ -95,21 +95,21 @@ translate_global_site(const chip_descr_t *chip,
 		      const int dx, const int dy,
 		      site_ref_t *rsite,
 		      unsigned *offx, unsigned *offy) {
-  unsigned width = chip->width;
+  unsigned width = chip->width, height = chip->height;
   unsigned offset = site_index(site);
   unsigned x = offset % width;
   unsigned y = offset / width;
   int newx = x+dx, newy = y+dy;
   /* check that we stay within bound */
-  if ((unsigned)newx < chip->width &&
-      (unsigned)newy < chip->height) {
+  if ((unsigned)(newx-1) < width - 2 &&
+      (unsigned)(newy-1) < height - 2) {
     *rsite = newx + width * newy;
     return 0;
   }
   /* We quantify the overflow and return the site projection */
-  *offx = newx < 0 ? abs(newx) : newx - chip->width;
-  *offy = newy < 0 ? abs(newy) : newy - chip->width;
-  *rsite = clip_val(newx, chip->width) + width * clip_val(newy, chip->height);
+  *offx = ((unsigned)(newx-1) < width - 2) ? 0 : newx <= 1 ? (unsigned)(1-newx) : newx - width + 2;
+  *offy = ((unsigned)(newy-1) < height - 2) ? 0 : newy <= 1 ? (unsigned)(1-newy) : newy - height + 2;
+  *rsite = clip_val(newx, width-1) + width * clip_val(newy, height-1);
   return -1;
 }
 

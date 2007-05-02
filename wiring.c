@@ -300,7 +300,7 @@ get_wire_startpoint(const wire_db_t *wiredb,
 			      &ep_site, &dx, &dy);
   if (ret) {
     if (wiredb->wires[ep].fut) {
-      wire_atom_t target = wiredb->wires[ep].fut[dy];
+      wire_atom_t target = wiredb->wires[ep].fut[dy + dx];
       char coucou[32];
       sprint_switch(coucou, chipdb, ep_site);
       g_warning("patching %s to %s at site %s\n",

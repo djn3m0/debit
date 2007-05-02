@@ -123,6 +123,16 @@ while (<STDIN>) {
 		$mdy += 1;
 	    }
 	    $end = $orientation.$length."BEG".$rank;
+	} elsif ($prefix =~ /LRTERM_/) {
+	    if ($mdx < 0) {
+		$mdx -= 1;
+	    }
+	    else {
+		$mdx += 1;
+	    }
+	    $end = $orientation.$length."BEG".$rank;
+	} elsif ($prefix =~ /LR_IOIS_/) {
+	    $end = $orientation.$length."BEG".$rank;
 	} elsif ($prefix =~ /TB_IOIS_/) {
 	    $end = $orientation.$length."BEG".$rank;
 	} else {
@@ -130,11 +140,27 @@ while (<STDIN>) {
 	}
 
 	#add endpoints in very special case for now
-	if ($wire =~ /S6BEG([0-9]*)/) {
-	    my $rank = $1;
-	    my @endpoints = ("TBTERM_S6A${rank}", "TBTERM_S6B${rank}",
-			     "TBTERM_S6MID${rank}", "TBTERM_S6C${rank}",
-			     "TBTERM_S6D${rank}", "TBTERM_S6END${rank}");
+	#It would be much better to have this into the array directly,
+	#with a correct ordering. However, this will only be possible
+	#once the array does not have to be sorted -- which will happen
+	#as soon as we write a fast name-to-index function
+	if ($wire =~ /(N|S)6BEG([0-9]*)/) {
+	    my $dir = $1;
+	    my $rank = $2;
+	    my @endpoints = ("TBTERM_${dir}6BEG${rank}",
+			     "TBTERM_${dir}6A${rank}",
+			     "TBTERM_${dir}6B${rank}", "TBTERM_${dir}6MID${rank}",
+			     "TBTERM_${dir}6C${rank}", "TBTERM_${dir}6D${rank}",
+			     "TBTERM_${dir}6END${rank}");
+	    &register_wire_corked($wire, $mdx, $mdy, $end, $wtype, $wsit,
+				  $orientation, \@endpoints);
+	} elsif ($wire =~ /(E|W)6BEG([0-9]*)/) {
+	    my $dir = $1;
+	    my $rank = $2;
+	    my @endpoints = ("LRTERM_${dir}6BEG${rank}",
+			     "LRTERM_${dir}6A${rank}", "LRTERM_${dir}6B${rank}",
+			     "LRTERM_${dir}6MID${rank}", "LRTERM_${dir}6C${rank}",
+			     "LRTERM_${dir}6D${rank}", "LRTERM_${dir}6END${rank}");
 	    &register_wire_corked($wire, $mdx, $mdy, $end, $wtype, $wsit,
 				  $orientation, \@endpoints);
 	} else {
