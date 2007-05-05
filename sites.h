@@ -89,28 +89,43 @@ clip_val(const int delta, const unsigned clip) {
   return delta < 0 ? 0 : ((unsigned)delta > clip ? clip : (unsigned)delta);
 }
 
-static inline int
+static inline site_ref_t
 translate_global_site(const chip_descr_t *chip,
 		      const site_ref_t site,
-		      const int dx, const int dy,
-		      site_ref_t *rsite,
-		      unsigned *offx, unsigned *offy) {
-  unsigned width = chip->width, height = chip->height;
-  unsigned offset = site_index(site);
-  unsigned x = offset % width;
-  unsigned y = offset / width;
+		      const int dx, const int dy) {
+  const unsigned width = chip->width, height = chip->height;
+  const unsigned offset = site_index(site);
+  const unsigned x = offset % width;
+  const unsigned y = offset / width;
   int newx = x+dx, newy = y+dy;
   /* check that we stay within bound */
   if ((unsigned)(newx-1) < width - 2 &&
       (unsigned)(newy-1) < height - 2) {
-    *rsite = newx + width * newy;
-    return 0;
+    return newx + width * newy;
   }
+  return SITE_NULL;
+}
+
+static inline site_ref_t
+project_global_site(const chip_descr_t *chip,
+		    const site_ref_t site,
+		    const int dx, const int dy,
+		    unsigned *offxy) {
+  const unsigned width = chip->width, height = chip->height;
+  const unsigned offset = site_index(site);
+  const unsigned x = offset % width;
+  const unsigned y = offset / width;
+  int newx = x+dx, newy = y+dy;
   /* We quantify the overflow and return the site projection */
-  *offx = ((unsigned)(newx-1) < width - 2) ? 0 : newx <= 1 ? (unsigned)(1-newx) : newx - width + 2;
-  *offy = ((unsigned)(newy-1) < height - 2) ? 0 : newy <= 1 ? (unsigned)(1-newy) : newy - height + 2;
-  *rsite = clip_val(newx, width-1) + width * clip_val(newy, height-1);
-  return -1;
+  unsigned offx = ((unsigned)(newx-1) < width - 2) ? 0 : newx <= 1 ? (unsigned)(1-newx) : newx - width + 2;
+  unsigned offy = ((unsigned)(newy-1) < height - 2) ? 0 : newy <= 1 ? (unsigned)(1-newy) : newy - height + 2;
+
+  *offxy = offx + offy;
+  //  g_warning("Returning offset %i", *offxy);
+/*   if ((offx + offy) == 0) */
+/*     return (1+clip_val(newx-1, width-2)) + width * (1+clip_val(newy-1, height-2)); */
+/*   else */
+  return clip_val(newx, width-1) + width * clip_val(newy, height-1);
 }
 
 #define MAX_SITE_NLEN 20

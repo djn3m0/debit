@@ -100,7 +100,7 @@ load_wire_atom(const wire_db_t *db, GKeyFile *keyfile,
     goto out_err;
 
   /* Insert the wirename */
-  debit_log(L_WIRES, "Inserting wire %s, id %i\n", wirename, id);
+  debit_log(L_WIRES, "Inserting wire %s, id %i", wirename, id);
   db->names[id] = g_string_chunk_insert_const(db->wirenames, wirename);
 
 #define GET_STRUCT_MEMBER(structname, structmem, strname) \
@@ -164,7 +164,7 @@ load_db_from_file(GKeyFile* db, wire_db_t *wires) {
 
   wirenames = g_key_file_get_groups(db, &nwires);
 
-  debit_log(L_WIRES, "Wiring database contains %zd wires\n", nwires);
+  debit_log(L_WIRES, "Wiring database contains %zd wires", nwires);
 
   /* Allocate the array */
   wires->dblen = nwires;
@@ -285,33 +285,31 @@ get_wire_startpoint(const wire_db_t *wiredb,
 		    const wire_atom_t worig) {
   const wire_simple_t *wo = &wiredb->wires[worig];
   wire_atom_t ep = wo->ep;
-  unsigned dx = 0, dy = 0;
+  unsigned dxy = 0;
   site_ref_t ep_site;
-  int ret;
 
-  debit_log(L_WIRES, "getting startpoint of wire %s\n",
+  debit_log(L_WIRES, "getting startpoint of wire %s",
 	    wire_name(wiredb, worig));
 
   /* This is how we detect unknown wires in the db */
   if (ep == worig)
     return FALSE;
 
-  ret = translate_global_site(chipdb, sorig, -wo->dx, -wo->dy,
-			      &ep_site, &dx, &dy);
-  if (ret) {
-    if (wiredb->wires[ep].fut) {
-      wire_atom_t target = wiredb->wires[ep].fut[dy + dx];
-      char coucou[32];
-      sprint_switch(coucou, chipdb, ep_site);
-      g_warning("patching %s to %s at site %s\n",
-		wire_name(wiredb, worig),
-		wire_name(wiredb, target),
-		coucou);
-      *wtarget = target;
-      *starget = ep_site;
-      return TRUE;
+  ep_site = translate_global_site(chipdb, sorig, -wo->dx, -wo->dy);
+
+  if (ep_site == SITE_NULL) {
+    /* If the endpoint accepts projections, which should be the case */
+    if (!wiredb->wires[ep].fut) {
+      g_warning("no projection for wire %s",
+		wire_name(wiredb, worig));
+      return FALSE;
     }
-    return FALSE;
+
+    ep_site = project_global_site(chipdb, sorig, -wo->dx, -wo->dy, &dxy);
+    g_assert( dxy < wiredb->wires[ep].fut_len );
+    *wtarget = wiredb->wires[ep].fut[dxy];
+    *starget = ep_site;
+    return TRUE;
   }
 
   *wtarget = ep;

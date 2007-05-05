@@ -146,6 +146,8 @@ while (<STDIN>) {
 	#once the array does not have to be sorted -- which will happen
 	#as soon as we write a fast name-to-index function
 	if ($wire =~ /(N|S)6BEG([0-9]*)/) {
+	    # These are very strange. I don't really understand the
+	    #logic of the thing.
 	    my $dir = $1;
 	    my $rank = $2;
 	    my @endpoints = ("TBTERM_${dir}6BEG${rank}",
@@ -165,8 +167,7 @@ while (<STDIN>) {
 	    &register_wire_corked($wire, $mdx, $mdy, $end, $wtype, $wsit,
 				  $orientation, \@endpoints);
 	} else {
-	    &register_wire($wire, $mdx, $mdy, $end, $wtype, $wsit,
-	    $orientation);
+	    &register_wire($wire, $mdx, $mdy, $end, $wtype, $wsit, $orientation);
 	}
 	next;
     }
