@@ -235,6 +235,32 @@ for $chip (keys %clbwidth) {
 	} elsif ($type =~ /^TL$/) {
 	    print_left_width(\*DESCR);
 	    print_top_height(\*DESCR);
+	} elsif ($type =~ /^(R|L)(T|B)TERM$/) {
+	    my $lr = $1;
+	    my $tb = $2;
+	    if ($lr =~ /R/) {
+		print_termright_width($clbwidth{$chip},$brams{$chip},\*DESCR);
+	    } else {
+		print_termleft_width(\*DESCR);
+	    }
+	    if ($tb =~ /T/) {
+		print_top_height(\*DESCR);
+	    } else {
+		print_bottom_height($clbheight{$chip},\*DESCR);
+	    }
+	} elsif ($type =~ /^(T|B)(L|R)TERM$/) {
+	    my $lr = $2;
+	    my $tb = $1;
+	    if ($lr =~ /R/) {
+		print_right_width($clbwidth{$chip},$brams{$chip},\*DESCR);
+	    } else {
+		print_left_width(\*DESCR);
+	    }
+	    if ($tb =~ /T/) {
+		print_termtop_height(\*DESCR);
+	    } else {
+		print_termbottom_height($clbheight{$chip},\*DESCR);
+	    }
 	}
 	#corner terms
 
