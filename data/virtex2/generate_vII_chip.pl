@@ -220,7 +220,23 @@ for $chip (keys %clbwidth) {
 	} elsif ($type =~ /^RTERMBRAM$/) {
 	    print_termright_width($clbwidth{$chip},$brams{$chip},\*DESCR);
 	    print_bram_height($brams{$chip}, $clbheight{$chip}, \*DESCR);
+	} #corners
+	elsif ($type =~ /^BR$/) {
+	    #ICAP is here. Bottom is top
+	    print_right_width($clbwidth{$chip},$brams{$chip},\*DESCR);
+	    print_bottom_height($clbheight{$chip},\*DESCR);
+	} elsif ($type =~ /^BL$/) {
+	    print_left_width(\*DESCR);
+	    print_bottom_height($clbheight{$chip},\*DESCR);
+	} elsif ($type =~ /^TR$/) {
+	    #BSCAN is here
+	    print_right_width($clbwidth{$chip},$brams{$chip},\*DESCR);
+	    print_top_height(\*DESCR);
+	} elsif ($type =~ /^TL$/) {
+	    print_left_width(\*DESCR);
+	    print_top_height(\*DESCR);
 	}
+	#corner terms
 
 	# Miss right, left,
 	# brams need their own function
