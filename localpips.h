@@ -35,7 +35,12 @@ typedef struct pip_db {
 #else /* __COMPILED_PIPSDB */
 
 typedef struct pip_db {
+  /* Different databases, sorted on increasing order of complexity */
+  /* Database of implicit pips -- only 2-uples of wires */
+  GNode *implicitdb[NR_SWITCH_TYPE];
+  /* Database of pips */
   GNode *memorydb[NR_SWITCH_TYPE];
+  /* Database of logic configuration elements */
   GNode *logicdb[NR_SWITCH_TYPE];
   wire_db_t *wiredb;
 } pip_db_t;

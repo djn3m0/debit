@@ -6,6 +6,7 @@
 DATAPREFIX=clb tterm bterm rterm lterm lrioi tbioi \
 	   bram ttermbram btermbram tbioibram
 LOGIPREFIX=clb
+IMPLPREFIX=tterm bterm rterm lterm
 
 #chip geometry
 CHIPS=40 80 250 500 1000 1500 2000 3000 4000 6000 8000

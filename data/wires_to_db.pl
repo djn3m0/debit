@@ -116,7 +116,8 @@ while (<STDIN>) {
 	$mdx = $mdx * $step;
 	$mdy = $mdy * $step;
 
-	if ($prefix =~ /TBTERM_/) {
+	if ($prefix =~ /TBTERM_/ ||
+	    $prefix =~ /[TB]TERM_/ ) {
 	    if ($mdy < 0) {
 		$mdy -= 1;
 	    }
@@ -124,7 +125,8 @@ while (<STDIN>) {
 		$mdy += 1;
 	    }
 	    $end = $orientation.$length."BEG".$rank;
-	} elsif ($prefix =~ /LRTERM_/) {
+	} elsif ($prefix =~ /LRTERM_/ ||
+		 $prefix =~ /[LR]TERM_/ ) {
 	    if ($mdx < 0) {
 		$mdx -= 1;
 	    }
@@ -434,7 +436,12 @@ sub dump_ini {
 
 	print "_WIRE_ENTRY($output, $nums{$output}, $dx{$output}, ";
 	print "$mydy, ";
-	print "$nums{$otherend{$output}}, ";
+	if (! defined ($nums{$otherend{$output}})) {
+	    print STDERR "WARNING: Undefined endpoint $otherend{$output} for $output\n";
+	    print "-1, ";
+	} else {
+	    print "$nums{$otherend{$output}}, ";
+	}
 	print "$nwires, ";
 
 	print "_WIRE_ENDS(";

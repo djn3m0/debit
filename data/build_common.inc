@@ -3,6 +3,11 @@
 ###
 
 ####
+# Implicit pip database
+####
+IMPLDATA=$(addsuffix /implicit.db,$(IMPLPREFIX))
+
+####
 # Pips database
 ####
 
@@ -53,9 +58,10 @@ FLIPCHIP    ?= 0
 WIRES_M4_SCRIPT=$(srcdir)/../dbtoini.m4
 WIRES_H_M4_SCRIPT=$(srcdir)/../dbtoh.m4
 
-$(WIRES_RAW_DB): $(DATDATA) $(LOGIDATA) $(DBGENSCRIPT)
-	cat $(DATDATA) $(LOGIDATA) \
+$(WIRES_RAW_DB): $(DATDATA) $(LOGIDATA) $(IMPLDATA) $(DBGENSCRIPT)
+	cat $(DATDATA) $(LOGIDATA) $(IMPLDATA) \
 	| sed -e 's/\[ *\([^ ]*\) *\]/\1/' \
+	| sed -e 's/EP=\(.*\)$$/\1/' \
 	| sed -e 's/\([^=]*\)=.*$$/\1/' \
 	| grep -v '^$$' \
 	| sort -n | uniq | $(DBGENSCRIPT) $(FLIPCHIP) > $@

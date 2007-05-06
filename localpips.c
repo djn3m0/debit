@@ -225,6 +225,10 @@ read_switchdb(pip_db_t *pipdb,
   return err;
 }
 
+static GNode *
+read_implicitdb(wire_db_t *wiredb, const gchar *datadir,
+		const gchar *base, const gchar *dataname);
+
 /** \brief Read a database from files
  *
  * Readback a set of files describing a pip database and fills in the
@@ -250,6 +254,8 @@ read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
     if (!base)
       continue;
 
+    pipdb->implicitdb[i] = read_implicitdb(pipdb->wiredb, datadir, base, "implicit.db");
+
     pipdb->memorydb[i] = g_node_new(NULL);
     err = read_switchdb(pipdb, pipdb->memorydb[i],
 			i, datadir, base,
@@ -258,11 +264,11 @@ read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
       goto out_err;
 
     /* For now, only clb... */
-    if (strcmp(base, "clb"))
+/*     if (strcmp(base, "clb")) */
       continue;
 
-    /* For now, the logic db is the same as the pipdb, pending further
-       modifications */
+    /* For now, the logic db has the same structure as the pipdb,
+       pending further modifications */
     pipdb->logicdb[i] = g_node_new(NULL);
     err = read_switchdb(pipdb, pipdb->logicdb[i],
 			i, datadir, base,
@@ -309,6 +315,8 @@ void free_datadb(GNode **db) {
   *db = NULL;
 }
 
+static void free_impldb(GNode **db);
+
 /** \brief Free a filled pip database
  *
  * Free all structures allocated during the database loading
@@ -327,6 +335,7 @@ free_pipdb(pip_db_t *pipdb) {
     free_wiredb(pipdb->wiredb);
 
   for(i = 0; i < NR_SWITCH_TYPE; i++) {
+    free_impldb (&pipdb->implicitdb[i]);
     free_datadb (&pipdb->memorydb[i]);
     free_datadb (&pipdb->logicdb[i]);
   }
@@ -702,6 +711,117 @@ __pips_of_site_append(const pip_db_t *pipdb,
 
   iterate_over_groups_memory(head, examine_groupnode, (void *)&exam_arg);
 }
+
+/***
+ * Implicit pip database
+ */
+
+/**
+ * Build one pip node
+ *
+ */
+
+typedef struct _build_pipnode {
+  GNode *head;
+  wire_db_t *wires;
+} build_pipnode_t;
+
+static void build_implpip(GKeyFile *datadb, const gchar* endp,
+			  gpointer data) {
+  build_pipnode_t *exam = data;
+  wire_db_t *wires = exam->wires;
+  pip_t *pip = g_new(pip_t, 1);
+  GError *error = NULL;
+  GNode *groupnode;
+  gchar *sourcename;
+
+  if (parse_wire_simple(wires, &pip->target, endp)) {
+    g_warning("unparsable target wire \"%s\"", endp);
+    goto out_err;
+  }
+
+  sourcename = g_key_file_get_string(datadb, endp, "EP", &error);
+  if (error)
+    goto out_free_err;
+
+  if (parse_wire_simple(wires, &pip->source, sourcename)) {
+    g_warning("unparsable source wire \"%s\"", sourcename);
+    goto out_err;
+  }
+
+  groupnode = g_node_new(pip);
+  g_node_append(exam->head, groupnode);
+  return;
+
+ out_free_err:
+  g_error_free(error);
+ out_err:
+  g_free(pip);
+  return;
+}
+
+/** \brief Prepare the iteration over a keyfile describing an implicit
+ * pip database
+ *
+ */
+
+static inline GNode *
+build_impldb_from_keyfile(GKeyFile *impldb, wire_db_t *wires) {
+  build_pipnode_t arg = {
+    .head = g_node_new(NULL),
+    .wires = wires,
+  };
+
+  iterate_over_groups(impldb, build_implpip, &arg);
+  return arg.head;
+}
+
+/** \brief Read an implicit pip database
+ *
+ * Readback a file containing implicit pips present at a site.
+ *
+ */
+static GNode *
+read_implicitdb(wire_db_t *wiredb,
+		const gchar *datadir, const gchar *base,
+		const gchar *dataname) {
+  GNode *head = NULL;
+  gchar *filename = NULL;
+  GKeyFile *data = NULL;
+  int err;
+
+  filename = g_build_filename(datadir,CHIP,base,dataname,NULL);
+  err = read_keyfile(&data,filename);
+  g_free(filename);
+  if (err)
+    goto out_err_nofree;
+
+  head = build_impldb_from_keyfile(data, wiredb);
+  g_key_file_free(data);
+
+ out_err_nofree:
+  return head;
+}
+
+static void
+destroy_implicit(GNode *head) {
+  g_node_traverse(head, G_IN_ORDER, G_TRAVERSE_ALL, -1, release_node, NULL);
+  g_node_destroy(head);
+  return;
+}
+
+/** \brief Free an implicit pip database
+ *
+ */
+
+static
+void free_impldb(GNode **db) {
+  GNode *tree = *db;
+  if (tree)
+    destroy_implicit(tree);
+  *db = NULL;
+}
+
 
 #endif /* __COMPILED_PIPSDB */
 
