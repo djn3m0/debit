@@ -334,6 +334,19 @@ register_spip(GNode **added,
   return present;
 }
 
+static inline gboolean
+get_pip_startpoint(wire_atom_t *source,
+		   const wire_atom_t target,
+		   const pip_db_t *pipdb,
+		   const chip_descr_t *cdb,
+		   const site_ref_t site,
+		   const pip_parsed_dense_t *pipdat) {
+
+  return
+    get_interconnect_startpoint(pipdat, source, target, site) ||
+    get_implicit_startpoint(source, pipdb, cdb, target, site);
+}
+
 /*
  * Try to find a remote drive for the wire at hand.
  *
@@ -344,11 +357,12 @@ register_spip(GNode **added,
  */
 
 static inline gboolean
-get_wire_driver(const wire_db_t *wiredb,
+get_wire_driver(const pip_db_t *pipdb,
 		const chip_descr_t *cdb,
 		const pip_parsed_dense_t *pipdat,
 		sited_pip_t *driver) {
   gboolean found;
+  const wire_db_t *wiredb = pipdb->wiredb;
   wire_type_t wtype = wire_type(wiredb,driver->pip.source);
 
   /*
@@ -374,7 +388,7 @@ get_wire_driver(const wire_db_t *wiredb,
   }
   found =
     get_wire_startpoint(wiredb, cdb, &driver->site, &driver->pip.target, driver->site, driver->pip.source) &&
-    get_interconnect_startpoint(pipdat, &driver->pip.source, driver->pip.target, driver->site);
+    get_pip_startpoint(&driver->pip.source, driver->pip.target, pipdb, cdb, driver->site, pipdat);
 
   return found;
 }
@@ -438,7 +452,7 @@ build_net_from(nets_t *nets,
 
     /* Get to the other site -- replace site and targets in the spip
        structure with values found. */
-    found = get_wire_driver(wiredb, cdb, pipdat, &spip);
+    found = get_wire_driver(pipdb, cdb, pipdat, &spip);
 
   } while (found);
 

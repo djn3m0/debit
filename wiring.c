@@ -309,6 +309,12 @@ get_wire_startpoint(const wire_db_t *wiredb,
     g_assert( dxy < wiredb->wires[ep].fut_len );
     *wtarget = wiredb->wires[ep].fut[dxy];
     *starget = ep_site;
+
+    {
+	    g_warning("wire %s projected to %s",
+		      wire_name(wiredb, worig),
+		      wire_name(wiredb, *wtarget));
+    }
     return TRUE;
   }
 

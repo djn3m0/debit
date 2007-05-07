@@ -822,6 +822,45 @@ void free_impldb(GNode **db) {
   *db = NULL;
 }
 
+static gboolean
+idpips(GNode *node, gpointer data) {
+  const pip_t *tpip = node->data;
+  pip_t *npip = data;
+  if (tpip->target == npip->target) {
+    npip->source = tpip->source;
+    g_warning("Implicit pip found !");
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/** \brief Query an implicit pip database
+ *
+ */
+
+static gboolean
+query_impldb(GNode *db, wire_atom_t *wire,
+	     const wire_atom_t orig) {
+  pip_t pip = { .source = WIRE_EP_END, .target = orig };
+  g_node_traverse(db, G_IN_ORDER, G_TRAVERSE_LEAVES,
+		  2, idpips, &pip);
+  if (pip.source == WIRE_EP_END)
+    return FALSE;
+  *wire = pip.source;
+  return TRUE;
+}
+
+static gboolean
+_get_implicit_startpoint(wire_atom_t *wire,
+			 const pip_db_t *pipdb,
+			 const wire_atom_t orig,
+			 const site_type_t stype) {
+  GNode *db = pipdb->implicitdb[stype];
+
+  if (db)
+    return query_impldb(db, wire, orig);
+  return FALSE;
+}
 
 #endif /* __COMPILED_PIPSDB */
 
@@ -1050,6 +1089,24 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
       fun2(data, bitpips[start], site);
     }
   }
+}
+
+/*
+ * Implicit database implementation
+ */
+
+gboolean
+get_implicit_startpoint(wire_atom_t *wire,
+			const pip_db_t *pipdb,
+			const chip_descr_t *chip,
+			const wire_atom_t orig,
+			const site_ref_t site) {
+  site_type_t stype = site_type(chip,site);
+  //g_warning("Asking for implicit pip for wire %s", wire_name(pipdb->wiredb, orig));
+  gboolean ret = _get_implicit_startpoint(wire, pipdb, orig, stype);
+  if (ret)
+    g_warning("Returning implicit pip for wire %s", wire_name(pipdb->wiredb, orig));
+  return ret;
 }
 
 /*

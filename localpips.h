@@ -109,6 +109,13 @@ get_interconnect_startpoint(const pip_parsed_dense_t *pipdat,
 			    const wire_atom_t orig,
 			    const site_ref_t site);
 
+gboolean
+get_implicit_startpoint(wire_atom_t *wire,
+			const pip_db_t *pipdb,
+			const chip_descr_t *chip,
+			const wire_atom_t orig,
+			const site_ref_t site);
+
 typedef void (*bitpip_iterator_t)(gpointer, const pip_t, const site_ref_t);
 
 typedef int (*sitepip_iterator_t)(unsigned site_x, unsigned site_y,

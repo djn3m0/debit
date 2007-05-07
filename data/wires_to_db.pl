@@ -6,6 +6,7 @@
 
 use strict;
 use integer;
+use Switch;
 
 my $invert_y_axis = shift @ARGV;
 
@@ -166,6 +167,21 @@ while (<STDIN>) {
 			     "LRTERM_${dir}6A${rank}", "LRTERM_${dir}6B${rank}",
 			     "LRTERM_${dir}6MID${rank}", "LRTERM_${dir}6C${rank}",
 			     "LRTERM_${dir}6D${rank}", "LRTERM_${dir}6END${rank}");
+	    &register_wire_corked($wire, $mdx, $mdy, $end, $wtype, $wsit,
+				  $orientation, \@endpoints);
+	} elsif ($wire =~ /(N|S|W|E)2BEG([0-9]*)/) {
+	    my $dir = $1;
+	    my $rank = $2;
+	    my $reflect_dir;
+	    switch ($dir) {
+		case /N/ { $reflect_dir = "B"; }
+		case /S/ { $reflect_dir = "T"; }
+		case /E/ { $reflect_dir = "L"; }
+		case /W/ { $reflect_dir = "R"; }
+	    }
+	    my @endpoints = ("${reflect_dir}TERM_${dir}2BEG${rank}",
+			     "${reflect_dir}TERM_${dir}2MID${rank}",
+			     "${reflect_dir}TERM_${dir}2END${rank}");
 	    &register_wire_corked($wire, $mdx, $mdy, $end, $wtype, $wsit,
 				  $orientation, \@endpoints);
 	} else {
