@@ -278,6 +278,8 @@ register_spip(GNode **added,
   GNode **nodetable = connexions->nodetable;
   GNode *cached = NULL, *father = net_of(nodetable, wiredb, spip);
 
+  g_assert(spip->pip.target != WIRE_EP_END);
+
   switch (target_type) {
   case LH:
   case LV: {
@@ -386,9 +388,18 @@ get_wire_driver(const pip_db_t *pipdb,
   default:
     break;
   }
+
+  debit_log(L_CONNEXITY, "wire driver from source %s and target %s",
+	    wire_name(pipdb->wiredb, driver->pip.source),
+	    wire_name(pipdb->wiredb, driver->pip.target));
+
   found =
     get_wire_startpoint(wiredb, cdb, &driver->site, &driver->pip.target, driver->site, driver->pip.source) &&
     get_pip_startpoint(&driver->pip.source, driver->pip.target, pipdb, cdb, driver->site, pipdat);
+
+  debit_log(L_CONNEXITY, "wire source %s and target %s in the end",
+	    wire_name(pipdb->wiredb, driver->pip.source),
+	    wire_name(pipdb->wiredb, driver->pip.target));
 
   return found;
 }
@@ -435,6 +446,7 @@ build_net_from(nets_t *nets,
 
     /* Try to find the next pip */
     spip.pip.target = pip_source;
+    g_assert(spip.pip.target != WIRE_EP_END);
 
     /* We need the copper endpoint of the pip, which can be local with a
        pip locally driving the wire, or remote, when the wire startpoint
@@ -442,7 +454,10 @@ build_net_from(nets_t *nets,
     /* First, check that the wire is not locally-driven -- that is,
        the source of the pip is driven locally by another pip at the
        same site */
-    found = get_interconnect_startpoint(pipdat, &spip.pip.source, pip_source, spip.site);
+    /* XXX replace with get_pip */
+    found = get_pip_startpoint(&spip.pip.source, pip_source, pipdb, cdb, spip.site, pipdat);
+    //    found = get_interconnect_startpoint(pipdat, &spip.pip.source, pip_source, spip.site);
+    g_assert(spip.pip.target != WIRE_EP_END);
     if (found)
       continue;
 
@@ -453,10 +468,10 @@ build_net_from(nets_t *nets,
     /* Get to the other site -- replace site and targets in the spip
        structure with values found. */
     found = get_wire_driver(pipdb, cdb, pipdat, &spip);
-
   } while (found);
 
   /* Add a dummy pip to record the absence of driver */
+  g_assert(spip.pip.target != WIRE_EP_END);
   spip.pip.source = WIRE_EP_END;
   if (!register_spip(&newnode, &spip, newnode, connexions, wiredb, cdb))
     return g_node_prepend(nets->head, newnode);

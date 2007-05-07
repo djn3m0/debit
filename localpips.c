@@ -828,7 +828,6 @@ idpips(GNode *node, gpointer data) {
   pip_t *npip = data;
   if (tpip->target == npip->target) {
     npip->source = tpip->source;
-    g_warning("Implicit pip found !");
     return TRUE;
   }
   return FALSE;
@@ -846,11 +845,12 @@ query_impldb(GNode *db, wire_atom_t *wire,
 		  2, idpips, &pip);
   if (pip.source == WIRE_EP_END)
     return FALSE;
+
   *wire = pip.source;
   return TRUE;
 }
 
-static gboolean
+gboolean
 _get_implicit_startpoint(wire_atom_t *wire,
 			 const pip_db_t *pipdb,
 			 const wire_atom_t orig,
@@ -1102,11 +1102,7 @@ get_implicit_startpoint(wire_atom_t *wire,
 			const wire_atom_t orig,
 			const site_ref_t site) {
   site_type_t stype = site_type(chip,site);
-  //g_warning("Asking for implicit pip for wire %s", wire_name(pipdb->wiredb, orig));
-  gboolean ret = _get_implicit_startpoint(wire, pipdb, orig, stype);
-  if (ret)
-    g_warning("Returning implicit pip for wire %s", wire_name(pipdb->wiredb, orig));
-  return ret;
+  return _get_implicit_startpoint(wire, pipdb, orig, stype);
 }
 
 /*

@@ -284,7 +284,7 @@ get_wire_startpoint(const wire_db_t *wiredb,
 		    const site_ref_t sorig,
 		    const wire_atom_t worig) {
   const wire_simple_t *wo = &wiredb->wires[worig];
-  wire_atom_t ep = wo->ep;
+  wire_atom_t target, ep = wo->ep;
   unsigned dxy = 0;
   site_ref_t ep_site;
 
@@ -307,14 +307,24 @@ get_wire_startpoint(const wire_db_t *wiredb,
 
     ep_site = project_global_site(chipdb, sorig, -wo->dx, -wo->dy, &dxy);
     g_assert( dxy < wiredb->wires[ep].fut_len );
-    *wtarget = wiredb->wires[ep].fut[dxy];
-    *starget = ep_site;
 
-    {
-	    g_warning("wire %s projected to %s",
-		      wire_name(wiredb, worig),
-		      wire_name(wiredb, *wtarget));
+    target = wiredb->wires[ep].fut[dxy];
+
+
+    /* This should be removed once the implicit databases are
+       complete */
+    if (target == WIRE_EP_END) {
+      g_warning("undefined projection for wire %s",
+		wire_name(wiredb, worig));
+      return FALSE;
     }
+
+    g_warning("found projection for wire %s, %s",
+	      wire_name(wiredb, worig),
+	      wire_name(wiredb, target));
+
+    *wtarget = target;
+    *starget = ep_site;
     return TRUE;
   }
 
