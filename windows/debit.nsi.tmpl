@@ -136,7 +136,10 @@ SectionEnd
 Section "StartMenu entries" SecStartMenu
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Xiledit.lnk" "$INSTDIR\bin\xiledit.exe" '"-d" "$INSTDIR\data"' "$INSTDIR\gfx\ulogic_icon.ico"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Xiledit (Spartan-3).lnk" "$INSTDIR\bin\xiledit_s3.exe" '"-d" "$INSTDIR\data"' "$INSTDIR\gfx\ulogic_icon.ico"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Xiledit (Virtex-II).lnk" "$INSTDIR\bin\xiledit.exe" '"-d" "$INSTDIR\data"' "$INSTDIR\gfx\ulogic_icon.ico"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Xiledit (Virtex-4).lnk" "$INSTDIR\bin\xiledit_v4.exe" '"-d" "$INSTDIR\data"' "$INSTDIR\gfx\ulogic_icon.ico"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Xiledit (Virtex-5).lnk" "$INSTDIR\bin\xiledit_v5.exe" '"-d" "$INSTDIR\data"' "$INSTDIR\gfx\ulogic_icon.ico"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd

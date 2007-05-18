@@ -70,7 +70,7 @@ update-mime-database %{_datadir}/mime || :
 %{_sysconfdir}/bash_completion.d/*
 
 %changelog
-* Fri May 18 2007 Jean-Baptiste Note <jean-baptiste.note@m4x.org> - 0.1-2
+* Fri May 18 2007 Jean-Baptiste Note <jean-baptiste.note@m4x.org> - 0.1-3
 - Add the bash autocompletion file
 
 * Sun Oct 22 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org> - 0.1-2
