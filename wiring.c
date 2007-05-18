@@ -110,8 +110,11 @@ do { structname->structmem = g_key_file_get_integer(keyfile, wirename, #strname,
 } while (0)
 
 #define GET_STRUCT_MEMBER_LIST(structname, structmem, structmemlen, strname) \
-do { structname->structmem = g_key_file_get_integer_list(keyfile, wirename, #strname, \
-                                                         &structname->structmemlen, &err);\
+do { \
+  gsize listsize = 0; \
+  structname->structmem = g_key_file_get_integer_list(keyfile, wirename, #strname, \
+                                                      &listsize, &err);\
+  structname->structmemlen = (typeof(structname->structmemlen)) listsize; \
   if (err)\
     goto out_err;\
 } while (0)
