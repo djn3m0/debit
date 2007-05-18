@@ -9,6 +9,7 @@ URL: http://www.ulogic.org/trac
 Source: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # what's required to build from the dist tarball
+BuildRequires: bash
 BuildRequires: gcc
 BuildRequires: pkgconfig
 BuildRequires: glib-devel
@@ -66,8 +67,12 @@ update-mime-database %{_datadir}/mime || :
 %dir %{_datadir}/%{name}
 %{_datadir}/%{name}/*
 %{_mandir}/*/*
+%{_sysconfdir}/bash_completion.d/*
 
 %changelog
+* Fri May 18 2007 Jean-Baptiste Note <jean-baptiste.note@m4x.org> - 0.1-2
+- Add the bash autocompletion file
+
 * Sun Oct 22 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org> - 0.1-2
 - Set the buildroot as per FedoraCore recommendations
 - Set the distribution in the release name as per FedoraCore recommendations
