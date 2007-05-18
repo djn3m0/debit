@@ -14,4 +14,6 @@ CHIP_PFX=xc2v
 SITE_INCL=sites_v2.h
 GENSCRIPT=generate_vII_chip.pl
 
+INST_DB_DIR=$(pkgdatadir)/virtex2
+
 include $(srcdir)/../build_common.inc

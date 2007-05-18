@@ -18,4 +18,6 @@ GENSCRIPT=generate_v5_chip.pl
 #Wire parsing
 DBGENSCRIPT=$(srcdir)/../wires_to_db_v5.pl
 
+INST_DB_DIR=$(pkgdatadir)/virtex5
+
 include $(srcdir)/../build_common.inc

@@ -14,4 +14,6 @@ GENSCRIPT=generate_v4_chip.pl
 #wiring database
 FLIPCHIP = 1
 
+INST_DB_DIR=$(pkgdatadir)/virtex4
+
 include $(srcdir)/../build_common.inc

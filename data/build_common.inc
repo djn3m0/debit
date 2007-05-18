@@ -81,8 +81,9 @@ ALLDDATA=$(WIRES_RAW_DB) $(WIRES_H_DB) $(PIPS_H_DB) $(PIPS_ALL_DBS) $(DATGENERAL
 
 dist_noinst_SCRIPTS=$(GENSCRIPT)
 dist_noinst_DATA=$(ALLDDATA)
-virtex2_pkgdatadir=$(pkgdatadir)/virtex2
-nobase_dist_virtex2_pkgdata_DATA=$(ALLDATA)
+
+dbs_pkgdatadir=$(INST_DB_DIR)
+nobase_dist_dbs_pkgdata_DATA=$(ALLDATA)
 
 #Allow me to cleanup the mess
 MAINTAINERCLEANFILES = $(CHIPDB) $(WIRES_RAW_DB) $(WIRES_H_DB) \
