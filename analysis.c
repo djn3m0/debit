@@ -15,6 +15,8 @@
 #include "analysis.h"
 #include "design.h"
 
+#include "xdlout.h"
+
 /*
  * This file centralizes the work on bitstream analysis. It gets the
  * sites descriptions for the chip, then the pips for all chip sites,
@@ -201,6 +203,7 @@ typedef struct _dump_site {
 void dump_nets(const bitstream_analyzed_t *nlz) {
   nets_t * nets;
   /* Then do some work */
+  print_design(&nlz->bitstream->header);
   nets = build_nets(nlz->pipdb, nlz->chip, nlz->pipdat);
   print_nets(nets, nlz->pipdb, nlz->chip);
   free_nets(nets);

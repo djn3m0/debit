@@ -8,7 +8,7 @@ DRAWING_SRC	= xiledit.c xildraw.c xildraw.h callbacks.c callbacks.h \
 		../sites.c ../sites_draw.c ../wiring_draw.c
 SHARED_SRC	= ../bitarray.c ../bitheader.c ../filedump.c \
 		../localpips.c  ../wiring.c ../keyfile.c \
-		../analysis.c ../connexity.c
+		../analysis.c ../connexity.c ../xdlout.c
 V2_SRC		= ../bitstream.c ../bitstream_parser.c ../codes/crc-ibm.c
 V4_SRC		= ../bitstream_v4.c ../bitstream_parser_common.c ../codes/crc32-c.c
 

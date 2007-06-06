@@ -9,14 +9,12 @@
 
 #include <stdint.h>
 #include <glib.h>
+#include "bitheader.h"
 
 /* This structure holds the finale results of the parsing phase */
 typedef struct _bitstream_parsed {
   /* First header informations */
-  gchar *filename;
-  gchar *device;
-  gchar *build_date;
-  gchar *build_time;
+  parsed_header_t header;
 
   /* (virtex-II) chip type info -- from bitstream data */
   const void *chip_struct;

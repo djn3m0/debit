@@ -6,6 +6,10 @@
 #ifndef _HAS_CONNEXITY_H
 #define _HAS_CONNEXITY_H
 
+#include <glib.h>
+#include "localpips.h"
+#include "sites.h"
+
 /** \brief Structure describing all nets in an FPGA
  *
  * This structure is an N-ary tree. The first-level nodes are the
@@ -26,9 +30,5 @@ nets_t *build_nets(const pip_db_t *pipdb,
 		   const pip_parsed_dense_t *pipdat);
 
 void free_nets(nets_t *);
-
-void print_nets(nets_t *net,
-		const pip_db_t *pipdb,
-		const chip_descr_t *cdb);
 
 #endif /* _HAS_CONNEXITY_H */

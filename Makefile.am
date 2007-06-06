@@ -13,7 +13,8 @@ SHARED_SRC	= bitarray.c bitarray.h \
 		connexity.c connexity.h \
 		wiring.c wiring.h \
 		bitstream_parser.h bitstream_packets.h \
-		debitlog.h design.h
+		debitlog.h design.h bitstream_high.h \
+		xdlout.h xdlout.c
 
 SHARED_SRC_V2	= codes/crc-ibm.c codes/crc-ibm.h \
 		bitstream.c bitstream.h sites_v2.h \

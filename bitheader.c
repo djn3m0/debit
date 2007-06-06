@@ -14,8 +14,27 @@ parse_synchro (synchro_option_t *opt) {
   return;
 }
 
+static void
+parse_option (parsed_header_t *parse,
+	      const header_option_t *opt) {
+
+  option_type_t code = opt->code;
+  gint len = get_option_len(opt);
+
+  debit_log(L_HEADER, "Option code %i, length %i", code, len);
+  debit_log(L_HEADER, "data: %.*s",len,opt->payload);
+
+  /* If in range, then record the option */
+  if (code < LAST_OPTION)
+    parse->options[code - FILENAME] = opt;
+  else
+    debit_log(L_HEADER, "Option code unknown, please report");
+
+}
+
 int
-parse_header(const gchar *buf, const size_t buf_len) {
+parse_header(parsed_header_t *parse,
+	     const gchar *buf, const size_t buf_len) {
   header_option_t *current;
   synchro_option_t *opt;
   const gchar *start = buf;
@@ -32,13 +51,13 @@ parse_header(const gchar *buf, const size_t buf_len) {
   current = (void *) buf;
 
   while (current->code != CODE) {
-    /* parse_option(current_option); */
+    parse_option(parse, current);
     current = next_option(current);
   }
 
   opt = (void*) current;
   parse_synchro(opt);
   end = (void *) opt->data;
-  //end = (void *) next_option(current);
+
   return (end - start);
 }
