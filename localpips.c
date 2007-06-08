@@ -732,9 +732,11 @@ static void build_implpip(GKeyFile *datadb, const gchar* endp,
 
   if (parse_wire_simple(wires, &pip->source, sourcename)) {
     g_warning("unparsable source wire \"%s\"", sourcename);
+    g_free(sourcename);
     goto out_err;
   }
 
+  g_free(sourcename);
   groupnode = g_node_new(pip);
   g_node_append(exam->head, groupnode);
   return;
