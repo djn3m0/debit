@@ -167,3 +167,89 @@ void print_nets(nets_t *net,
   /* Iterate through nets */
   g_node_children_foreach (net->head, G_TRAVERSE_ALL, print_net, &arg);
 }
+
+/**
+ * Slice printing function
+ **/
+
+typedef struct _slice_iter {
+  const chip_descr_t *chip;
+  const wire_db_t *wiredb;
+} slice_iter_t;
+
+
+static void
+pip_iterator(gpointer data, const pip_t pip,
+	     const site_ref_t site) {
+  slice_iter_t *slit = data;
+  const wire_db_t *db = slit->wiredb;
+  (void) site;
+  /* Print the configuration of the slice */
+  const char *owire = wire_name(db, pip.target);
+  const char *iwire = wire_name(db, pip.source);
+  g_print(" %s::%s", owire, iwire);
+}
+
+#if defined(VIRTEX2) || defined(SPARTAN3)
+
+static const gchar *
+const type_names[NR_SITE_TYPE] = {
+  [SITE_TYPE_NEUTRAL] = "UNK",
+  [CLB] = "SLICE",
+  [TIOI] = "IOB",
+  [BIOI] = "DIFFM",
+  [LIOI] = "DIFFS",
+  [RIOI] = "DIFFS",
+};
+
+#elif defined(VIRTEX4) || defined(VIRTEX5)
+
+static const gchar *
+const type_names[NR_SITE_TYPE] = {
+  [SITE_TYPE_NEUTRAL] = "UNK",
+  [CLB] = "SLICE",
+};
+
+#endif
+
+
+static int
+slice_iterator(unsigned site_x, unsigned site_y,
+	       csite_descr_t *site, gpointer dat) {
+  slice_iter_t *slit = dat;
+
+  const chip_descr_t *chip = slit->chip;
+  /*
+  const wire_db_t *wiredb = slit->wiredb;
+  const wire_t *wire = get_wire(wiredb, spip->pip.target);
+  */
+  gchar slicen[MAX_SITE_NLEN];
+  gchar siten[MAX_SITE_NLEN];
+  snprint_slice(slicen, MAX_SITE_NLEN, chip, site, 0);
+  sprint_csite(siten, site, site_x, site_y);
+  const char *sliceid = "slice";
+
+  /* Combine the situation and site to get the location */
+  /*  inst "Q_1" "SLICE",placed R6C4 SLICE_X7Y4  ,
+      cfg " BXINV::#OFF BXOUTUSED::#OFF BYINV::#OFF BYINVOUTUSED::#OFF BYOUTUSED::#OFF
+  */
+  g_print("inst \"%s\" \"%s\",placed %s %s  ,\n",
+	  sliceid, type_names[site->type], siten, slicen);
+
+  /* start of config string */
+  g_print("  cfg \"");
+  /* data */
+
+  /* end */
+/*   g_print("       \"  ;\n"); */
+  return TRUE;
+}
+
+void
+print_slices(const pip_parsed_dense_t *pipdat,
+	     const pip_db_t *pipdb,
+	     const chip_descr_t *chip) {
+  slice_iter_t arg = { .chip = chip, .wiredb = pipdb->wiredb };
+  iterate_over_bitpips_complex(pipdat, chip,
+			       slice_iterator, pip_iterator, &arg);
+}

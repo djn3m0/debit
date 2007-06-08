@@ -262,19 +262,6 @@ read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
 			"control.db", "data.db");
     if (err)
       goto out_err;
-
-    /* For now, only clb... */
-/*     if (strcmp(base, "clb")) */
-      continue;
-
-    /* For now, the logic db has the same structure as the pipdb,
-       pending further modifications */
-    pipdb->logicdb[i] = g_node_new(NULL);
-    err = read_switchdb(pipdb, pipdb->logicdb[i],
-			i, datadir, base,
-			"lcontrol.db", "ldata.db");
-    if (err)
-      goto out_err;
   }
 
   return err;
@@ -337,7 +324,6 @@ free_pipdb(pip_db_t *pipdb) {
   for(i = 0; i < NR_SWITCH_TYPE; i++) {
     free_impldb (&pipdb->implicitdb[i]);
     free_datadb (&pipdb->memorydb[i]);
-    free_datadb (&pipdb->logicdb[i]);
   }
 
   g_free(pipdb);
@@ -1133,4 +1119,13 @@ get_implicit_startpoint(wire_atom_t *wire,
  * will be further explored when the code for this is written in
  * connexity analysis.
  *
+ */
+
+/*
+ * Logic database implementation
+ * Logic patterns are completely merged into the standard database _AND_
+ * the implicit database. The difference between the logic and wiring
+ * lies in the connexity analysis: logic wires are registered some
+ * strange places. And the connexity is complex, needs a connexity
+ * database, which is a bitmask of input wires.
  */

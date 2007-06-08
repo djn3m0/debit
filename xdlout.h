@@ -16,4 +16,9 @@ void print_nets(nets_t *net,
 		const pip_db_t *pipdb,
 		const chip_descr_t *cdb);
 
+void
+print_slices(const pip_parsed_dense_t *pipdat,
+	     const pip_db_t *pipdb,
+	     const chip_descr_t *chip);
+
 #endif /* _HAS_XDLOUT_H */

@@ -33,7 +33,6 @@ $(PIPS_H_DB): $(PIPS_M4_SCRIPT) $(WIRES_H_DB) $(PIPS_ALL_DBS)
 ####
 LOGICONTROL=$(addsuffix /lcontrol.db,$(LOGIPREFIX))
 LOGIDATA=$(addsuffix /ldata.db,$(LOGIPREFIX))
-#DATGENERAL=$(addsuffix /all.db,$(LOGIPREFIX))
 
 ####
 # Chip geometry database

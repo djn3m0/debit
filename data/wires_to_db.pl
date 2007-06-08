@@ -53,6 +53,7 @@ my @det_type = ( "WIRE_TYPE_NEUTRAL",
 		 "WF2_PINWIRE", "WF3_PINWIRE", "WF4_PINWIRE",
 		 "WG1_PINWIRE", "WG2_PINWIRE", "WG3_PINWIRE",
 		 "WG4_PINWIRE",    "X", "XB", "XQ",    "Y", "YB", "YQ",
+		 "LOGIC",
 		 "NR_WIRE_TYPE");
 
 my %type_h;
@@ -324,6 +325,16 @@ while (<STDIN>) {
 	#long wires. Not sure what to do: fall through
 	#Patch situation, which encodes the index
 	$sit{$wire} = $mysit;
+	next;
+    }
+
+    if (m/^(.*)_([0-4])/) {
+	my $wiretype = "LOGIC";
+	my $index = $2;
+	my $wiresit = $coucou[$index];
+#	print STDERR "Warning, wiresit $wiresit\n";
+	# Direction; input, output
+	&register_wire($wire, 0, 0, $wire, $wiretype, $wiresit, "WIRE_DIRECTION_NEUTRAL");
 	next;
     }
 

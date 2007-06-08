@@ -92,6 +92,7 @@ typedef enum _wire_type {
   WG1_PINWIRE, WG2_PINWIRE, WG3_PINWIRE, WG4_PINWIRE,
   X, XB, XQ,
   Y, YB, YQ,
+  LOGIC,
   NR_WIRE_TYPE,
 } __attribute__((packed)) wire_type_t;
 

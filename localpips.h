@@ -40,8 +40,6 @@ typedef struct pip_db {
   GNode *implicitdb[NR_SWITCH_TYPE];
   /* Database of pips */
   GNode *memorydb[NR_SWITCH_TYPE];
-  /* Database of logic configuration elements */
-  GNode *logicdb[NR_SWITCH_TYPE];
   wire_db_t *wiredb;
 } pip_db_t;
 
