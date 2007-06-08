@@ -101,17 +101,44 @@ print_lut_data(const csite_descr_t *site,
 }
 
 static void
+print_switchpip(const wire_db_t *wiredb,
+		const chip_descr_t *chip,
+		const pip_t pip,
+		const site_ref_t site_ref) {
+  gchar site_buf[32];
+  sprint_switch(site_buf, chip, site_ref);
+  g_printf("pip %s %s -> %s\n", site_buf,
+	   wire_name(wiredb,pip.source),
+	   wire_name(wiredb,pip.target));
+}
+
+static void
+print_logicopt(const wire_db_t *wiredb,
+	       const chip_descr_t *chip,
+	       const pip_t pip,
+	       const site_ref_t site_ref) {
+  gchar site_buf[32];
+  sprint_switch(site_buf, chip, site_ref);
+  g_printf("%s %s::%s\n", site_buf,
+	   wire_name(wiredb,pip.target),
+	   wire_name(wiredb,pip.source));
+}
+
+static void
 print_switchpip_iter(gpointer data, const pip_t pip,
 		     const site_ref_t site_ref) {
   bitstream_analyzed_t *bitstream = data;
   const wire_db_t *wiredb = bitstream->pipdb->wiredb;
   const chip_descr_t *chip = bitstream->chip;
-  gchar site_buf[32];
+  wire_type_t wtype = wire_type(wiredb, pip.target);
 
-  sprint_switch(site_buf, chip, site_ref);
-  g_printf("pip %s %s -> %s\n", site_buf,
-	   wire_name(wiredb,pip.source),
-	   wire_name(wiredb,pip.target));
+  switch (wtype) {
+  case LOGIC:
+    print_logicopt(wiredb, chip, pip, site_ref);
+    break;
+  default:
+    print_switchpip(wiredb, chip, pip, site_ref);
+  }
 }
 
 static void
