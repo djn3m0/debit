@@ -137,6 +137,9 @@ __pips_of_site_append(const pip_db_t *pipdb,
 static int build_datatree_from_keyfiles(GKeyFile *data, GKeyFile *control,
 					wire_db_t *wires, GNode *head,
 					const site_type_t type);
+static int build_connextree_from_keyfiles(GKeyFile *data, GKeyFile *control,
+                                          wire_db_t *wires, GNode *head,
+                                          const site_type_t type);
 static void destroy_datatree(GNode *head);
 
 #if defined(VIRTEX2)
@@ -192,11 +195,16 @@ static const gchar *basedbnames[NR_SWITCH_TYPE] = {
 
 #endif
 
+typedef int (* build_db_t)(GKeyFile *data, GKeyFile *control,
+                           wire_db_t *wires, GNode *head,
+                           const site_type_t i);
+
 static inline int
-read_switchdb(pip_db_t *pipdb,
-	      GNode *head, const site_type_t switchtype,
-	      const gchar *datadir, const gchar *base,
-	      const gchar *ctrlname, const gchar *dataname) {
+read_db(pip_db_t *pipdb,
+        GNode *head, const site_type_t switchtype,
+        const gchar *datadir, const gchar *base,
+        const gchar *ctrlname, const gchar *dataname,
+        build_db_t buildb) {
   int err = 0;
   gchar *filename = NULL;
   GKeyFile *control = NULL, *data = NULL;
@@ -213,9 +221,7 @@ read_switchdb(pip_db_t *pipdb,
   if (err)
     goto out_err_free;
 
-  err = build_datatree_from_keyfiles(data, control,
-				     pipdb->wiredb,
-				     head, switchtype);
+  err = buildb(data, control, pipdb->wiredb, head, switchtype);
 
  out_err_free:
   if (control)
@@ -223,6 +229,26 @@ read_switchdb(pip_db_t *pipdb,
   if (data)
     g_key_file_free(data);
   return err;
+}
+
+static int
+read_switchdb(pip_db_t *pipdb,
+              GNode *head, const site_type_t switchtype,
+              const gchar *datadir, const gchar *base,
+              const gchar *ctrlname, const gchar *dataname) {
+  return read_db(pipdb, head, switchtype,
+                 datadir, base, ctrlname, dataname,
+                 build_datatree_from_keyfiles);
+}
+
+static int
+read_connexdb(pip_db_t *pipdb,
+	      GNode *head, const site_type_t switchtype,
+	      const gchar *datadir, const gchar *base,
+	      const gchar *ctrlname, const gchar *dataname) {
+  return read_db(pipdb, head, switchtype,
+                 datadir, base, ctrlname, dataname,
+                 build_connextree_from_keyfiles);
 }
 
 static GNode *
@@ -246,6 +272,7 @@ read_implicitdb(wire_db_t *wiredb, const gchar *datadir,
 static int
 read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
   int err = 0;
+  GNode *dbnode;
   guint i;
 
   for (i = 0; i < NR_SWITCH_TYPE; i++) {
@@ -256,12 +283,21 @@ read_db_from_file(pip_db_t *pipdb, const gchar *datadir) {
 
     pipdb->implicitdb[i] = read_implicitdb(pipdb->wiredb, datadir, base, "implicit.db");
 
-    pipdb->memorydb[i] = g_node_new(NULL);
-    err = read_switchdb(pipdb, pipdb->memorydb[i],
-			i, datadir, base,
+    dbnode = g_node_new(NULL);
+    err = read_switchdb(pipdb, dbnode, i, datadir, base,
 			"control.db", "data.db");
     if (err)
       goto out_err;
+    pipdb->memorydb[i] = dbnode;
+
+    dbnode = g_node_new(NULL);
+    err = read_connexdb(pipdb, dbnode, i, datadir, base,
+                        "connexcontrol.db", "connexdata.db");
+    if (err)
+      g_warning("No connexion database for %s", base);
+    pipdb->connexdb[i] = dbnode;
+    /* Discard error for connexity database for now */
+    err = 0;
   }
 
   return err;
@@ -480,6 +516,49 @@ static void build_groupnode(GKeyFile *datadb, const gchar* endp,
   iterate_over_starts(datadb, build_wirenode, &arg, endp);
 }
 
+
+typedef struct _connex_control_data {
+  wire_atom_t endwire;
+  gsize size;
+  wire_atom_t *data;
+} connex_control_data_t;
+
+static inline wire_atom_t *
+get_con_structure_from_file(GKeyFile *keyfile, const gchar *end,
+                            gsize *length, const wire_db_t *wires);
+
+static void
+build_connexnode(GKeyFile *datadb, const gchar* endp, gpointer data) {
+  build_groupnode_t *exam = data;
+  wire_db_t *wires = exam->wires;
+  connex_control_data_t *dat = g_new(connex_control_data_t, 1);
+  GNode *groupnode;
+  build_wirenode_t arg = { .datadb = datadb, .wires = wires };
+
+  if (parse_wire_simple(wires, &dat->endwire, endp)) {
+    g_warning("unparsable wire %s", endp);
+    g_free(dat);
+    return;
+  }
+
+  dat->data = get_con_structure_from_file(exam->ctrldb, endp, &dat->size,
+                                          exam->wires);
+
+  if (dat->data == NULL) {
+    g_warning("Not registering connexnode for %s", endp);
+    g_free(dat);
+    return;
+  }
+
+  g_warning("Registering connexnode for %s", endp);
+
+  groupnode = g_node_new(dat);
+  g_node_append(exam->head, groupnode);
+  arg.groupnode = groupnode;
+
+  iterate_over_starts(datadb, build_wirenode, &arg, endp);
+}
+
 /** \brief Convert ini file data into optimized in-memory representation
  *
  *
@@ -500,7 +579,25 @@ build_datatree_from_keyfiles(GKeyFile *data, GKeyFile *control,
   return 0;
 }
 
+/** \brief Convert ini file data into optimized in-memory representation
+ *
+ *
+ *
+ */
+static int
+build_connextree_from_keyfiles(GKeyFile *data, GKeyFile *control,
+                               wire_db_t *wires, GNode *head,
+                               const site_type_t i) {
+  build_groupnode_t arg = {
+    .ctrldb = control,
+    .head = head,
+    .wires = wires,
+    .type = i,
+  };
 
+  iterate_over_groups(data, build_connexnode, &arg);
+  return 0;
+}
 
 /** \brief Release memory database
  *
@@ -594,8 +691,64 @@ static inline gint *get_pip_structure_from_file(GKeyFile *keyfile,
   gint *array = g_key_file_get_integer_list(keyfile, end, "BITLIST", length, NULL);
   const guint width = type_bits[type].y_width;
   gsize i;
+
+#if DEBIT_DEBUG > 1
+  if (array == NULL) {
+    g_warning("Problem parsing group %s in pip database", end);
+    return NULL;
+  }
+#else
+  g_assert(array != NULL);
+#endif
+
   for (i = 0; i < *length; i++)
     array[i] = bitpos_to_cfgbit(array[i], width);
+  return array;
+}
+
+/** \brief Raw query of the file representing the connexity control database
+ *
+ * This function returns the site-independent connexity control information
+ * present in the database and directly used to locate the entry points
+ * of a logic element in the design.
+ *
+ * @param pipdb pip database
+ * @param end pip endpoint
+ * @param length pointer to variable holding the number of bits part of
+ * the returned configuration
+ *
+ * @return the list of bits
+ *
+ */
+
+static inline wire_atom_t *
+get_con_structure_from_file(GKeyFile *keyfile, const gchar *end, gsize *length,
+			    const wire_db_t *wires) {
+  gchar **endp = g_key_file_get_string_list(keyfile, end, "EPLIST", length, NULL);
+  wire_atom_t *array = NULL;
+  gsize i;
+
+#if DEBIT_DEBUG > 1
+  if (endp == NULL) {
+    g_warning("Problem parsing group %s in connexity database", end);
+    return NULL;
+  }
+#else
+  g_assert(endp != NULL);
+#endif
+
+  array = g_new(wire_atom_t, *length);
+  for (i = 0; i < *length; i++) {
+    int err = parse_wire_simple(wires, &array[i], endp[i]);
+    if (err) {
+      g_warning("unparsable target wire \"%s\"", endp[i]);
+      g_free(array);
+      array = NULL;
+      break;
+    }
+  }
+
+  g_strfreev(endp);
   return array;
 }
 

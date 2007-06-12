@@ -90,11 +90,10 @@ print_pip_ref(pip_ref_t *ref, state_t *state, void *data) {
     break;
   case PIP_ACCOMPANIED:
     dat->stats.unisolated++;
-    fprintf(stderr,":not alone:\n");
-    debit_log(L_CORRELATE, "together with:");
-    dump_set(state, pipdb);
-    debit_log(L_CORRELATE, "set bits:");
+    fprintf(stderr,":not alone: ");
     dump_result(0, state);
+    debit_log(L_CORRELATE, "\ttogether with:");
+    dump_set(state, pipdb);
     break;
   case PIP_ISOLATED:
     dat->stats.isolated++;

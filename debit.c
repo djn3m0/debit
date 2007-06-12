@@ -68,8 +68,11 @@ debit_file(gchar *input_file, gchar *output_dir) {
 
   if (sitedump || pipdump || lutdump || bramdump || netdump) {
     bitstream_analyzed_t *analysis = analyze_bitstream(bit, datadir);
-    if (analysis == NULL)
+    if (analysis == NULL) {
+      g_warning("Problem during analysis");
+      err = -1;
       goto out_free;
+    }
 
 /*     print_chip(analysis->chip); */
 
