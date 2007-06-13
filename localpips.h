@@ -132,4 +132,20 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
 			     sitepip_iterator_t fun1, bitpip_iterator_t fun2,
 			     gpointer data);
 
+/*
+ * Connexity database API
+ */
+
+uint32_t
+get_input_wires(const pip_db_t *pipdb,
+                const logic_t pip, const switch_type_t swit,
+                gsize *size, wire_atom_t **array);
+
+typedef void (* logic_callback_t)(const logic_atom_t start, void *data);
+
+void
+iter_logic_input(const pip_db_t *pipdb,
+                 const logic_t pip, const switch_type_t swit,
+                 logic_callback_t logcall, void *data);
+
 #endif /* _LOCALPIPS_H */

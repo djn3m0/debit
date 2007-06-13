@@ -24,6 +24,7 @@ typedef struct _wire {
  */
 
 typedef guint16 wire_atom_t;
+typedef guint16 logic_atom_t;
 
 #define WIRE_EP_END ((wire_atom_t) -1)
 
@@ -94,10 +95,21 @@ const wire_t *get_wire(const wire_db_t *db, const wire_atom_t wire) {
   return (&db->details[wire]);
 }
 
+/* For now pip and logic elemnts are unified. This may change in the
+ * future, as we split the wire and logic element database. In
+ * particular, the logic source should have nothing to do with a
+ * standard wire...
+ */
+
 typedef struct _pip {
   wire_atom_t source;
   wire_atom_t target;
 } __attribute__((packed)) pip_t;
+
+typedef struct _logic {
+  logic_atom_t source;
+  wire_atom_t target;
+} __attribute__((packed)) logic_t;
 
 typedef struct _sited_pip {
   site_ref_t site;
@@ -117,6 +129,7 @@ void sprint_spip(gchar *buf, const wire_db_t *wdb, const chip_descr_t *chip,
 /* } */
 
 gint parse_wire_simple(const wire_db_t *, wire_atom_t*, const gchar *);
+#define parse_logic_simple(x,y,z) parse_wire_simple(x,y,z)
 
 gboolean
 get_wire_startpoint(const wire_db_t *wiredb, const chip_descr_t *chipdb,

@@ -520,7 +520,7 @@ static void build_groupnode(GKeyFile *datadb, const gchar* endp,
 typedef struct _connex_control_data {
   wire_atom_t endwire;
   gsize size;
-  wire_atom_t *data;
+  logic_atom_t *data;
 } connex_control_data_t;
 
 static inline wire_atom_t *
@@ -737,9 +737,9 @@ get_con_structure_from_file(GKeyFile *keyfile, const gchar *end, gsize *length,
   g_assert(endp != NULL);
 #endif
 
-  array = g_new(wire_atom_t, *length);
+  array = g_new(logic_atom_t, *length);
   for (i = 0; i < *length; i++) {
-    int err = parse_wire_simple(wires, &array[i], endp[i]);
+    int err = parse_logic_simple(wires, &array[i], endp[i]);
     if (err) {
       g_warning("unparsable target wire \"%s\"", endp[i]);
       g_free(array);
@@ -1284,3 +1284,104 @@ get_implicit_startpoint(wire_atom_t *wire,
  * strange places. And the connexity is complex, needs a connexity
  * database, which is a bitmask of input wires.
  */
+
+/* Connexity database query functions */
+
+typedef struct _search_logic {
+  const logic_t pip;
+  GNode *db;
+} search_logic_t;
+
+static void
+find_logic(GNode *node, gpointer data) {
+  search_logic_t *cfg = data;
+  connex_control_data_t *dat = node->data;
+  if (dat->endwire == cfg->pip.target)
+    cfg->db = node;
+}
+
+static void
+find_config(GNode *node, gpointer data) {
+  search_logic_t *cfg = data;
+  localpip_data_t *dat = node->data;
+  if (dat->startwire == cfg->pip.source)
+    cfg->db = node;
+}
+
+/*
+ * Return the GNode associated to a logic pip.
+ * And Nil if not found.
+ */
+
+static GNode *
+logic_lookup(const logic_t pip,
+             const pip_db_t *pipdb,
+             const switch_type_t swit) {
+  /* find the endpoint */
+  GNode *database = pipdb->connexdb[swit];
+  search_logic_t logic = { .pip = pip, .db = NULL };
+  if (!database)
+    return NULL;
+
+  /* First-level lookup */
+  g_node_children_foreach (database, G_TRAVERSE_ALL,
+                           find_logic, &logic);
+
+  if (!logic.db)
+    return NULL;
+  database = logic.db;
+  logic.db = NULL;
+
+  /* Second-level lookup */
+  g_node_children_foreach (database, G_TRAVERSE_ALL,
+                           find_config, &logic);
+
+  return logic.db;
+}
+
+/*
+ * This function gets the input wires from a logic_t entity. More
+ * precisely, it is a very low-level function that returns two things:
+ *
+ * - the array of input wires for the pip
+ * - the value of the pip's indexes
+ */
+
+/* Return from the GNode */
+static uint32_t
+get_input_wires_helper(const GNode *db,
+                       gsize *size, logic_atom_t **array) {
+  /* Get the control information */
+  localpip_data_t *dat = db->data;
+  GNode *ctrl = db->parent;
+  connex_control_data_t *cfg = ctrl->data;
+  *array = cfg->data;
+  *size = cfg->size;
+  return dat->cfgdata;
+}
+
+uint32_t
+get_input_wires(const pip_db_t *pipdb,
+                const logic_t pip, const switch_type_t swit,
+                gsize *size, wire_atom_t **array) {
+  GNode *base = logic_lookup(pip, pipdb, swit);
+  return get_input_wires_helper(base, size, array);
+}
+
+static inline void
+iterate_input_wires(uint32_t set, gsize size, logic_atom_t *array,
+                    logic_callback_t logcall, void *data) {
+  unsigned i;
+  for (i=0; i<size; i++)
+    if (set & (1 << i))
+      logcall(array[i], data);
+}
+
+void
+iter_logic_input(const pip_db_t *pipdb,
+                 const logic_t pip, const switch_type_t swit,
+                 logic_callback_t logcall, void *data) {
+  gsize size; logic_atom_t *array;
+  uint32_t set = get_input_wires(pipdb, pip, swit, &size, &array);
+  iterate_input_wires(set, size, array, logcall, data);
+}
