@@ -353,6 +353,7 @@ sub dump_ini {
     my $output;
     for $output (@wires) {
 	my $endpoint = $otherend{$output};
+	my $nendpoints = 0;
 	print "_WIRE_ENTRY($output, $nums{$output}, ";
 	if (defined $nums{$endpoint}) {
 	    my $newdy = - $dy{$output};
@@ -372,6 +373,8 @@ sub dump_ini {
 		print "$nums{$output}, ";
 	    }
 	}
+
+	print "$nendpoints, _WIRE_ENDS(), ";
 	print "$type{$output}, $dir{$output}, $sit{$output})\n";
     }
 }

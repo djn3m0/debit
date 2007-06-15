@@ -62,6 +62,10 @@ my %xc5vlx30 = (
 $width_refs{"xc5vlx30"} = $i;
 my $xc5vlx30_rows = 2;
 
+my %xc5vlx50 = %xc5vlx30;
+my $xc5vlx50_rows = $xc5vlx30_rows + 1;
+$width_refs{"xc5vlx50"} = $i;
+
 $i = 0;
 my %xc5vlx85 = (
 		$i++ => "IOB",
@@ -266,11 +270,12 @@ my $xc5vlx330_rows = $xc5vlx220_rows + 1;
 $width_refs{"xc5vlx330"} = $i;
 
 
-my @sizes = ( 30, 85, 110, 220, 330 );
+my @sizes = ( 30, 50, 85, 110, 220, 330 );
 my $root = "xc5vlx";
 
 my %dat_refs = (
 		"xc5vlx30" => \%xc5vlx30,
+		"xc5vlx50" => \%xc5vlx50,
 		"xc5vlx85" => \%xc5vlx85,
 		"xc5vlx110" => \%xc5vlx110,
 		"xc5vlx220" => \%xc5vlx220,
@@ -279,6 +284,7 @@ my %dat_refs = (
 
 my %height_refs = (
 		"xc5vlx30" => 2,
+		"xc5vlx50" => 3,
 		"xc5vlx85" => 3,
 		"xc5vlx110" => 4,
 		"xc5vlx220" => 4,
