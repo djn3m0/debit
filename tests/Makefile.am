@@ -4,7 +4,7 @@ EXTRA_DIST=$(check_SCRIPTS)
 TESTS_ENVIRONMENT = top_srcdir=$(top_srcdir) \
 		    top_builddir=$(top_builddir)
 
-TESTS=test_v5.sh test_s3.sh test_v2.sh test_v4.sh
+TESTS=test_s3.sh test_v2.sh test_v4.sh test_v5.sh
 
 FULL_ENVIRONMENT = srcdir=$(srcdir) $(TESTS_ENVIRONMENT)
 

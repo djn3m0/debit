@@ -310,8 +310,8 @@ query_bitstream_luts(const bitstream_parsed_t *bitstream,
   (void) bitstream;
   (void) site;
 
-  /* query four luts. Bits are MSB first, but in reverse order */
-  for (i=0; i<4; i++) {
+  /* query eight luts. Bits are MSB first, but in reverse order */
+  for (i=0; i<8; i++) {
     luts[i] = 0;
   }
 

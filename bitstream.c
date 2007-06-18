@@ -33,37 +33,39 @@
 
 #if defined(VIRTEX2)
 
+#define CLB_HEIGHT 10
+
 const type_bits_t type_bits[NR_SITE_TYPE] = {
   /* CLB Group */
   [CLB] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
   },
   [LTERM] = {
     .col_type = V2C_IOB,
     .x_type_off = 0,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
   },
   [RTERM] = {
     .col_type = V2C_IOB,
     .x_type_off = 1,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
   },
   [LIOI] = {
     .col_type = V2C_IOI,
     .x_type_off = 0,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
   },
   [RIOI] = {
     .col_type = V2C_IOI,
     .x_type_off = 1,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
   },
   [TTERM] = {
     .col_type = V2C_CLB,
@@ -81,20 +83,20 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
     .y_offset = 2,
-    .y_width = sizeof(site_descr_t),
+    .y_width = CLB_HEIGHT,
   },
   [BIOI] = {
     .col_type = V2C_CLB,
     .x_type_off = 0,
-    .y_offset = - ((int)sizeof(site_descr_t) + 2),
-    .y_width = sizeof(site_descr_t),
+    .y_offset = - ((int)CLB_HEIGHT + 2),
+    .y_width = CLB_HEIGHT,
   },
   /* BRAM Group */
   [BRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
-    .y_offset = sizeof(site_descr_t) + 2,
-    .y_width = sizeof(site_descr_t),
+    .y_offset = CLB_HEIGHT + 2,
+    .y_width = CLB_HEIGHT,
   },
   [TTERMBRAM] = {
     .col_type = V2C_BRAM_INT,
@@ -112,13 +114,13 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
     .y_offset = 2,
-    .y_width = sizeof(site_descr_t),
+    .y_width = CLB_HEIGHT,
   },
   [BIOIBRAM] = {
     .col_type = V2C_BRAM_INT,
     .x_type_off = 0,
-    .y_offset = - ((int)sizeof(site_descr_t) + 2),
-    .y_width = sizeof(site_descr_t),
+    .y_offset = - ((int)CLB_HEIGHT + 2),
+    .y_width = CLB_HEIGHT,
   },
   /* Still todo:
      these nothing:
@@ -135,19 +137,19 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
     .col_type = V2C_GCLK,
     .x_type_off = 0,
     .y_offset = - (),
-    .y_width = sizeof(site_descr_t),
+    .y_width = CLB_HEIGHT,
   },
   [CLKB] = {
     .col_type = V2C_GCLK,
     .x_type_off = 0,
     .y_offset = ,
-    .y_width = sizeof(site_descr_t),
+    .y_width = CLB_HEIGHT,
   },
   [GCLKC] = {
     .col_type = V2C_GCLK,
     .x_type_off = 0,
     .y_offset = ,
-    .y_width = sizeof(site_descr_t),
+    .y_width = CLB_HEIGHT,
   },
   */
   /* GCLKH are harder */
@@ -414,7 +416,13 @@ query_bitstream_luts(const bitstream_parsed_t *bitstream,
 
   /* query height luts. Bits are MSB first, but in reverse order */
   for (i=0; i < 8; i++) {
-    unsigned byte_lut_offset = bitpos_invert(5 * BITAT(i,1) + 3 * BITAT(i,0), sizeof(site_descr_t));
+    /* X position of the LUT is only guessed for spartan3 */
+#ifdef VIRTEX2
+    unsigned byte_lut_offset = bitpos_invert(5 * BITAT(i,1) + 3 * BITAT(i,0), CLB_HEIGHT);
+#else /* VIRTEX2 */
+    unsigned byte_lut_offset = bitpos_invert(4 * BITAT(i,1) + 2 * BITAT(i,0), CLB_HEIGHT);
+#endif /* VIRTEX2 */
+    /* Y-position of the LUT is 1+BITAT(i,2) */
     guint first_byte = assemble_cfgbit(1+BITAT(i,2), byte_lut_offset);
     /* minus height, to account for the reverse occuring in
        bitpos_invert */
@@ -447,6 +455,31 @@ query_bistream_config(const bitstream_parsed_t *bitstream,
   return 0;
 }
 
+#if defined(VIRTEX2)
+
+#define BRAM_FRAMES 64
+#define BRAM_WORD_PER_FRAME 16
+
+static const
+guchar bram_offset_for_bit[16] = {
+  1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, 1, 1,
+};
+
+#else /* VIRTEX2 */
+
+/* Not really reverse-engineered yet, just a wild guess */
+
+/* SPARTAN3 */
+#define BRAM_FRAMES 76
+#define BRAM_WORD_PER_FRAME 16
+
+static const
+guchar bram_offset_for_bit[16] = {
+  1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, 1, 1,
+};
+
+#endif /* VIRTEX2 */
+
 static const
 guchar bram_bit_to_word[16] = {
   6, 4, 2, 0, 8, 10, 12, 14, 15, 13, 11, 9, 1, 3, 5, 7,
@@ -455,11 +488,6 @@ guchar bram_bit_to_word[16] = {
 static const
 guint16 bram_offset_to_mask[16] = {
   0x10, 0x800, 0x20, 0x400, 0x40, 0x200, 0x80, 0x100, 0x8, 0x1000, 0x4, 0x2000, 0x2, 0x4000, 0x1, 0x8000,
-};
-
-static const
-guchar bram_offset_for_bit[16] = {
-  1, 1, 1, 2, 1, 1, 1, 3, 1, 1, 1, 2, 1, 1, 1,
 };
 
 /** \brief Get the bram data bits from a site
@@ -477,8 +505,8 @@ query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
   const guint x = site->type_coord.x;
   /* the bram spans 4 sites in height */
   const guint y = site->type_coord.y >> 2;
-  const unsigned bram_width = 4 * sizeof(site_descr_t);
-  const unsigned site_offset = 2 + sizeof(site_descr_t) + y * bram_width + (bram_width - 2);
+  const unsigned bram_width = 4 * CLB_HEIGHT;
+  const unsigned site_offset = 2 + CLB_HEIGHT + y * bram_width + (bram_width - 2);
 
   guint16 *bram_data = g_new0(guint16,64*16);
   guint i,j,k;
