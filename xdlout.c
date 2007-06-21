@@ -15,9 +15,9 @@ void print_design(parsed_header_t *header) {
   const unsigned ncdv1 = 3, ncdv2 = 1;
   const header_option_t *devopt = get_option(header, DEVICE_TYPE);
   const header_option_t *nameopt = get_option(header, FILENAME);
-  char *name = nameopt->payload;
+  const char *name = nameopt->payload;
   unsigned namel = get_option_len(nameopt);
-  char *chp = devopt->payload;
+  const char *chp = devopt->payload;
   unsigned chpl = get_option_len(devopt);
   time_t timestamp;
 
