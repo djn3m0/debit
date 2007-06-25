@@ -129,9 +129,11 @@ project_global_site(const chip_descr_t *chip,
 }
 
 #define MAX_SITE_NLEN 20
-void sprint_csite(gchar *data, const csite_descr_t *site,
-		  unsigned gx, unsigned gy);
-void sprint_switch(gchar *data, const chip_descr_t *chip,
+int snprint_csite(gchar *buf, const size_t bufs,
+		  const csite_descr_t *site,
+		  const unsigned gx, const unsigned gy);
+int snprint_switch(gchar *data, const size_t bufs,
+		   const chip_descr_t *chip,
 		   const site_ref_t swb);
 void snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
 		   const csite_descr_t *site, const slice_index_t slice);

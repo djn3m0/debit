@@ -343,16 +343,18 @@ get_wire_startpoint(const wire_db_t *wiredb,
  * @param spip the sited pip to print
  */
 
-void
-sprint_spip(gchar *buf,
-	    const wire_db_t *wdb,
-	    const chip_descr_t *chip,
-	    const sited_pip_t *spip) {
+int
+snprint_spip(gchar *buf, size_t bufs,
+	     const wire_db_t *wdb,
+	     const chip_descr_t *chip,
+	     const sited_pip_t *spip) {
   const gchar *start = wire_name(wdb, spip->pip.source);
   const gchar *end = wire_name(wdb, spip->pip.target);
-  gchar site_buf[30];
+  gchar site_buf[MAX_SITE_NLEN];
 
-  sprint_switch(site_buf, chip, spip->site);
-  sprintf(buf, "pip %s %s -> %s", site_buf, start, end);
+  snprint_switch(site_buf, ARRAY_SIZE(site_buf),
+		 chip, spip->site);
+  return snprintf(buf, bufs, "pip %s %s -> %s",
+		  site_buf, start, end);
 }
 

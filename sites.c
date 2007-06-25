@@ -412,9 +412,10 @@ static const char *sw_str[NR_SWITCH_TYPE] = {
 
 #endif
 
-void
-sprint_csite(gchar *data, const csite_descr_t *site,
-	     const unsigned gx, const unsigned gy) {
+int
+snprint_csite(gchar *buf, size_t bufs,
+	      const csite_descr_t *site,
+	      const unsigned gx, const unsigned gy) {
   const char *str = print_str[site->type];
   const site_print_t strtype = print_type[site->type];
   const guint x = site->type_coord.x + 1;
@@ -425,19 +426,16 @@ sprint_csite(gchar *data, const csite_descr_t *site,
 
   switch (strtype) {
     case PRINT_BOTH:
-      sprintf(data, str, y, x);
-      break;
+      return snprintf(buf, bufs, str, y, x);
     case PRINT_X:
-      sprintf(data, str, x);
-      break;
+      return snprintf(buf, bufs, str, x);
     case PRINT_Y:
-      sprintf(data, str, y);
-      break;
+      return snprintf(buf, bufs, str, y);
     /* V4-style site naming needs global coordinates */
     case PRINT_BOTH_INVERT:
-      sprintf(data, str, gx, gy);
-      break;
+      return snprintf(buf, bufs, str, gx, gy);
   }
+  g_assert_not_reached();
 }
 
 /* Print the slice name. At some point, the site should be embedded into
@@ -460,9 +458,10 @@ snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
   }
 }
 
-void
-sprint_switch(gchar *data, const chip_descr_t *chip,
-	      const site_ref_t site_ref) {
+int
+snprint_switch(gchar *buf, size_t bufs,
+	       const chip_descr_t *chip,
+	       const site_ref_t site_ref) {
   const csite_descr_t *site = get_site(chip, site_ref);
   const switch_type_t switch_ref = sw_of_type(site->type);
   const char *str = sw_str[switch_ref];
@@ -476,30 +475,27 @@ sprint_switch(gchar *data, const chip_descr_t *chip,
 
   switch (strtype) {
   case PRINT_BOTH:
-    sprintf(data, str, y, x);
-    break;
+    return snprintf(buf, bufs, str, y, x);
   case PRINT_X:
-    sprintf(data, str, x);
-    break;
+    return snprintf(buf, bufs, str, x);
   case PRINT_Y:
-    sprintf(data, str, y);
-    break;
+    return snprintf(buf, bufs, str, y);
     /* V4-style site naming needs global coordinates */
   case PRINT_BOTH_INVERT: {
     unsigned width = chip->width;
     unsigned gx = site_ref % width,
       gy = site_ref / width;
-    sprintf(data, str, gx, gy);
+    return snprintf(buf, bufs, str, gx, gy);
   }
-    break;
   }
+  g_assert_not_reached();
 }
 
 static void
 print_iterator(unsigned x, unsigned y,
 	       csite_descr_t *site, gpointer dat) {
-  gchar name[32];
-  sprint_csite(name, site, x, y);
+  gchar name[MAX_SITE_NLEN];
+  snprint_csite(name, ARRAY_SIZE(name), site, x, y);
   (void) dat;
   g_print("global site (%i,%i) is %s\n", x, y, name);
 }

@@ -5,6 +5,8 @@
 #ifndef _HAS_DEBIT_DEBUG_H
 #define _HAS_DEBIT_DEBUG_H
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+
 #ifndef DEBIT_DEBUG
 #define DEBIT_DEBUG 2
 #endif

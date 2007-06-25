@@ -31,9 +31,9 @@
 
 static inline void
 print_pip(const csite_descr_t *site, const gchar *start, const gchar *end) {
-  gchar site_buf[32];
+  gchar site_buf[MAX_SITE_NLEN];
   /* XXX */
-  sprint_csite(site_buf, site, 0, 0);
+  snprint_csite(site_buf, ARRAY_SIZE(site_buf), site, 0, 0);
   g_printf("pip %s %s -> %s\n", site_buf, start, end);
 }
 
@@ -86,7 +86,8 @@ print_lut_data(const csite_descr_t *site,
   gchar sname[MAX_SITE_NLEN];
   guint i,j;
 
-  sprint_csite(sname, site, x, y);
+  snprint_csite(sname, ARRAY_SIZE(sname),
+		site, x, y);
   g_printf("%s\n", sname);
   for (j = 0; j < 4; j++) {
     gchar slicen[MAX_SITE_NLEN];
@@ -105,8 +106,9 @@ print_switchpip(const wire_db_t *wiredb,
 		const chip_descr_t *chip,
 		const pip_t pip,
 		const site_ref_t site_ref) {
-  gchar site_buf[32];
-  sprint_switch(site_buf, chip, site_ref);
+  gchar site_buf[MAX_SITE_NLEN];
+  snprint_switch(site_buf, ARRAY_SIZE(site_buf),
+		 chip, site_ref);
   g_printf("pip %s %s -> %s\n", site_buf,
 	   wire_name(wiredb,pip.source),
 	   wire_name(wiredb,pip.target));
@@ -117,8 +119,9 @@ print_logicopt(const wire_db_t *wiredb,
 	       const chip_descr_t *chip,
 	       const pip_t pip,
 	       const site_ref_t site_ref) {
-  gchar site_buf[32];
-  sprint_switch(site_buf, chip, site_ref);
+  gchar site_buf[MAX_SITE_NLEN];
+  snprint_switch(site_buf, ARRAY_SIZE(site_buf),
+		 chip, site_ref);
   g_printf("%s %s::%s\n", site_buf,
 	   wire_name(wiredb,pip.target),
 	   wire_name(wiredb,pip.source));
@@ -242,13 +245,14 @@ dump_site_iter(unsigned site_x, unsigned site_y,
   dump_site_t *dumpsite = dat;
   gchar *buffer = dumpsite->buffer;
   gsize buffer_len = dumpsite->buffer_len;
-  gchar *filename, *fullname, site_buf[32];
+  gchar *filename, *fullname, site_buf[MAX_SITE_NLEN];
   gboolean ok;
 
   /* Get the bitstream contents */
   query_bitstream_site_data(buffer, buffer_len, dumpsite->parsed, site);
 
-  sprint_csite(site_buf, site, site_x, site_y);
+  snprint_csite(site_buf, ARRAY_SIZE(site_buf),
+		site, site_x, site_y);
   filename = g_strconcat(site_buf,dumpsite->suffix,NULL);
   fullname = g_build_filename(dumpsite->odir, filename, NULL);
   g_free(filename);

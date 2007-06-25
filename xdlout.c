@@ -143,7 +143,8 @@ print_wire(GNode *net,
   if (spip->pip.source == WIRE_EP_END)
     return FALSE;
 
-  sprint_spip(buf, wiredb, chip, net->data);
+  snprint_spip(buf, ARRAY_SIZE(buf),
+	       wiredb, chip, net->data);
   g_print("  %s ,\n", buf);
   return FALSE;
 }
@@ -226,7 +227,7 @@ slice_iterator(unsigned site_x, unsigned site_y,
   gchar slicen[MAX_SITE_NLEN];
   gchar siten[MAX_SITE_NLEN];
   snprint_slice(slicen, MAX_SITE_NLEN, chip, site, 0);
-  sprint_csite(siten, site, site_x, site_y);
+  snprint_csite(siten, ARRAY_SIZE(siten), site, site_x, site_y);
   const char *sliceid = "slice";
 
   /* Combine the situation and site to get the location */
