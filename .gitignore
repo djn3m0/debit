@@ -1,0 +1,11 @@
+#Automake-generated
+/INSTALL
+/TODO
+/aclocal.m4
+/configure
+Makefile
+Makefile.in
+autom4te.cache
+config.*
+cscope.*
+patches
