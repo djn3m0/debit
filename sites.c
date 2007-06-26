@@ -440,7 +440,7 @@ snprint_csite(gchar *buf, size_t bufs,
 
 /* Print the slice name. At some point, the site should be embedded into
    the site maybe ? XXX *site redundant with chip */
-void
+int
 snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
 	      const csite_descr_t *site, const slice_index_t slice) {
   /* Only works for slices for now */
@@ -452,9 +452,10 @@ snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
   const guint y = 2 * (clb_h - 1 - site->type_coord.y) + BITAT(slice,0);
 
   switch (strtype) {
-    case PRINT_BOTH:
-      snprintf(buf, buf_len, str, x, y);
-      break;
+  case PRINT_BOTH:
+    return snprintf(buf, buf_len, str, x, y);
+  default:
+    return 0;
   }
 }
 

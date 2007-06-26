@@ -135,7 +135,7 @@ int snprint_csite(gchar *buf, const size_t bufs,
 int snprint_switch(gchar *data, const size_t bufs,
 		   const chip_descr_t *chip,
 		   const site_ref_t swb);
-void snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
+int snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
 		   const csite_descr_t *site, const slice_index_t slice);
 
 typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
