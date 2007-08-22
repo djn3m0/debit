@@ -7,45 +7,90 @@ AC_CONFIG_HEADER([config.h])
 
 AM_INIT_AUTOMAKE([1.9 -Wall dist-bzip2])
 
-# Checks for programs.
+dnl Checks for programs
 AC_PROG_CC
 AC_PROG_INSTALL
 
-# Checks for libraries.
+dnl Checks for libraries
 AC_CHECK_LIB([m], [sqrt])
 
-# Check for glib
+dnl Check for glib
 GLIB_REQUIRED=2.2.0
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= $GLIB_REQUIRED])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
+dnl ===========================================================================
+dnl
+dnl Define a macro to enable feature
+dnl  - Macro: DEBIT_FEATURE_ENABLE (ID, NAME, DEFAULT, COMMANDS-TO-CHECK-IT)
+dnl
+dnl Where COMMANDS-TO-CHECK-IT should set $use_ID to something other than yes if the
+dnl backend cannot be built.
+dnl
+dnl Copied verbatim from CAIRO_BACKEND_ENABLE
+dnl
+AC_DEFUN([DEBIT_FEATURE_ENABLE],
+         [AC_ARG_ENABLE([$1],
+                         AS_HELP_STRING([--enable-$1=@<:@no/auto/yes@:>@],
+                                        [Enable debit's $2 feature @<:@default=$3@:>@]),
+                         use_$1=$enableval, use_$1=$3)
+	  if test "x$use_$1" = xno; then
+	    use_$1="no (disabled, use --enable-$1 to enable)"
+	  else
+            AC_CACHE_CHECK([for debit's $2 feature], debit_cv_use_$1,
+			   [echo
+			    saved_use_$1=$use_$1
+			    use_$1=yes
+			    $4
+			    debit_cv_use_$1=$use_$1
+			    use_$1=$saved_use_$1
+			    AC_MSG_CHECKING([whether debit's $2 feature could be enabled])])
+	    case $use_$1 in
+	      yes)
+	        if test "x$debit_cv_use_$1" = xyes; then
+		  use_$1=yes
+		else
+	          AC_MSG_ERROR([requested feature $2 could not be enabled])
+		fi
+		;;
+	      auto)
+	        use_$1=$debit_cv_use_$1
+		;;
+	      *)
+	        AC_MSG_ERROR([invalid argument passed to --enable-$1: $use_$1, should be one of @<:@no/auto/yes@:>@])
+		;;
+	    esac
+	  fi])
+
+dnl ===========================================================================
+
 dnl Check for Cairo pdf/ps backend for bit2pdf
 CAIRO_REQUIRED=1.2.0
-AC_ARG_WITH(cairo, [  --with-cairo	allow use of cairo [default=yes]], with_cairo=$withval, with_cairo=yes)
-if test "x$with_cairo" = "xyes"; then
-  PKG_CHECK_MODULES(CAIRO, [cairo-pdf >= $CAIRO_REQUIRED cairo-ps >= $CAIRO_REQUIRED])
-fi
-AM_CONDITIONAL([BUILD_BIT2PDF], [test "x$with_cairo" = xyes])
+DEBIT_FEATURE_ENABLE(cairo, Cairo, auto, [
+  PKG_CHECK_MODULES(CAIRO, [cairo-pdf >= $CAIRO_REQUIRED cairo-ps >= $CAIRO_REQUIRED],
+			   [use_cairo=yes], [use_cairo=no])
+])
+AM_CONDITIONAL([BUILD_BIT2PDF], [test "x$use_cairo" = xyes])
 AC_SUBST(CAIRO_CFLAGS)
 AC_SUBST(CAIRO_LIBS)
 
 dnl Check for gtk+ for building the gui
 GTK_REQUIRED=2.8.0
-AC_ARG_WITH(gtk, [  --with-gtk	allow use of gtk [default=yes]], with_gtk=$withval, with_gtk=yes)
-if test "x$with_gtk" = "xyes"; then
-  PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= $GTK_REQUIRED])
-fi
-AM_CONDITIONAL([BUILD_GUI], [test "x$with_gtk" = xyes])
+DEBIT_FEATURE_ENABLE(gtk, GTK+, auto, [
+  PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= $GTK_REQUIRED],
+			 [use_gtk=yes], [use_gtk=no])
+])
+AM_CONDITIONAL([BUILD_GUI], [test "x$use_gtk" = xyes])
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
 
 dnl Check for gtk+directfb for building the directfb version of the gui
-AC_ARG_WITH(directfb, [  --with-directfb	allow use of directfb [default=no]], with_directfb=$withval, with_directfb=no)
-if test "x$with_directfb" = "xyes"; then
-  PKG_CHECK_MODULES(GTK_DIRECTFB, [gtk+-directfb-2.0 >= $GTK_REQUIRED])
-fi
-AM_CONDITIONAL([BUILD_GUI_DIRECTFB], [test "x$with_directfb" = xyes])
+DEBIT_FEATURE_ENABLE(directfb, DirectFB, no, [
+  PKG_CHECK_MODULES(GTK_DIRECTFB, [gtk+-directfb-2.0 >= $GTK_REQUIRED],
+				  [use_directfb=yes], [use_directfb=no])
+])
+AM_CONDITIONAL([BUILD_GUI_DIRECTFB], [test "x$use_directfb" = xyes])
 AC_SUBST(GTK_DIRECTFB_CFLAGS)
 AC_SUBST(GTK_DIRECTFB_LIBS)
 
