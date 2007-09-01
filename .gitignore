@@ -2,10 +2,21 @@
 /INSTALL
 /TODO
 /aclocal.m4
+/build-arch-stamp
+/build-indep-stamp
+/compile
 /configure
+/depcomp
+/install-sh
+/missing
 Makefile
 Makefile.in
 autom4te.cache
 config.*
+#Annoying directories
+.deps
+#Cscope & al
+semantic.cache
 cscope.*
-patches
+#Build leftovers
+git-ref
