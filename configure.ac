@@ -9,6 +9,8 @@ AM_INIT_AUTOMAKE([1.9 -Wall dist-bzip2])
 
 dnl Checks for programs
 AC_PROG_CC
+AC_PROG_YACC
+AC_PROG_LEX
 AC_PROG_INSTALL
 
 dnl Checks for libraries
@@ -137,11 +139,12 @@ AC_CONFIG_FILES([Makefile tests/Makefile \
 		data/virtex2/Makefile \
 		data/virtex4/Makefile \
 		data/virtex5/Makefile \
+		xdl/Makefile \
 		debian/Makefile rpm/Makefile \
 		windows/Makefile windows/scripts/Makefile \
-		altera/Makefile \
+		altera/Makefile	\
 		codes/Makefile utils/Makefile utils/correlation/Makefile \
 		xiledit/Makefile \
-		desktop/Makefile desktop/artwork/Makefile
+		desktop/Makefile desktop/artwork/Makefile \
 		doc/Makefile doc/man/Makefile])
 AC_OUTPUT
