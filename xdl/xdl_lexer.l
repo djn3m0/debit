@@ -1,3 +1,8 @@
+/*
+ * (C) Copyright 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
+ * All rights reserved.
+ */
+
 /* XDL lexer */
 
 /* Definitions */
@@ -77,7 +82,7 @@ v[0-9]+.[0-9]+  { return VERSION; }
 \"  {
          yytext[yyleng-1] = '0';
          BEGIN(INITIAL);
-         return(STRING);
+         copy_and_return(STRING);
     }
 \\[\": ] yymore(); /* Handle string-within-string and other escaped characters */
 }
