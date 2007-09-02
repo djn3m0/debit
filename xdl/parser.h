@@ -2,21 +2,23 @@
 #define _HAS_PARSER_H
 
 #include "localpips.h"
+#include "sites.h"
 
 typedef struct _parser_t {
 /* 	yyscan_t scanner; */
 	const char *datadir;
+	const pip_db_t *pipdb;
+	const chip_descr_t *chip;
 	/* written by the scanner */
 	unsigned pip_counter;
-	pip_db_t *pipdb;
-	/* chip descr too */
 	char *design;
 } parser_t;
 
 static inline void
 free_parser(parser_t *parser) {
-	pip_db_t *pipdb= parser->pipdb;
-	char *design= parser->design;
+	chip_descr_t *chip = (void *)parser->chip;
+	pip_db_t *pipdb= (void *)parser->pipdb;
+	char *design= (void *)parser->design;
 	if (design) {
 		parser->design = NULL;
 		free(design);
@@ -24,6 +26,10 @@ free_parser(parser_t *parser) {
 	if (pipdb) {
 		parser->pipdb = NULL;
 		free_pipdb(pipdb);
+	}
+	if (chip) {
+		parser->chip = NULL;
+		release_chip(chip);
 	}
 }
 

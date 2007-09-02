@@ -492,6 +492,49 @@ snprint_switch(gchar *buf, size_t bufs,
   g_assert_not_reached();
 }
 
+/*
+ * Very, very, dumb site lookup by name
+ */
+
+typedef struct _site_lookup {
+  const chip_descr_t *chip;
+  const char *str;
+  int _found;
+  site_ref_t pos;
+} site_lookup_t;
+
+static void
+lookup_iterator(unsigned x, unsigned y,
+		csite_descr_t *site, gpointer dat) {
+  gchar name[MAX_SITE_NLEN];
+  site_lookup_t *sl = (void *) dat;
+  int _found;
+
+  if (!sl->_found)
+    return;
+
+  snprint_csite(name, ARRAY_SIZE(name), site, x, y);
+  //  printf("comparing %s to %s\n", sl->str, name);
+  _found = strcmp(name,sl->str);
+  if (_found == 0) {
+    sl->_found = _found;
+    sl->pos = get_site_ref(sl->chip, site);
+  }
+  return;
+}
+
+int parse_site_simple(const chip_descr_t *chip,
+		      site_ref_t* sref,
+		      const gchar *lookup) {
+  site_lookup_t sl = { .str = lookup,
+		       ._found = 1,
+		       .chip = chip, };
+  iterate_over_sites(chip, lookup_iterator, &sl);
+  if (sl._found == 0)
+    *sref = sl.pos;
+  return sl._found;
+}
+
 static void
 print_iterator(unsigned x, unsigned y,
 	       csite_descr_t *site, gpointer dat) {

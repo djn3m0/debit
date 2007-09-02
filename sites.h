@@ -78,6 +78,12 @@ get_site(const chip_descr_t *chip,
   return &chip->data[ref];
 }
 
+static inline site_ref_t
+get_site_ref(const chip_descr_t *chip,
+	     const csite_descr_t *site) {
+  return (site - chip->data);
+}
+
 static inline site_type_t
 site_type(const chip_descr_t *chip,
 	  const site_ref_t site) {
@@ -137,6 +143,23 @@ int snprint_switch(gchar *data, const size_t bufs,
 		   const site_ref_t swb);
 int snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
 		   const csite_descr_t *site, const slice_index_t slice);
+
+/**
+ * \brief Site string parsing function
+ *
+ * Converse of printing function snprint_csite: get a site_ref_t from its name
+ *
+ * @param chip The chip description
+ * @param lookup The site string to be parsed
+ * @param sref The site reference where the atom corresponding to the site pass
+ * @return 0 on success (the string is found), !=0 on problem
+ *
+ * @see snprint_csite
+ * @see parse_wire_simple
+ */
+int parse_site_simple(const chip_descr_t *chip,
+		      site_ref_t* sref,
+		      const gchar *lookup);
 
 typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
 				csite_descr_t *site, gpointer dat);
