@@ -44,6 +44,10 @@ typedef void (*frame_iterator_t)(const char *frame,
 void iterate_over_frames(const bitstream_parsed_t *parsed,
 			 frame_iterator_t iter, void *data);
 
+void
+iterate_over_frames_far(const bitstream_parsed_t *parsed,
+			frame_iterator_t iter, void *dat);
+
 typedef struct _frame_record {
   guint32 far;
   guint32 offset;

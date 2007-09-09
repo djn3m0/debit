@@ -588,17 +588,28 @@ typedef enum _ba_col_type {
   BA_TYPE_CLB = 0,
   BA_TYPE_BRAM,
   BA_TYPE_BRAM_INT,
+  BA_TYPE_END,
 } ba_col_type_t;
 
 static inline int
-_type_of_far(const bitstream_parser_t *bitstream,
+_last_frame(const chip_id_t chiptype,
+	    const sw_far_t *addr) {
+  /* last frame is seen how ?
+     HACK HACK ugly */
+  const unsigned *col_count = bitdescr[chiptype].col_count;
+  const int cond = (addr->ba == BA_TYPE_BRAM_INT  &&
+		    addr->mja == col_count[V2C_BRAM_INT]);
+  return cond;
+}
+
+static inline int
+_type_of_far(const chip_id_t chiptype,
 	     const sw_far_t *addr) {
   int ba = addr->ba;
 
   /* See ug002, page 322, 340 */
   switch(ba) {
   case BA_TYPE_CLB: {
-    chip_id_t chiptype = bitstream->type;
     const unsigned *col_count = bitdescr[chiptype].col_count;
     int nclb = col_count[V2C_CLB];
     int mja = addr->mja;
@@ -625,12 +636,11 @@ _type_of_far(const bitstream_parser_t *bitstream,
 }
 
 static inline int
-_col_of_far(const bitstream_parser_t *bitstream,
+_col_of_far(const chip_id_t chiptype,
 	    const sw_far_t *addr) {
-  chip_id_t chiptype = bitstream->type;
   int nclb = bitdescr[chiptype].col_count[V2C_CLB];
 
-  int type = _type_of_far(bitstream, addr);
+  int type = _type_of_far(chiptype, addr);
   int mja = addr->mja;
 
   switch (type) {
@@ -665,9 +675,8 @@ _col_of_far(const bitstream_parser_t *bitstream,
 }
 
 static inline void
-_far_increment_mja(bitstream_parser_t *bitstream,
-		   sw_far_t *addr, int type) {
-  chip_id_t chiptype = bitstream->type;
+_far_increment_mja(const chip_id_t chiptype,
+		   sw_far_t *addr, const int type) {
   const unsigned *col_count = bitdescr[chiptype].col_count;
   guint mja;
 
@@ -682,18 +691,17 @@ _far_increment_mja(bitstream_parser_t *bitstream,
 }
 
 static inline void
-_far_increment_mna(bitstream_parser_t *bitstream,
+_far_increment_mna(const chip_id_t chiptype,
 		   sw_far_t *addr) {
-  chip_id_t chiptype = bitstream->type;
   const unsigned *frame_count = bitdescr[chiptype].frame_count;
   int type;
 
   addr->mna += 1;
-  type = _type_of_far(bitstream, addr);
+  type = _type_of_far(chiptype, addr);
 
   if (addr->mna == frame_count[type]) {
     addr->mna = 0;
-    _far_increment_mja(bitstream, addr, type);
+    _far_increment_mja(chiptype, addr, type);
   }
 }
 
@@ -701,19 +709,19 @@ static inline void
 far_increment_mna(bitstream_parser_t *bitstream) {
   sw_far_t far;
   fill_swfar(&far, register_read(bitstream, FAR));
-  _far_increment_mna(bitstream, &far);
+  _far_increment_mna(bitstream->type, &far);
   print_far(&far);
   register_write(bitstream, FAR, get_hwfar(&far));
 }
 
 static inline void
-_far_increment_bn(bitstream_parser_t *bitstream,
+_far_increment_bn(const bitstream_parser_t *bitstream,
 		  sw_far_t *addr) {
   addr->bn += 1;
 
   if (addr->bn == frame_length(bitstream)) {
     addr->bn = 0;
-    _far_increment_mna(bitstream, addr);
+    _far_increment_mna(bitstream->type, addr);
   }
 }
 
@@ -869,8 +877,8 @@ void record_frame(bitstream_parsed_t *parsed,
 
   fill_swfar(&far, myfar);
 
-  type = _type_of_far(bitstream, &far);
-  index = _col_of_far(bitstream, &far);
+  type = _type_of_far(bitstream->type, &far);
+  index = _col_of_far(bitstream->type, &far);
   frame = far.mna;
 
   debit_log(L_BITSTREAM,"flushing frame [type:%i,index:%02i,frame:%2X]",
@@ -943,6 +951,33 @@ iterate_over_frames(const bitstream_parsed_t *parsed,
 	iter(data, type, index, frame, itdat);
       }
     }
+  }
+}
+
+/* Get chip ID directly */
+static chip_id_t chipid(const bitstream_parsed_t *parsed) {
+  const chip_struct_t *chip = parsed->chip_struct;
+  return chip - bitdescr;
+}
+
+/* Iterate over frames in FAR-ordered mode. This is a bit complex... */
+void
+iterate_over_frames_far(const bitstream_parsed_t *parsed,
+			frame_iterator_t iter, void *itdat) {
+  chip_id_t chip_id = chipid(parsed);
+  sw_far_t far;
+  fill_swfar(&far, 0);
+
+  /* Iterate over the whole thing very dumbly */
+  while (!_last_frame(chip_id, &far)) {
+    const int type = _type_of_far(chip_id, &far);
+    const int index = _col_of_far(chip_id, &far);
+    const int frame = far.mna;
+    const gchar *data = get_frame(parsed, type, index, frame);
+
+    iter(data, type, index, frame, itdat);
+    _far_increment_mna(chip_id, &far);
+    print_far(&far);
   }
 }
 

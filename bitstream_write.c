@@ -379,8 +379,8 @@ bs_fdri_write_frames(bitstream_writer_t *bit, int fd,
   /* Prepare long FDRI write */
   bs_write_wreg(fd, TYPE_V2, FDRI, wordc);
 
-  /* simply write *all* frames, to be refined */
-  iterate_over_frames(parsed, write_frame, bit);
+  /* simply write *all* frames, in FAR order */
+  iterate_over_frames_far(parsed, write_frame, bit);
 
   /* padding frame */
   bs_write_padding(fd, FDRI, chip->framelen);
