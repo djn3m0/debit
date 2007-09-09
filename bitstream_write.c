@@ -158,6 +158,55 @@ typedef enum _cmd_code {
   __NUM_CMD_CODE,
 } cmd_code_t;
 
+/* Other shitty registers */
+/* XXX Duplicated, along with above */
+
+typedef struct _bitfield_t {
+  /* length is implicit as the difference of lenghts */
+  unsigned char off;
+} bitfield_t;
+
+typedef enum _cor_fields {
+  GWE_CYCLE = 0,
+  GTS_CYCLE, LOCK_CYCLE,
+  MATCH_CYCLE, DONE_CYCLE,
+  SSCLKSRC, OSCFSEL,
+  SINGLE, DRIVE_DONE, DONE_PIPE,
+  SHUT_RST_DCM, RSV, CRC_BYPASS,
+  COR_FIELD_LAST,
+} ctl_bits_t;
+
+static const bitfield_t cor_bitfields[COR_FIELD_LAST+1] = {
+  [GWE_CYCLE] = { .off = 0 },
+  [GTS_CYCLE] = { .off = 3 },
+  [LOCK_CYCLE] = { .off = 6 },
+  [MATCH_CYCLE] = { .off = 9 },
+  [DONE_CYCLE] = { .off = 12 },
+  [SSCLKSRC] = { .off = 15 },
+  [OSCFSEL] = { .off = 17 },
+  [SINGLE] = { .off = 23 },
+  [DRIVE_DONE] = { .off = 24 },
+  [DONE_PIPE] = { .off = 25 },
+  [SHUT_RST_DCM] = { .off = 26 },
+  [RSV] = { .off = 27 },
+  [CRC_BYPASS] = { .off = 29 },
+  [COR_FIELD_LAST] = { .off = 30 },
+};
+
+#define MSK(x) ((1<<x)-1)
+static inline uint32_t
+setfiel(const uint32_t val,
+	const unsigned field,
+	const bitfield_t bitfields[]) {
+  unsigned offset = bitfields[field].off;
+  unsigned flen = bitfields[field+1].off - offset;
+  assert((val & MSK(flen)) == val);
+  return val << offset;
+}
+
+#define COR_F(name, val) \
+  setfiel(val, name, cor_bitfields)
+
 /* crc update function, from host-interpreted data.
    TODO: Share with update function in parser. */
 static inline void
@@ -348,17 +397,16 @@ static void
 bs_write_cmd_header(bitstream_writer_t *writer,
 		    int fd, const bitstream_parsed_t *bit) {
   const chip_struct_t *chip = bit->chip_struct;
-  /* CRC reset */
+
   bs_write_wreg_u32(writer, fd, CMD, RCRC);
-  /* FLR setting -- from bitstream type */
   bs_write_wreg_u32(writer, fd, FLR, chip->framelen-1);
-  /* COR setting, default value */
-  bs_write_wreg_u32(writer, fd, COR, S2U("cor"));
-  /* IDCODE setting */
+  /* These values are meaningless for me now */
+  bs_write_wreg_u32(writer, fd, COR,
+		    COR_F(GWE_CYCLE, 5) | COR_F(GTS_CYCLE, 4) |
+		    COR_F(LOCK_CYCLE, 7) | COR_F(MATCH_CYCLE, 7) |
+		    COR_F(DONE_CYCLE, 3) | COR_F(OSCFSEL, 2));
   bs_write_wreg_u32(writer, fd, IDCODE, chip->idcode);
-  /* MASK setting (what is this ?) */
-  bs_write_wreg_u32(writer, fd, MASK, S2U("mask"));
-  /* CMD first command */
+  bs_write_wreg_u32(writer, fd, MASK, 0);
   bs_write_wreg_u32(writer, fd, CMD, SWITCH);
 
   /* Start-of-write */
@@ -377,7 +425,8 @@ bs_write_cmd_footer(bitstream_writer_t *writer, int fd, const bitstream_parsed_t
     bs_write_noop(fd);
   /* Again, commands */
   bs_write_wreg_u32(writer, fd, CMD, START);
-  bs_write_wreg_u32(writer, fd, CTL, S2U("ctl"));
+/*   bs_write_wreg_u32(writer, fd, CTL, S2U("ctl")); */
+  bs_write_wreg_u32(writer, fd, CTL, 0);
   /* CRC check, if need be. We fuck this up big time intentionally. We
      don't want anyone to load our bitstreams for now... */
   bs_write_wreg_u32(writer, fd, CRC, S2U("CRC"));
