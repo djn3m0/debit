@@ -918,6 +918,7 @@ handle_cmd_write(bitstream_parsed_t *parsed,
     register_write(parser, CRC, 0);
     break;
   default:
+    debit_log(L_BITSTREAM,"Command %s",cmd_names[cmd]);
     break;
   }
 
