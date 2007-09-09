@@ -4,6 +4,7 @@
  *
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <glib.h>
@@ -725,6 +726,103 @@ far_increment_bn(bitstream_parser_t *bitstream)
   register_write(bitstream, FAR, get_hwfar(&far));
 }
 
+/* Other special registers */
+
+typedef struct _bitfield_t {
+  /* length is implicit as the difference of lenghts */
+  unsigned char off;
+} bitfield_t;
+
+typedef enum _ctl_fields {
+  GTS_USR_B = 0,
+  RSV0, RSV1,
+  PERSIST, SBITS,
+  RSV2, CTL_FIELD_LAST,
+} ctl_fields_t;
+
+#define STDNAME(x) [x] = #x
+
+static const char * ctl_fields_name[CTL_FIELD_LAST] = {
+  STDNAME(GTS_USR_B),
+  STDNAME(RSV0), STDNAME(RSV1),
+  STDNAME(PERSIST), STDNAME(SBITS),
+  STDNAME(RSV2),
+};
+
+static const bitfield_t ctl_bitfields[CTL_FIELD_LAST+1] = {
+  [GTS_USR_B] = { .off = 0 },
+  [RSV0] = { .off = 1 },
+  [RSV1] = { .off = 2 },
+  [PERSIST] = { .off = 3 },
+  [SBITS] = { .off = 4 },
+  [RSV2] = { .off = 6 },
+  [CTL_FIELD_LAST] = { .off = 7 },
+};
+
+/* MASK is identical */
+
+typedef enum _cor_fields {
+  GWE_CYCLE = 0,
+  GTS_CYCLE, LOCK_CYCLE,
+  MATCH_CYCLE, DONE_CYCLE,
+  SSCLKSRC, OSCFSEL,
+  SINGLE, DRIVE_DONE, DONE_PIPE,
+  SHUT_RST_DCM, RSV, CRC_BYPASS,
+  COR_FIELD_LAST,
+} ctl_bits_t;
+
+static const char * cor_fields_name[COR_FIELD_LAST] = {
+  STDNAME(GWE_CYCLE),
+  STDNAME(GTS_CYCLE), STDNAME(LOCK_CYCLE),
+  STDNAME(MATCH_CYCLE), STDNAME(DONE_CYCLE),
+  STDNAME(SSCLKSRC), STDNAME(OSCFSEL),
+  STDNAME(SINGLE), STDNAME(DRIVE_DONE), STDNAME(DONE_PIPE),
+  STDNAME(SHUT_RST_DCM), STDNAME(RSV), STDNAME(CRC_BYPASS),
+};
+
+static const bitfield_t cor_bitfields[COR_FIELD_LAST+1] = {
+  [GWE_CYCLE] = { .off = 0 },
+  [GTS_CYCLE] = { .off = 3 },
+  [LOCK_CYCLE] = { .off = 6 },
+  [MATCH_CYCLE] = { .off = 9 },
+  [DONE_CYCLE] = { .off = 12 },
+  [SSCLKSRC] = { .off = 15 },
+  [OSCFSEL] = { .off = 17 },
+  [SINGLE] = { .off = 23 },
+  [DRIVE_DONE] = { .off = 24 },
+  [DONE_PIPE] = { .off = 25 },
+  [SHUT_RST_DCM] = { .off = 26 },
+  [RSV] = { .off = 27 },
+  [CRC_BYPASS] = { .off = 29 },
+  [COR_FIELD_LAST] = { .off = 30 },
+};
+
+#define MSK(x) ((1<<x)-1)
+static void
+decode_reg(const uint32_t rval,
+	   const unsigned nfields,
+	   const bitfield_t bitfields[],
+	   const char *names[]) {
+  unsigned i;
+  for(i = 0; i < nfields; i++) {
+    unsigned offset = bitfields[i].off;
+    unsigned flen = bitfields[i+1].off - offset;
+    unsigned fval = (rval >> offset) & MSK(flen);
+    if (fval)
+      debit_log(L_BITSTREAM, "%s=%i", names[i], fval);
+  }
+}
+
+static inline uint32_t
+setfiel(const uint32_t val,
+	const unsigned field,
+	const bitfield_t bitfields[]) {
+  unsigned offset = bitfields[field].off;
+  unsigned flen = bitfields[field+1].off - offset;
+  assert((val & MSK(flen)) == val);
+  return val << offset;
+}
+
 static inline void
 default_register_write(bitstream_parser_t *parser,
 		       const register_index_t reg,
@@ -1130,6 +1228,15 @@ read_next_token(bitstream_parsed_t *parsed,
       case IDCODE:
 	/* get the index of the IDCODE & check FLR consistency */
 	err = idcode_write(parsed, parser);
+	break;
+      case MASK:
+      case CTL:
+	decode_reg(register_read(parser, reg), CTL_FIELD_LAST,
+		   ctl_bitfields, ctl_fields_name);
+	break;
+      case COR:
+	decode_reg(register_read(parser, reg), COR_FIELD_LAST,
+		   cor_bitfields, cor_fields_name);
 	break;
       default:
 	break;
