@@ -19,6 +19,7 @@ SHARED_SRC	= bitarray.c bitarray.h \
 SHARED_SRC_V2	= codes/crc-ibm.c codes/crc-ibm.h \
 		bitstream.c bitstream.h sites_v2.h \
 		bitstream_parser.c bitstream_parser.h \
+		bitstream_write.c bitstream_write.h \
 		design_v2.h virtex2_config.h cfgbit.h
 
 bin_PROGRAMS	= debit debit_v4 debit_v5 debit_s3

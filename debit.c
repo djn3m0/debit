@@ -24,6 +24,7 @@
 #include <glib.h>
 
 #include "bitstream_parser.h"
+#include "bitstream_write.h"
 #include "debitlog.h"
 #include "filedump.h"
 #include "analysis.h"
@@ -37,6 +38,9 @@ static gboolean bramdump = FALSE;
 static gboolean netdump = FALSE;
 
 static gchar *ifile = NULL;
+#ifdef VIRTEX2
+static gchar *ofile = NULL;
+#endif /* VIRTEX2 */
 static gchar *odir = "";
 static gchar *datadir = DATADIR;
 static gchar *suffix = ".bin";
@@ -65,6 +69,13 @@ debit_file(gchar *input_file, gchar *output_dir) {
 
   if (unkdump)
     design_dump_frames(bit, output_dir);
+
+#ifdef VIRTEX2
+  /* Just rewrite the bitstream. This is a test for the
+     bitstream-writing code */
+  if (ofile)
+    bitstream_write(bit,output_dir,ofile);
+#endif /* VIRTEX2 */
 
   if (sitedump || pipdump || lutdump || bramdump || netdump) {
     bitstream_analyzed_t *analysis = analyze_bitstream(bit, datadir);
@@ -104,6 +115,9 @@ static GOptionEntry entries[] =
 #else
   {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_local_debug, "Debug verbosity", NULL},
 #endif
+#ifdef VIRTEX2
+  {"outfile", 't', 0, G_OPTION_ARG_FILENAME, &ofile, "Write output bitstream to <ofile>", "<ofile>"},
+#endif /* VIRTEX2 */
   {"outdir", 'o', 0, G_OPTION_ARG_FILENAME, &odir, "Write data files in directory <odir>", "<odir>"},
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
   /* v2 specific */
