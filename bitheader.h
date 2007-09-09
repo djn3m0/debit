@@ -15,11 +15,11 @@
 #define FIRST_OPTION_OFFSET 11
 
 typedef enum option_type {
-  FILENAME = 0x61,
-  DEVICE_TYPE,
-  BUILD_DATE,
-  BUILD_TIME,
-  CODE,
+  FILENAME = 'a',
+  DEVICE_TYPE = 'b',
+  BUILD_DATE = 'c',
+  BUILD_TIME = 'd',
+  CODE = 'e',
   LAST_OPTION,
 } option_type_t;
 
