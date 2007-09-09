@@ -47,7 +47,10 @@ write_words(int fd, const uint32_t *buf, const size_t wordc) {
 /* Write data buffer without host to bitstream conversion of words */
 static inline void
 write_buf(int fd, const void *buf, const size_t len) {
-  (void) write(fd, buf, len);
+  ssize_t written = write(fd, buf, len);
+  if (written < 0)
+    perror("writing buffer");
+  assert((size_t)written == len);
 }
 
 /*
@@ -290,28 +293,32 @@ write_frame(const char *frame, guint type, guint index, guint frameidx, void *da
   //  update_crc_b(writer, FDRI, frame, frame_len);
 }
 
+#define S2U(x) GUINT32_FROM_BE(*((uint32_t *)x))
+
 static void
 bs_fdri_write_frames(bitstream_writer_t *bit, int fd,
 		     const bitstream_parsed_t *parsed) {
-  bitstream_writer_t bitstream_writer;
   /* Compute total word count */
   unsigned wordc = 2000;
 
   /* prepare for FRDI write */
+  /* FAR initialization. For non-compressed bitstream, it is set to be zero */
+  bs_write_wreg_u32(bit, fd, FAR, 0);
+  bs_write_wreg_u32(bit, fd, CMD, WCFG);
+
+  /* Prepare long FDRI write */
   bs_write_wreg(fd, TYPE_V2, FDRI, wordc);
 
   /* simply write *all* frames, to be refined */
-  iterate_over_frames(parsed, write_frame, &bitstream_writer);
+  iterate_over_frames(parsed, write_frame, bit);
 
   /* Update CRC */
 
   /* write AutoCRC word and update CRC accordingly */
   update_crc_w(bit, CRC, bit->crc);
-  write_u32(fd, bit->crc);
+  write_u32(fd, S2U("acrc"));
 
 }
-
-#define S2U(x) GUINT32_FROM_BE(*((uint32_t *)x))
 
 static void
 bs_write_cmd_header(bitstream_writer_t *writer,
@@ -331,11 +338,6 @@ bs_write_cmd_header(bitstream_writer_t *writer,
   bs_write_wreg_u32(writer, fd, CMD, SWITCH);
 
   /* Start-of-write */
-  /* FAR initialization. For non-compressed bitstream, it should be zero */
-  bs_write_wreg_u32(writer, fd, FAR, S2U("far"));
-  /* CMD second command */
-  bs_write_wreg_u32(writer, fd, CMD, WCFG);
-  /* Then the data, into the FDRI */
 }
 
 static void
@@ -351,10 +353,10 @@ bs_write_cmd_footer(bitstream_writer_t *writer, int fd, const bitstream_parsed_t
     bs_write_noop(fd);
   /* Again, commands */
   bs_write_wreg_u32(writer, fd, CMD, START);
-  bs_write_wreg_u32(writer, fd, CTL, 0xffff);
+  bs_write_wreg_u32(writer, fd, CTL, S2U("ctl"));
   /* CRC check, if need be. We fuck this up big time intentionally. We
      don't want anyone to load our bitstreams for now... */
-  bs_write_wreg_u32(writer, fd, CRC, 0xffff);
+  bs_write_wreg_u32(writer, fd, CRC, S2U("CRC"));
   bs_write_wreg_u32(writer, fd, CMD, DESYNCH);
   /* Last series of noops */
   for (i = 0; i < 4; i++)
@@ -380,6 +382,7 @@ bitstream_write(const bitstream_parsed_t *bit,
   unlink(tmpname);
   g_free(tmpname);
 
+  /* write all raw bitstream data to disk */
   bs_write_synchro(data);
   bs_write_cmd_header(&writer, data, bit);
   bs_fdri_write_frames(&writer, data, bit);
@@ -392,7 +395,7 @@ bitstream_write(const bitstream_parsed_t *bit,
     goto err_data;
   }
 
-  /* Then assemble the whole thing */
+  /* Prepend header to raw bitstream data */
   bs_add_header(&writer, file, data);
 
   close(file);
