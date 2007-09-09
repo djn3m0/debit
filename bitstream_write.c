@@ -20,6 +20,7 @@
 typedef struct _bitstream_writer {
   int fd;
   uint32_t crc;
+  const bitstream_parsed_t *bit;
 } bitstream_writer_t;
 
 static inline void write_u8(int fd, const uint8_t dat) {
@@ -75,15 +76,20 @@ bs_write_long_option(const int fd, const uint8_t code,
 }
 
 static void
-bs_write_header(const int fd) {
-  const char *filename = "essai.ncd";
-  const char *device = "2v40cs144";
-  const char *date = "2006/10/ 5";
-  const char *time = "06:06:06";
-  bs_write_option(fd, FILENAME, filename, strlen(filename)+1);
-  bs_write_option(fd, DEVICE_TYPE, device, strlen(filename)+1);
-  bs_write_option(fd, BUILD_DATE, date, strlen(date)+1);
-  bs_write_option(fd, BUILD_TIME, time, strlen(time)+1);
+bs_write_header(const int fd, const bitstream_parsed_t *bit) {
+  const parsed_header_t *header = &bit->header;
+
+#define REWRITE(opt)   do {				\
+  const header_option_t *hopt = get_option(header,opt); \
+  bs_write_option(fd, opt,				\
+		  hopt->payload,			\
+		  get_option_len(hopt)); }		\
+  while(0)
+
+  REWRITE(FILENAME);
+  REWRITE(DEVICE_TYPE);
+  REWRITE(BUILD_DATE);
+  REWRITE(BUILD_TIME);
 }
 
 static void
@@ -121,7 +127,7 @@ static void
 bs_add_header(const bitstream_writer_t *writer, int fd, int data) {
   (void) writer;
   bs_write_magic(fd);
-  bs_write_header(fd);
+  bs_write_header(fd, writer->bit);
   bs_write_data(fd, data);
 }
 
@@ -245,7 +251,9 @@ bs_write_wreg(const int fd, const cmd_pkt_ver_t type, const unsigned rega, const
     break;
   case TYPE_V2:
     write_pkt1(fd, 0, rega, PKT_WRITE);
-    write_pkt2(fd, wordc, PKT_WRITE);
+    /* XXX hotfix for pkt2 generation: invert read and write.
+       See in ug002 where the correct fix should happen */
+    write_pkt2(fd, wordc, PKT_READ);
     break;
   }
   /* Register rega for future CRC updates */
@@ -271,23 +279,34 @@ bs_write_wreg_u32(bitstream_writer_t *writer,
   bs_write_wreg_data(writer, fd, rega, 1, &word);
 }
 
+static inline void
+bs_write_padding(const int fd, const unsigned rega, const unsigned count) {
+  unsigned i;
+  (void) rega;
+  for (i = 0; i < count; i++)
+    write_u32(fd, 0);
+  /* XXX rega for CRC update */
+}
+
 /* Scatter-gather data write, for frames */
 
 #define AUTOCRC_NONE 0xffff
 
-/*
-typedef void (*frame_iterator_t)(const char *frame,
-				 guint type,
-				 guint index,
-				 guint frameidx,
-				 void *data);
- */
+static inline unsigned nframes(const chip_struct_t *chip_struct) {
+  const unsigned *col_count = chip_struct->col_count;
+  const unsigned *frame_count = chip_struct->frame_count;
+  unsigned total = 0;
+  int type;
+  for (type = 0; type < V2C__NB_CFG; type++)
+    total += frame_count[type] * col_count[type];
+  return total;
+}
 
 static void
 write_frame(const char *frame, guint type, guint index, guint frameidx, void *data) {
   bitstream_writer_t *writer = data;
-  /* XXX */
-  unsigned frame_len = 25;
+  const chip_struct_t *chip = writer->bit->chip_struct;
+  const unsigned frame_len = chip->framelen * sizeof(uint32_t);
   (void) type; (void) index; (void) frameidx;
   write_buf(writer->fd, frame, frame_len);
   //  update_crc_b(writer, FDRI, frame, frame_len);
@@ -299,7 +318,9 @@ static void
 bs_fdri_write_frames(bitstream_writer_t *bit, int fd,
 		     const bitstream_parsed_t *parsed) {
   /* Compute total word count */
-  unsigned wordc = 2000;
+  const chip_struct_t *chip = parsed->chip_struct;
+  const unsigned framec = nframes(chip);
+  const unsigned wordc = (framec + 1) * chip->framelen;
 
   /* prepare for FRDI write */
   /* FAR initialization. For non-compressed bitstream, it is set to be zero */
@@ -311,6 +332,9 @@ bs_fdri_write_frames(bitstream_writer_t *bit, int fd,
 
   /* simply write *all* frames, to be refined */
   iterate_over_frames(parsed, write_frame, bit);
+
+  /* padding frame */
+  bs_write_padding(fd, FDRI, chip->framelen);
 
   /* Update CRC */
 
@@ -368,7 +392,7 @@ bitstream_write(const bitstream_parsed_t *bit,
 		const char *output_dir,
 		const char *ofile) {
   int file, data, err = 0;
-  bitstream_writer_t writer;
+  bitstream_writer_t writer = { .bit = bit };
   gchar *tmpname = NULL;
   (void) output_dir;
 
