@@ -226,7 +226,7 @@ update_crc_h(bitstream_writer_t *writer, const register_index_t reg,
   }
 
   /* write back the new CRC register */
-/*   thing->bcc = bcc; */
+  writer->crc = bcc;
 
   /* writes to the CRC should yield a zero value */
   if (reg == CRC)
@@ -248,17 +248,17 @@ update_crc_b(bitstream_writer_t *bit,
   size_t i;
   assert(len % 4 == 0);
 
-  for (i = 0; i < len; i++) {
-    bcc = crc_ibm_byte(bcc, val[i]);
-    bcc = crc_ibm_byte(bcc, val[i+1]);
-    bcc = crc_ibm_byte(bcc, val[i+2]);
+  for (i = 0; i < len; i+=4) {
     bcc = crc_ibm_byte(bcc, val[i+3]);
+    bcc = crc_ibm_byte(bcc, val[i+2]);
+    bcc = crc_ibm_byte(bcc, val[i+1]);
+    bcc = crc_ibm_byte(bcc, val[i+0]);
     /* the 5 bits of register address */
     bcc = crc_ibm_addr5(bcc, reg);
   }
 
   /* write back the new CRC register */
-  //  crcreg->value = bcc;
+  bit->crc = bcc;
 
   /* writes to the CRC should yield a zero value. */
   if (reg == CRC)
@@ -329,12 +329,13 @@ bs_write_wreg_u32(bitstream_writer_t *writer,
 }
 
 static inline void
-bs_write_padding(const int fd, const unsigned rega, const unsigned count) {
+bs_write_padding(bitstream_writer_t *writer, const unsigned rega, const unsigned count) {
+  const int fd = writer->fd;
   unsigned i;
-  (void) rega;
-  for (i = 0; i < count; i++)
+  for (i = 0; i < count; i++) {
     write_u32(fd, 0);
-  /* XXX rega for CRC update */
+    update_crc_w(writer, rega, 0);
+  }
 }
 
 /* Scatter-gather data write, for frames */
@@ -358,7 +359,7 @@ write_frame(const char *frame, guint type, guint index, guint frameidx, void *da
   const unsigned frame_len = chip->framelen * sizeof(uint32_t);
   (void) type; (void) index; (void) frameidx;
   write_buf(writer->fd, frame, frame_len);
-  //  update_crc_b(writer, FDRI, frame, frame_len);
+  update_crc_b(writer, FDRI, frame, frame_len);
 }
 
 #define S2U(x) GUINT32_FROM_BE(*((uint32_t *)x))
@@ -383,14 +384,14 @@ bs_fdri_write_frames(bitstream_writer_t *bit, int fd,
   iterate_over_frames_far(parsed, write_frame, bit);
 
   /* padding frame */
-  bs_write_padding(fd, FDRI, chip->framelen);
-
-  /* Update CRC */
+  bs_write_padding(bit, FDRI, chip->framelen);
 
   /* write AutoCRC word and update CRC accordingly */
-  update_crc_w(bit, CRC, bit->crc);
-  write_u32(fd, S2U("acrc"));
 
+  debit_log(L_BITSTREAM,"ACRC is %04x", bit->crc);
+  write_u32(fd, bit->crc);
+  update_crc_w(bit, CRC, bit->crc);
+  /* This yields zero in CRC register */
 }
 
 static void
@@ -399,6 +400,9 @@ bs_write_cmd_header(bitstream_writer_t *writer,
   const chip_struct_t *chip = bit->chip_struct;
 
   bs_write_wreg_u32(writer, fd, CMD, RCRC);
+  /* reset the CRC appropriately */
+  writer->crc = 0;
+
   bs_write_wreg_u32(writer, fd, FLR, chip->framelen-1);
   /* These values are meaningless for me now */
   bs_write_wreg_u32(writer, fd, COR,
@@ -420,18 +424,21 @@ bs_write_cmd_footer(bitstream_writer_t *writer, int fd, const bitstream_parsed_t
   /* All frames have been written */
   bs_write_wreg_u32(writer, fd, CMD, GRESTORE);
   bs_write_wreg_u32(writer, fd, CMD, DGHIGH_LFRM);
-  /* Series of noop packets. How many are there ? */
-  for (i = 0; i < 26; i++)
+
+  /* Series of noop packets, waiting for flush of the last written
+     frame */
+  for (i = 0; i < chip->framelen; i++)
     bs_write_noop(fd);
-  /* Again, commands */
+
   bs_write_wreg_u32(writer, fd, CMD, START);
-/*   bs_write_wreg_u32(writer, fd, CTL, S2U("ctl")); */
   bs_write_wreg_u32(writer, fd, CTL, 0);
-  /* CRC check, if need be. We fuck this up big time intentionally. We
-     don't want anyone to load our bitstreams for now... */
-  bs_write_wreg_u32(writer, fd, CRC, S2U("CRC"));
+
+  /* CRC check. We should fuck this up big time intentionally. We don't
+     want anyone to load our bitstreams for now... */
+  debit_log(L_BITSTREAM,"CRC is %04x", writer->crc);
+  bs_write_wreg_u32(writer, fd, CRC, writer->crc);
+
   bs_write_wreg_u32(writer, fd, CMD, DESYNCH);
-  /* Last series of noops */
   for (i = 0; i < 4; i++)
     bs_write_noop(fd);
 }

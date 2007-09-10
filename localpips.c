@@ -799,7 +799,7 @@ typedef struct _examine_endpoint_memory {
 static void
 examine_groupnode (GNode *node, gpointer data) {
   localpip_control_data_t *ctrldat = node->data;
-  examine_endpoint_memory_t *exam_arg = data;
+  const examine_endpoint_memory_t *exam_arg = data;
   wire_db_t * wiredb = exam_arg->wiredb;
   const wire_atom_t endwire = ctrldat->endwire;
   examine_data_memory_t pass_arg = {

@@ -977,7 +977,6 @@ iterate_over_frames_far(const bitstream_parsed_t *parsed,
 
     iter(data, type, index, frame, itdat);
     _far_increment_mna(chip_id, &far);
-    print_far(&far);
   }
 }
 
