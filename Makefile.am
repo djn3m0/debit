@@ -126,7 +126,7 @@ DOXYDIR=doc
 doxy: $(DOCSOURCES) $(DOXYCONFIG)
 	doxygen $(DOXYCONFIG) #&& make -C $(DOXYDIR)/latex/
 
-DPKG_SOURCE_EXCLUDE=-i'(trash|.git)' -Itrash -I.git
+DPKG_SOURCE_EXCLUDE=-i'(trash|.git|tests/.*/.*)' -Itrash -I.git -Itests/*/*
 
 #Build both source and binary deb
 deb:
