@@ -133,6 +133,17 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
 			     gpointer data);
 
 /*
+ * Detailed lookup function
+ */
+
+int
+bitpip_lookup(const sited_pip_t pip,
+	      const chip_descr_t *chip,
+	      const pip_db_t *pipdb,
+	      const unsigned **cfgbits, size_t *nbits,
+	      uint32_t *vals);
+
+/*
  * Connexity database API
  */
 
@@ -140,6 +151,10 @@ uint32_t
 get_input_wires(const pip_db_t *pipdb,
                 const logic_t pip, const switch_type_t swit,
                 gsize *size, wire_atom_t **array);
+
+/*
+ * Iteration over database
+ */
 
 typedef void (* logic_callback_t)(const logic_atom_t start, void *data);
 
