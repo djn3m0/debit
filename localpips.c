@@ -1392,7 +1392,7 @@ iter_logic_input(const pip_db_t *pipdb,
 /* Pip database query */
 static inline void
 gather_db_data(const GNode *base,
-	       unsigned **cfgbits, size_t *nbits,
+	       const unsigned **cfgbits, size_t *nbits,
 	       uint32_t *vals) {
   const localpip_data_t *dat = base->data;
   const GNode *nodectrl = base->parent;
