@@ -35,7 +35,9 @@ enum {
 	L_GUI = (DEBIT_DEBUG > 1) * 0x4000,
 	/* Header */
 	L_HEADER = (DEBIT_DEBUG > 1) * 0x8000,
-	L_ANY = 0xffff,
+	/* Parser */
+	L_PARSER = (DEBIT_DEBUG > 1) * 0x10000,
+	L_ANY = 0xfffff,
 };
 
 #if DEBIT_DEBUG > 0

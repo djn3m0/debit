@@ -1285,26 +1285,28 @@ get_implicit_startpoint(wire_atom_t *wire,
  * database, which is a bitmask of input wires.
  */
 
-/* Connexity database query functions */
+/* Generic database query functions */
 
-typedef struct _search_logic {
-  const logic_t pip;
+typedef struct _search_db {
+  const unsigned first;
+  const unsigned second;
   GNode *db;
-} search_logic_t;
+} search_db_t;
 
 static void
-find_logic(GNode *node, gpointer data) {
-  search_logic_t *cfg = data;
+find_first(GNode *node, gpointer data) {
+  search_db_t *cfg = data;
+  /* compatible with localpip_control_data_t for endwire */
   connex_control_data_t *dat = node->data;
-  if (dat->endwire == cfg->pip.target)
+  if (dat->endwire == cfg->first)
     cfg->db = node;
 }
 
 static void
-find_config(GNode *node, gpointer data) {
-  search_logic_t *cfg = data;
+find_second(GNode *node, gpointer data) {
+  search_db_t *cfg = data;
   localpip_data_t *dat = node->data;
-  if (dat->startwire == cfg->pip.source)
+  if (dat->startwire == cfg->second)
     cfg->db = node;
 }
 
@@ -1313,19 +1315,19 @@ find_config(GNode *node, gpointer data) {
  * And Nil if not found.
  */
 
-static GNode *
-logic_lookup(const logic_t pip,
-             const pip_db_t *pipdb,
-             const switch_type_t swit) {
-  /* find the endpoint */
-  GNode *database = pipdb->connexdb[swit];
-  search_logic_t logic = { .pip = pip, .db = NULL };
+static const GNode *
+db_lookup(const unsigned source,
+	  const unsigned target,
+	  const GNode *database) {
+  search_db_t logic = { .first = target,
+			.second = source,
+			.db = NULL };
   if (!database)
     return NULL;
 
   /* First-level lookup */
-  g_node_children_foreach (database, G_TRAVERSE_ALL,
-                           find_logic, &logic);
+  g_node_children_foreach ((void *)database, G_TRAVERSE_ALL,
+                           find_first, &logic);
 
   if (!logic.db)
     return NULL;
@@ -1333,8 +1335,8 @@ logic_lookup(const logic_t pip,
   logic.db = NULL;
 
   /* Second-level lookup */
-  g_node_children_foreach (database, G_TRAVERSE_ALL,
-                           find_config, &logic);
+  g_node_children_foreach ((void *)database, G_TRAVERSE_ALL,
+                           find_second, &logic);
 
   return logic.db;
 }
@@ -1364,7 +1366,8 @@ uint32_t
 get_input_wires(const pip_db_t *pipdb,
                 const logic_t pip, const switch_type_t swit,
                 gsize *size, wire_atom_t **array) {
-  GNode *base = logic_lookup(pip, pipdb, swit);
+  GNode *database = pipdb->connexdb[swit];
+  const GNode *base = db_lookup(pip.source, pip.target, database);
   return get_input_wires_helper(base, size, array);
 }
 
@@ -1384,4 +1387,42 @@ iter_logic_input(const pip_db_t *pipdb,
   gsize size; logic_atom_t *array;
   uint32_t set = get_input_wires(pipdb, pip, swit, &size, &array);
   iterate_input_wires(set, size, array, logcall, data);
+}
+
+/* Pip database query */
+static inline void
+gather_db_data(const GNode *base,
+	       const unsigned **cfgbits, size_t *nbits,
+	       uint32_t *vals) {
+  const localpip_data_t *dat = base->data;
+  const GNode *nodectrl = base->parent;
+  const localpip_control_data_t *ctrl = nodectrl->data;
+  *cfgbits = ctrl->data;
+  *vals = dat->cfgdata;
+  *nbits = ctrl->size;
+}
+
+/*
+ * Return the GNode associated to a logic pip.
+ * And Nil if not found.
+ */
+
+int
+bitpip_lookup(const sited_pip_t spip,
+	      const chip_descr_t *chip,
+	      const pip_db_t *pipdb,
+	      const unsigned **cfgbits, size_t *nbits,
+	      uint32_t *vals) {
+  const site_type_t stype = site_type(chip, spip.site);
+  const GNode *database = pipdb->memorydb[stype];
+  const GNode *base = db_lookup(spip.pip.source, spip.pip.target, database);
+
+  if (!base) {
+    debit_log(L_PIPS, "bitpip lookup failed");
+    return -1;
+  }
+
+  gather_db_data(base, cfgbits, nbits, vals);
+  debit_log(L_PIPS, "bitpip lookup succeeded with value %08x", *vals);
+  return 0;
 }

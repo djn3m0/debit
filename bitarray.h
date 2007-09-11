@@ -48,8 +48,9 @@ gchar bytearray_get_uint8(bytearray_t *ba)
   return ba->data[ba->pos++];
 }
 
-/* unaligned memory access */
+#ifdef HAVE_ALIGNED_ACCESS_REQUIRED
 
+/* unaligned memory access prohibited */
 static inline
 guint32 bytearray_peek_uint32(const bytearray_t *ba) {
   guint32 c = 0;
@@ -74,13 +75,14 @@ int is_aligned32(const void *ptr) {
   return (((unsigned long)ptr & 3) == 0);
 }
 
+#else /* HAVE_ALIGNED_ACCESS_REQUIRED */
+
 static inline
-guint32 _bytearray_peek_uint32(const bytearray_t *ba) {
+guint32 bytearray_peek_uint32(const bytearray_t *ba) {
   guint32 c;
   const guint32 *pos = (guint32 *)&ba->data[ba->pos];
 
   g_assert(bytearray_available(ba) >= sizeof(uint32_t));
-  g_assert(is_aligned32(pos));
 
   /** \todo We read as big endian for now,
       but later use standard conversion macros outside this */
@@ -88,6 +90,8 @@ guint32 _bytearray_peek_uint32(const bytearray_t *ba) {
   c = GUINT32_FROM_BE(*pos);
   return c;
 }
+
+#endif /* HAVE_ALIGNED_ACCESS_REQUIRED */
 
 static inline
 guint32 bytearray_get_uint32(bytearray_t *ba)

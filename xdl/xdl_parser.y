@@ -12,13 +12,14 @@
 #include <string.h>
 #include "parser.h"
 #include "wiring.h"
+#include "debitlog.h"
 /* XXX */
 #include "design_v2.h"
 
 #define YYPARSE_PARAM yyparm
 
 void yyerror(char *err) {
-	fprintf(stderr, "XDL parser error: %s", err);
+  debit_log(L_PARSER, "XDL parser error: %s", err);
 }
 
 /* could be changed, depending on whether the lexer is reentrant */
@@ -29,56 +30,76 @@ extern int yylex(void *yylval_param);
  * back to the lexer in case we need to interpret identifiers.
  */
 typedef enum ident_type_t {
-	IDENT_TYPE_STRING = 0,
-	IDENT_TYPE_WIRE,
-	IDENT_TYPE_SITE,
+  IDENT_TYPE_STRING = 0,
+  IDENT_TYPE_WIRE,
+  IDENT_TYPE_SITE,
 } ident_type_t;
+
+static void write_pip(parser_t *parser,
+		      const sited_pip_t spip) {
+  const wire_db_t *wdb = parser->pipdb->wiredb;
+  const chip_descr_t *chip = parser->chip;
+  const unsigned *cfgbits;
+  size_t nbits;
+  uint32_t vals;
+  char pname[64];
+  (void) snprint_spip(pname, sizeof(pname), wdb, chip, &spip);
+  debit_log(L_PARSER, "%s", pname);
+
+  /* lookup the pip in the database */
+  (void) bitpip_lookup(spip, chip, parser->pipdb,
+		       &cfgbits, &nbits, &vals);
+
+  /* process the bitstream accordingly */
+
+}
+
 
 static void treat_pip(parser_t *parser,
 		      const char *start,
 		      const char *end,
 		      const char *site) {
-	const wire_db_t *wdb = parser->pipdb->wiredb;
-	const chip_descr_t *chip = parser->chip;
-	int err;
-	wire_atom_t swire, ewire;
-	site_ref_t sref;
-	parser->pip_counter++;
+  const wire_db_t *wdb = parser->pipdb->wiredb;
+  const chip_descr_t *chip = parser->chip;
+  sited_pip_t spip;
+  int err;
+  parser->pip_counter++;
 
-	/* Obviously this parsing should be factored in
-	   the lexer, before we even have to duplicate and pass strings
-	   around */
-	err = parse_wire_simple(wdb, &swire, start);
-	if (err) {
-		printf("unknown wire %s @%s\n", start, site);
-		goto out_err;
-	}
-	err = parse_wire_simple(wdb, &ewire, end);
-	if (err) {
-		printf("unknown wire %s @%s\n", end, site);
-		goto out_err;
-	}
-	err = parse_site_simple(chip, &sref, site);
-	if (err) {
-		printf("unknown site %s\n", site);
-		goto out_err;
-	}
+  /* Obviously this parsing should be factored in
+     the lexer, before we even have to duplicate and pass strings
+     around */
+  err = parse_wire_simple(wdb, &spip.pip.source, start);
+  if (err) {
+    debit_log(L_PARSER, "unknown wire %s @%s", start, site);
+    goto out_err;
+  }
+  err = parse_wire_simple(wdb, &spip.pip.target, end);
+  if (err) {
+    debit_log(L_PARSER, "unknown wire %s @%s", end, site);
+    goto out_err;
+  }
+  err = parse_site_simple(chip, &spip.site, site);
+  if (err) {
+    debit_log(L_PARSER, "unknown site %s", site);
+    goto out_err;
+  }
 
-	printf("pip %s to %s @ %s\n", wire_name(wdb,swire), wire_name(wdb,ewire), site);
-out_err:
-	return;
+  write_pip(parser, spip);
+
+ out_err:
+  return;
 }
 
 static void treat_design(parser_t *parser,
 			 const char *design_name,
 			 const char *device) {
-	const char *datadir = parser->datadir;
-	/* Load the wire/pip db at this time. Obviously, should use the
-	 * type of device here... */
-	parser->pipdb = get_pipdb(datadir);
-	parser->chip = get_chip(datadir, XC2V2000);
-	parser->design = strdup(design_name);
-	printf("Design %s on device %s\n",design_name,device);
+  const char *datadir = parser->datadir;
+  /* Load the wire/pip db at this time. Obviously, should use the
+   * type of device here... */
+  parser->pipdb = get_pipdb(datadir);
+  parser->chip = get_chip(datadir, XC2V2000);
+  parser->design = strdup(design_name);
+  printf("Design %s on device %s\n",design_name,device);
 }
 
 %}
