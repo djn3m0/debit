@@ -23,18 +23,31 @@ typedef struct _bitstream_writer {
   const bitstream_parsed_t *bit;
 } bitstream_writer_t;
 
+static inline void write_s(int fd, const void *buf, size_t count) {
+  const char *dat = buf;
+  do {
+    ssize_t written = write(fd, dat, count);
+    if (written < 0) {
+      perror("writing buffer");
+      return;
+    }
+    count -= written;
+    dat += written;
+  } while (count != 0);
+}
+
 static inline void write_u8(int fd, const uint8_t dat) {
-  (void) write(fd, &dat, sizeof(dat));
+  write_s(fd, &dat, sizeof(dat));
 }
 
 static inline void write_u16(int fd, const uint16_t dat) {
   const uint16_t wdat = GUINT16_TO_BE(dat);
-  (void) write(fd, &wdat, sizeof(wdat));
+  write_s(fd, &wdat, sizeof(wdat));
 }
 
 static inline void write_u32(int fd, const uint32_t dat) {
   const uint32_t wdat = GUINT32_TO_BE(dat);
-  (void) write(fd, &wdat, sizeof(wdat));
+  write_s(fd, &wdat, sizeof(wdat));
 }
 
 /* Write data buffer with host to bitstream conversion of words */
@@ -48,10 +61,7 @@ write_words(int fd, const uint32_t *buf, const size_t wordc) {
 /* Write data buffer without host to bitstream conversion of words */
 static inline void
 write_buf(int fd, const void *buf, const size_t len) {
-  ssize_t written = write(fd, buf, len);
-  if (written < 0)
-    perror("writing buffer");
-  assert((size_t)written == len);
+  write_s(fd, buf, len);
 }
 
 /*
@@ -64,7 +74,7 @@ bs_write_option(const int fd, const uint8_t code,
 		const void *payload, const uint16_t length) {
   write_u8(fd,code);
   write_u16(fd,length);
-  write(fd, payload, length);
+  write_s(fd, payload, length);
 }
 
 static void
@@ -72,7 +82,7 @@ bs_write_long_option(const int fd, const uint8_t code,
 		     const void *payload, const uint32_t length) {
   write_u8(fd,code);
   write_u32(fd,length);
-  write(fd, payload, length);
+  write_s(fd, payload, length);
 }
 
 static void
