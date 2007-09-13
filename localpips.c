@@ -844,11 +844,12 @@ __pips_of_site_append(const pip_db_t *pipdb,
     .array = pips_array,
     .wiredb = pipdb->wiredb,
   };
+  void *arg = (void *)&exam_arg;
 
   if (!head)
     return;
 
-  iterate_over_groups_memory(head, examine_groupnode, (void *)&exam_arg);
+  iterate_over_groups_memory(head, examine_groupnode, arg);
 }
 
 /***
