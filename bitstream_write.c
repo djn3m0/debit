@@ -5,8 +5,21 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
 #include <fcntl.h>
+
+#include <glib.h>
+#include <glib/gstdio.h>
+
+#undef HAVE_MMAP
+
+#ifdef HAVE_MMAP
+#include <sys/mman.h>
+#endif /* HAVE_MMAP */
+
+/* Dirty hack for w32 support */
+#ifndef O_NDELAY
+#define O_NDELAY 0
+#endif /* O_NDELAY */
 
 #include <unistd.h>
 
@@ -113,11 +126,13 @@ bs_write_magic(const int fd) {
   write_u8(fd,  0x1);
 }
 
+#ifdef HAVE_MMAP
 static void
-bs_write_data(int fd, int fd_data) {
+bs_write_data(int fd, int fd_data, const char *tmp) {
   struct stat statistics;
   void *data_buf;
   off_t size;
+  (void) tmp;
 
   fstat(fd_data, &statistics);
   size = statistics.st_size;
@@ -130,15 +145,39 @@ bs_write_data(int fd, int fd_data) {
   bs_write_long_option(fd, CODE, data_buf, size);
   munmap(data_buf, size);
 }
+#else /* HAVE_MMAP */
+/* Non-mmap suboptimal implementation, which goes through the file
+   path -- which must not have been unlinked. */
+static void
+bs_write_data(int fd, int fd_data, const char *tmp) {
+  GError *error = NULL;
+  GMappedFile *file = NULL;
+  (void) fd_data;
+
+  file = g_mapped_file_new(tmp, FALSE, &error);
+  if (error != NULL) {
+    g_warning("could not map file %s: %s", tmp, error->message);
+    g_error_free (error);
+    return;
+  }
+
+  bs_write_long_option(fd, CODE,
+		       g_mapped_file_get_contents (file),
+		       g_mapped_file_get_length (file));
+
+  g_mapped_file_free(file);
+}
+#endif /* HAVE_MMAP */
 
 /* Only depends on ? */
 /* A bit complicated, as this must be computed after the file output */
 static void
-bs_add_header(const bitstream_writer_t *writer, int fd, int data) {
+bs_add_header(const bitstream_writer_t *writer,
+	      int fd, int data, const char *tmp) {
   (void) writer;
   bs_write_magic(fd);
   bs_write_header(fd, writer->bit);
-  bs_write_data(fd, data);
+  bs_write_data(fd, data, tmp);
 }
 
 /* packet writing functions */
@@ -468,9 +507,13 @@ bitstream_write(const bitstream_parsed_t *bit,
     return data;
   writer.fd = data;
 
-  /* unlink it from the filesystem */
-  unlink(tmpname);
+  /* unlink the temp file from the filesystem early if we can directly
+     mmap from a fd instead of a filename */
+#ifdef HAVE_MMAP
+  (void) unlink(tmpname);
   g_free(tmpname);
+  tmpname = NULL;
+#endif /* HAVE_MMAP */
 
   /* write all raw bitstream data to disk */
   bs_write_synchro(data);
@@ -479,18 +522,39 @@ bitstream_write(const bitstream_parsed_t *bit,
   bs_write_cmd_footer(&writer, data, bit);
 
   /* open bitstream itself */
-  file = open(ofile, O_CREAT | O_NONBLOCK | O_WRONLY, S_IRWXU | S_IRWXG);
+  file = g_open(ofile, O_CREAT | O_TRUNC | O_NDELAY | O_WRONLY, S_IRWXU);
   if (file < 0) {
     err = file;
     goto err_data;
   }
 
-  /* Prepend header to raw bitstream data */
-  bs_add_header(&writer, file, data);
+  /* Close the fd_data so that data will appear in mmap */
+#ifndef HAVE_MMAP
+  err = close(data);
+  data = -1;
+  if (err) {
+    perror("Closing bitstream file");
+    goto err_data;
+  }
+#endif
 
+  /* Prepend header to raw bitstream data */
+  bs_add_header(&writer, file, data, tmpname);
   close(file);
+
  err_data:
-  close(data);
+#ifdef HAVE_MMAP
+  err = close(data);
+  data = -1;
+  if (err) {
+    perror("Closing bitstream file");
+    goto err_data;
+  }
+#else
+  (void) unlink(tmpname);
+  g_free(tmpname);
+  tmpname = NULL;
+#endif /* HAVE_MMAP */
   return err;
 }
 
