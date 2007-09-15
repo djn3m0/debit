@@ -2,14 +2,29 @@
 	<title>SEE ALSO</title>
 	<para>
 	<citerefentry>
+	  <refentrytitle>bit2pdf</refentrytitle>
+	  <manvolnum>1</manvolnum>
+	</citerefentry>,
+	<citerefentry>
+	  <refentrytitle>bitisolation</refentrytitle>
+	  <manvolnum>1</manvolnum>
+	</citerefentry>,
+	<citerefentry>
 	  <refentrytitle>debit</refentrytitle>
+	  <manvolnum>1</manvolnum>
+	</citerefentry>,
+	<citerefentry>
+	  <refentrytitle>diff_bin_pos</refentrytitle>
+	  <manvolnum>1</manvolnum>
+	</citerefentry>,
+	<citerefentry>
+	  <refentrytitle>xdl2bit</refentrytitle>
 	  <manvolnum>1</manvolnum>
 	</citerefentry>,
 	<citerefentry>
 	  <refentrytitle>xiledit</refentrytitle>
 	  <manvolnum>1</manvolnum>
-	</citerefentry>
-	</para>
+	</citerefentry></para>
 	<para>
 		More information can be found at ulogic's homepage <ulink url="http://www.ulogic.org/trac"/>
 	</para>
