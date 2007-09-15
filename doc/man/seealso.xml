@@ -1,0 +1,16 @@
+<refsect1 id="seealso">
+	<title>SEE ALSO</title>
+	<para>
+	<citerefentry>
+	  <refentrytitle>debit</refentrytitle>
+	  <manvolnum>1</manvolnum>
+	</citerefentry>,
+	<citerefentry>
+	  <refentrytitle>xiledit</refentrytitle>
+	  <manvolnum>1</manvolnum>
+	</citerefentry>
+	</para>
+	<para>
+		More information can be found at ulogic's homepage <ulink url="http://www.ulogic.org/trac"/>
+	</para>
+</refsect1>

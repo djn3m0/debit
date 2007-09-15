@@ -9,11 +9,11 @@
 #include "xdl_parser.h"
 #include "parser.h"
 
-/* Parsing */
+/* Parsing, lexing */
 extern int yyparse (void *);
+extern FILE* yyin;
 
 /* Command-line */
-
 static gchar *ifile = NULL;
 static gchar *ofile = NULL;
 static gchar *datadir = DATADIR;
@@ -24,8 +24,8 @@ unsigned int debit_debug = 0;
 
 static GOptionEntry entries[] =
 {
-  {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Read bitstream <ifile>", "<ifile>"},
-  {"output", 'o', 0, G_OPTION_ARG_FILENAME, &ofile, "Write pdf to file <ofile>", "<ofile>"},
+  {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Read XDL file <ifile>", "<ifile>"},
+  {"output", 'o', 0, G_OPTION_ARG_FILENAME, &ofile, "Write bitstream to file <ofile>", "<ofile>"},
 #if DEBIT_DEBUG > 0
   {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
 #endif
@@ -33,10 +33,11 @@ static GOptionEntry entries[] =
   { NULL, '\0', 0, 0, 0, NULL, NULL }
 };
 
-static void
+static int
 xdl2bit_init(int *argcp, char ***argvp) {
   GError *error = NULL;
   GOptionContext *context = NULL;
+  int err = 0;
 
   context = g_option_context_new ("- turn a XDL file into a nice bitstream");
   g_option_context_add_main_entries (context, entries, NULL);
@@ -44,9 +45,21 @@ xdl2bit_init(int *argcp, char ***argvp) {
   if (error != NULL) {
     g_warning("cmdline parse error: %s", error->message);
     g_error_free (error);
+    return 1;
+  }
+
+  if (ifile) {
+    FILE *file = fopen(ifile, "r");
+    if (!file)
+      err = -1;
+    else
+      yyin = file;
+  } else {
+    yyin = stdin;
   }
 
   g_option_context_free(context);
+  return err;
 }
 
 int main(int argc, char **argv) {
@@ -55,8 +68,11 @@ int main(int argc, char **argv) {
 		.design = NULL,
 		.pipdb = NULL,
 	};
+	int err;
 
-	xdl2bit_init(&argc, &argv);
+	err = xdl2bit_init(&argc, &argv);
+	if (err)
+	  return err;
 	parser.datadir = datadir,
 
 	yyparse(&parser);

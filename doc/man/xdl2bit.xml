@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl"
+   href="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+
+    <!ENTITY cmd "<command>xdl2bit</command>">
+    <!ENTITY Xilinx "<trademark class='registered'>Xilinx</trademark>">
+    <!ENTITY XDL "<acronym>XDL</acronym>">
+]>
+
+<refentry>
+
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="entryinfo.xml" />
+
+<refmeta>
+	<refentrytitle>xdl2bit</refentrytitle>
+	<manvolnum>1</manvolnum>
+</refmeta>
+
+<refnamediv>
+	<refname>xdl2bit</refname>
+	<refpurpose>convert &XDL; files to &Xilinx; bitstreams</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+	&cmd;
+	<arg><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></arg>
+	<arg><option>--output <replaceable class="option">BITFILE</replaceable></option></arg>
+	<arg><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></arg>
+	<arg choice="req"><option>--input</option> <replaceable>XDL-FILE</replaceable></arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+	  &cmd;
+	  <arg choice="plain"><option>--help</option></arg>
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id="description">
+	<title>DESCRIPTION</title>
+	<para>
+		The &cmd; program parses one &Xilinx; &XDL; file
+		specified on the command line as
+		<replaceable>XDL-FILE</replaceable> and compiles it into a bitstream.
+	</para>
+</refsect1>
+
+<refsect1 id="options">
+	<title>OPTIONS</title>
+	<para>
+		&cmd; accepts the following options (in alphabetical order):
+	</para>
+
+	<variablelist>
+
+		<varlistentry>
+	<term><option>--datadir <replaceable class="option">DIRECTORY</replaceable></option></term>
+	<listitem>
+	  <para>Read debit's database files from
+	  <replaceable>DIRECTORY</replaceable> instread of the default
+	  compile-time location. Use with care !</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--debug <replaceable class="option">DEBUGMASK</replaceable></option></term>
+	<listitem>
+	  <para>Selectively enable debugging according to the <replaceable>DEBUGMASK</replaceable>.</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--help</option></term>
+	<listitem>
+		<para>Display some basic help</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--input <replaceable class="option">XDL-FILE</replaceable></option></term>
+	<listitem>
+	  <para>Read &XDL; file <replaceable>XDL-FILE</replaceable>.</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><option>--output <replaceable class="option">BITFILE</replaceable></option></term>
+	<listitem>
+	  <para>Output bitstream file <replaceable>BITFILE</replaceable>.</para>
+	</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<refsect1 id="diagnostics">
+	<title>DIAGNOSTICS</title>
+	<para>
+		&cmd; return codes provide information that can be used when
+		calling it from scripts.
+	</para>
+	<!-- better use segmentedlist element later,
+	     which is currently only supported in snapshots -->
+	<variablelist>
+
+		<varlistentry>
+	<term><errorcode>0</errorcode></term>
+	<listitem>
+		<para>No error</para>
+	</listitem>
+		</varlistentry>
+
+		<varlistentry>
+	<term><errorcode>-1</errorcode></term>
+	<listitem>
+		<para>Something wrong happened</para>
+	</listitem>
+		</varlistentry>
+
+	</variablelist>
+</refsect1>
+
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="seealso.xml" />
+
+</refentry>
