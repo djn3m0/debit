@@ -102,10 +102,18 @@ static void treat_pip(parser_t *parser,
 
 #include <time.h>
 static void treat_time(parsed_header_t *header) {
-  static const char *date = "2006/11/ 5";
-  static const char *time = "11: 4:42";
+  static char date[11];
+  static char hms[9];
+  const struct tm *tm;
+  time_t ltime;
+  (void) time(&ltime);
+  tm = localtime(&ltime);
+  snprintf(date, ARRAY_SIZE(date), "%i/%i/%i",
+	   1900+tm->tm_year, 1+tm->tm_mon, tm->tm_mday);
+  snprintf(hms, ARRAY_SIZE(hms), "%i:%i:%i",
+	   tm->tm_hour, tm->tm_min, tm->tm_sec);
   write_option(header, BUILD_DATE, date, strlen(date));
-  write_option(header, BUILD_TIME, time, strlen(time));
+  write_option(header, BUILD_TIME, hms, strlen(hms));
 }
 
 static int treat_design(parser_t *parser,
