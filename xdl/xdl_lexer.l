@@ -66,10 +66,9 @@ v[0-9]+.[0-9]+  { return VERSION; }
                                      It helps resolve shift-reduce conflicts */
 :             { return(TOK_CFG_SEP); }
 :D=           { BEGIN(S_CLUT);
-                printf( "Begin lut configuration\n" );
                 return(TOK_CFG_SEP); } /* magic string for LUT cfg data */
 \"            { BEGIN(INITIAL); return (TOK_QUOTE); }
-.             { printf( "Unrecognized character: %s\n", yytext ); }
+.             { g_warning("Unrecognized character: %s\n", yytext ); }
 }
 
 <S_CLUT>{
@@ -113,6 +112,6 @@ A[1-6]   {
 #[^\n]*\n      /* eat up one-line and end-of-line comments */
 [ \t\n]+       /* eat up whitespace */
 
-.           printf( "Unrecognized character: %s\n", yytext );
+.              { g_warning("Unrecognized character: %s\n", yytext ); }
 
 %%
