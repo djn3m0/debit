@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
 	};
 	int err;
 
-	yydebug = 1;
+/* 	yydebug = 1; */
 
 	err = xdl2bit_init(&argc, &argv);
 	if (err)

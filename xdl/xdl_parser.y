@@ -112,8 +112,6 @@ static void treat_design(parser_t *parser,
 
 %union {
 	char *name;
-	char *str;
-	char op;
 	unsigned val;
 }
 
@@ -139,12 +137,8 @@ static void treat_design(parser_t *parser,
 %token CONFIG
 %token CONNECTION
 
-%token TOK_E_OPEN
-%token TOK_E_CLOSE
-%token TOK_E_VAR
-%token TOK_E_HEX
-%token TOK_E_NULL
-%left '+' '*'
+%token TOK_E_VAL
+%left '+' '*' '@'
 %left NEG
 
 %type <name> LUTID
@@ -156,8 +150,7 @@ static void treat_design(parser_t *parser,
 %type <name> STRING
 %type <name> design_name
 
-%type <str> TOK_E_VAR
-%type <str> TOK_E_HEX
+%type <val> TOK_E_VAL
 %type <val> lutexpr
 %type <val> cfglut
 
@@ -235,22 +228,7 @@ net: net_header ',' iopinlist piplist ';'
 netlist: net | netlist net ;
 
 /* LUT expressions */
-lutexpr: TOK_E_VAR               {
-  /* I definitely love this, though the lookup should be moved to the
-     lexer to avoid unnecessary string copying */
-  static const uint16_t vars[4] = {
-    [0] = 0x00ff, [1] = 0x0f0f,
-    [2] = 0x3333, [3] = 0x5555,
-  };
-  unsigned index = $1[1]-'1';
-  assert(index < ARRAY_SIZE(vars));
-  debit_log(L_PARSER, "Lookup variable %s, index %i", $1, index);
-  $$ = vars[index];
- };
-| TOK_E_HEX                      {
-  /* convert from hex */
-  $$ = 0; /* strtol($1,$1+strlen($1),16); */};
-| TOK_E_NULL                     { $$ = 0; };
+lutexpr: TOK_E_VAL               { $$ = $1; };
 | lutexpr '*' lutexpr            { $$ = $1 & $3; };
 | lutexpr '+' lutexpr            { $$ = $1 | $3; };
 | lutexpr '@' lutexpr            { $$ = $1 ^ $3; };

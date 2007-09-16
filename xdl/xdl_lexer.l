@@ -8,6 +8,9 @@
 /* Definitions */
 %{
 #include <stdio.h>
+#include <stdint.h>
+#include <assert.h>
+#include "debitlog.h"
 #include "xdl_parser.h"
 
 extern void yyerror(char *);
@@ -58,8 +61,7 @@ v[0-9]+.[0-9]+  { return VERSION; }
 }
 
 <S_CSTRING>{
-[^\\\n\t ":]* { yymore(); BEGIN(S_CIDENTIFIER); }
-\\[\": ]      { yymore(); BEGIN(S_CIDENTIFIER); } /* Handle escaped characters */
+([^\\\n\t \":]*|\\[\": ])* { copy_and_return(IDENTIFIER); }
 [ \t\n]+      { return(TOK_WS); } /* whitespace is significant is this context.
                                      It helps resolve shift-reduce conflicts */
 :             { return(TOK_CFG_SEP); }
@@ -67,40 +69,33 @@ v[0-9]+.[0-9]+  { return VERSION; }
                 printf( "Begin lut configuration\n" );
                 return(TOK_CFG_SEP); } /* magic string for LUT cfg data */
 \"            { BEGIN(INITIAL); return (TOK_QUOTE); }
-}
-
-<S_CIDENTIFIER>{
-[^\\\n\t ":]* { yymore(); } /* standard characters */
-\\[\": ]      { yymore(); } /* escaped characters */
-[ \t\n]+              { BEGIN(S_CSTRING);
-                        yytext[yyleng-1]='\0';
-                        yylval->name = strdup(yytext);
-                        unput(' ');
-                        return(IDENTIFIER); } /* whitespace, end */
-:                     { BEGIN(S_CSTRING);
-                        yytext[yyleng-1]='\0';
-                        yylval->name = strdup(yytext);
-                        unput(':');
-                        return(IDENTIFIER); } /* unescaped colon */
-\"                    { BEGIN(S_CSTRING);
-                        yytext[yyleng-1]='\0';
-                        yylval->name = strdup(yytext);
-                        unput('"');
-                        return(IDENTIFIER); } /* end-of-string */
-.                     printf( "Unrecognized character: %s\n", yytext );
+.             { printf( "Unrecognized character: %s\n", yytext ); }
 }
 
 <S_CLUT>{
-A[1-6]   { copy_and_return(TOK_E_VAR); } /* XXX: should lookup here. variable; and prepare for the V5 ! */
-0x[a-fA-F0-9]+ { copy_and_return(TOK_E_HEX); } /* null token */
-0        { return(TOK_E_NULL); } /* null token */
-[ \t\n]+ { BEGIN(S_CIDENTIFIER); return(TOK_WS); } /* end-of-thing */
-[()+*@~]  { return(yytext[0]); } /* return character */
+A[1-6]   {
+	/* I definitely love this */
+	static const uint16_t vars[4] = {
+		[0] = 0x00ff, [1] = 0x0f0f,
+		[2] = 0x3333, [3] = 0x5555,
+	};
+	unsigned index = yytext[1]-'1';
+	assert(index < ARRAY_SIZE(vars));
+	debit_log(L_LEXER, "Lookup variable %s, index %i", yytext, index);
+	yylval->val = vars[index];
+	return(TOK_E_VAL);
+}
+0x[a-fA-F0-9]+ { yylval->val = 0; /* XXX */
+	         return(TOK_E_VAL); }
+0        { yylval->val = 0;
+	   return(TOK_E_VAL); }
+[()+*@~] { return(yytext[0]); }
+[ \t\n]+ { BEGIN(S_CSTRING); return(TOK_WS); } /* end-of-thing */
 }
 
 \" BEGIN(S_STRING);
 <S_STRING>{
-[^\\\n"]* { yymore(); }
+[^\\\n\"]* { yymore(); }
 \n { yymore(); } /* Handle multi-line string */
 \\\n { yymore(); } /* Handle multi-line string with escaped NL */
 \\[\": ] { yymore(); } /* Handle string-within-string and other escaped characters */

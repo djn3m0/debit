@@ -5,6 +5,8 @@
 #ifndef _HAS_DEBIT_DEBUG_H
 #define _HAS_DEBIT_DEBUG_H
 
+#include <glib.h>
+
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 #ifndef DEBIT_DEBUG
