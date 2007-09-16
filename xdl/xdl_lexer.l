@@ -33,6 +33,7 @@ extern void yyerror(char *);
 %x S_CONFIG
 %x S_CSTRING
 %x S_CIDENTIFIER
+%x S_CLUT
 
 %%
 
@@ -48,7 +49,7 @@ inpin  { return INPIN; }
 pip    { return PIP; }
 "=="|"=>"|"=-"|"->"     { return CONNECTION; }
 
-[a-zA-Z0-9_\-]* copy_and_return(IDENTIFIER); /* Should do otherwise */
+[a-zA-Z0-9_\-]* { copy_and_return(IDENTIFIER); } /* Should do otherwise */
 v[0-9]+.[0-9]+  { return VERSION; }
 
 <S_CONFIG>{
@@ -62,29 +63,52 @@ v[0-9]+.[0-9]+  { return VERSION; }
 [ \t\n]+      { return(TOK_WS); } /* whitespace is significant is this context.
                                      It helps resolve shift-reduce conflicts */
 :             { return(TOK_CFG_SEP); }
+:D=           { BEGIN(S_CLUT);
+                printf( "Begin lut configuration\n" );
+                return(TOK_CFG_SEP); } /* magic string for LUT cfg data */
 \"            { BEGIN(INITIAL); return (TOK_QUOTE); }
 }
 
 <S_CIDENTIFIER>{
-[^\\\n\t ":]* yymore(); /* standard characters */
-\\[\": ] yymore();      /* escaped characters */
-[ \t\n]+              { BEGIN(S_CSTRING); unput(' '); return(IDENTIFIER); } /* whitespace, end */
-:                     { BEGIN(S_CSTRING); unput(':'); return(IDENTIFIER); } /* unescaped colon */
-\"                    { BEGIN(S_CSTRING); unput('"'); return(IDENTIFIER); }
+[^\\\n\t ":]* { yymore(); } /* standard characters */
+\\[\": ]      { yymore(); } /* escaped characters */
+[ \t\n]+              { BEGIN(S_CSTRING);
+                        yytext[yyleng-1]='\0';
+                        yylval->name = strdup(yytext);
+                        unput(' ');
+                        return(IDENTIFIER); } /* whitespace, end */
+:                     { BEGIN(S_CSTRING);
+                        yytext[yyleng-1]='\0';
+                        yylval->name = strdup(yytext);
+                        unput(':');
+                        return(IDENTIFIER); } /* unescaped colon */
+\"                    { BEGIN(S_CSTRING);
+                        yytext[yyleng-1]='\0';
+                        yylval->name = strdup(yytext);
+                        unput('"');
+                        return(IDENTIFIER); } /* end-of-string */
 .                     printf( "Unrecognized character: %s\n", yytext );
+}
+
+<S_CLUT>{
+A[1-6]   { copy_and_return(TOK_E_VAR); } /* XXX: should lookup here. variable; and prepare for the V5 ! */
+0x[a-fA-F0-9]+ { copy_and_return(TOK_E_HEX); } /* null token */
+0        { return(TOK_E_NULL); } /* null token */
+[ \t\n]+ { BEGIN(S_CIDENTIFIER); return(TOK_WS); } /* end-of-thing */
+[()+*@~]  { return(yytext[0]); } /* return character */
 }
 
 \" BEGIN(S_STRING);
 <S_STRING>{
-[^\\\n"]* yymore();
-\n yymore(); /* Handle multi-line string */
-\\\n yymore(); /* Handle multi-line string with escaped NL */
+[^\\\n"]* { yymore(); }
+\n { yymore(); } /* Handle multi-line string */
+\\\n { yymore(); } /* Handle multi-line string with escaped NL */
+\\[\": ] { yymore(); } /* Handle string-within-string and other escaped characters */
 \"  {
-         yytext[yyleng-1] = '0';
+         yytext[yyleng-1] = '\0';
          BEGIN(INITIAL);
          copy_and_return(STRING);
     }
-\\[\": ] yymore(); /* Handle string-within-string and other escaped characters */
 }
 
 ","            { return ','; }

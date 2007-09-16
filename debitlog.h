@@ -35,8 +35,11 @@ enum {
 	L_GUI = (DEBIT_DEBUG > 1) * 0x4000,
 	/* Header */
 	L_HEADER = (DEBIT_DEBUG > 1) * 0x8000,
-	/* Parser */
+	/* Parser / lexer */
 	L_PARSER = (DEBIT_DEBUG > 1) * 0x10000,
+	L_LEXER = (DEBIT_DEBUG > 1) * 0x20000,
+	/* Bitstream writer */
+	L_WRITE = (DEBIT_DEBUG > 1) * 0x40000,
 	L_ANY = 0xfffff,
 };
 

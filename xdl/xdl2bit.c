@@ -62,6 +62,8 @@ xdl2bit_init(int *argcp, char ***argvp) {
   return err;
 }
 
+extern int yydebug;
+
 int main(int argc, char **argv) {
 	parser_t parser = {
 		.pip_counter = 0,
@@ -69,6 +71,8 @@ int main(int argc, char **argv) {
 		.pipdb = NULL,
 	};
 	int err;
+
+	yydebug = 1;
 
 	err = xdl2bit_init(&argc, &argv);
 	if (err)

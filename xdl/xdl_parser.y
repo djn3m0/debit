@@ -10,6 +10,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+
 #include "parser.h"
 #include "wiring.h"
 #include "debitlog.h"
@@ -17,6 +19,7 @@
 #include "design_v2.h"
 
 #define YYPARSE_PARAM yyparm
+#define YYDEBUG 1
 
 void yyerror(char *err) {
   debit_log(L_PARSER, "XDL parser error: %s", err);
@@ -109,6 +112,9 @@ static void treat_design(parser_t *parser,
 
 %union {
 	char *name;
+	char *str;
+	char op;
+	unsigned val;
 }
 
 /* Bison declaration */
@@ -116,6 +122,8 @@ static void treat_design(parser_t *parser,
 %token IDENTIFIER
 %token VERSION
 %token DESIGN
+
+%token LUTID
 
 %token INSTANCE
 %token PLACED
@@ -131,6 +139,15 @@ static void treat_design(parser_t *parser,
 %token CONFIG
 %token CONNECTION
 
+%token TOK_E_OPEN
+%token TOK_E_CLOSE
+%token TOK_E_VAR
+%token TOK_E_HEX
+%token TOK_E_NULL
+%left '+' '*'
+%left NEG
+
+%type <name> LUTID
 %type <name> IDENTIFIER
 %type <name> wire0
 %type <name> wire1
@@ -138,6 +155,11 @@ static void treat_design(parser_t *parser,
 %type <name> part
 %type <name> STRING
 %type <name> design_name
+
+%type <str> TOK_E_VAR
+%type <str> TOK_E_HEX
+%type <val> lutexpr
+%type <val> cfglut
 
 %% /* Grammar follows */
 
@@ -168,12 +190,16 @@ sitedef: STRING ;
 tile: IDENTIFIER { $$ = $1; } ;
 site: IDENTIFIER ;
 
-cfgattr: IDENTIFIER ;
-cfgval:  | IDENTIFIER ; /* Configuration values / names can be empty (MUXF) */
+cfgattr: IDENTIFIER { debit_log(L_PARSER, "Attribute %s", $1); } ;
+cfgval:  | IDENTIFIER { debit_log(L_PARSER, "Config val %s", $1); } ; /* Configuration values / names can be empty (MUXF) */
 whitespace: | TOK_WS ;  /* Whitespace can be empty */
 
-cfgvallist: TOK_CFG_SEP cfgval | cfgvallist TOK_CFG_SEP cfgval ;
-cfgitem: cfgattr cfgvallist ;
+cfgtrait: TOK_CFG_SEP cfgval;
+cfglut: TOK_CFG_SEP lutexpr { $$ = $2; };
+cfgvallist: cfgtrait | cfgvallist cfgtrait ;
+cfgitem: cfgattr cfgvallist
+| cfgattr cfgvallist cfglut { debit_log(L_PARSER, "LUT cfg %04x seen\n", (uint16_t)$3); };
+
 cfglist: cfgitem | cfglist TOK_WS cfgitem ;
 cfgstring: TOK_QUOTE whitespace cfglist whitespace TOK_QUOTE ;
 placement: PLACED tile site | UNPLACED ;
@@ -207,3 +233,26 @@ net: net_header ',' iopinlist piplist ';'
    | net_header ',' config ',' ';' ;
 
 netlist: net | netlist net ;
+
+/* LUT expressions */
+lutexpr: TOK_E_VAR               {
+  /* I definitely love this, though the lookup should be moved to the
+     lexer to avoid unnecessary string copying */
+  static const uint16_t vars[4] = {
+    [0] = 0x00ff, [1] = 0x0f0f,
+    [2] = 0x3333, [3] = 0x5555,
+  };
+  unsigned index = $1[1]-'1';
+  assert(index < ARRAY_SIZE(vars));
+  debit_log(L_PARSER, "Lookup variable %s, index %i", $1, index);
+  $$ = vars[index];
+ };
+| TOK_E_HEX                      {
+  /* convert from hex */
+  $$ = 0; /* strtol($1,$1+strlen($1),16); */};
+| TOK_E_NULL                     { $$ = 0; };
+| lutexpr '*' lutexpr            { $$ = $1 & $3; };
+| lutexpr '+' lutexpr            { $$ = $1 | $3; };
+| lutexpr '@' lutexpr            { $$ = $1 ^ $3; };
+| '~' lutexpr %prec NEG          { $$ = ~ $2; };
+| '(' lutexpr ')'                { $$ = $2; };
