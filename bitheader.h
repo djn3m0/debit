@@ -58,6 +58,15 @@ get_option(const parsed_header_t *header,
   return &header->options[opt - FILENAME];
 }
 
+static inline void
+write_option(parsed_header_t *header,
+	     const option_type_t opt,
+	     const void *data, const unsigned len) {
+  header_option_p *hopt = &header->options[opt - FILENAME];
+  hopt->data = data;
+  hopt->len = len;
+}
+
 static inline
 header_option_t *next_option(const header_option_t *data) {
   gint len = GINT16_FROM_BE(data->length);

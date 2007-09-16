@@ -38,10 +38,12 @@ typedef enum ident_type_t {
   IDENT_TYPE_SITE,
 } ident_type_t;
 
-static void write_pip(parser_t *parser,
-		      const sited_pip_t spip) {
+static int write_pip(parser_t *parser,
+		     const sited_pip_t spip) {
   const wire_db_t *wdb = parser->pipdb->wiredb;
   const chip_descr_t *chip = parser->chip;
+/*   const csite_descr_t *csite = get_site(chip, spip.site); */
+  int err = 0;
   const unsigned *cfgbits;
   size_t nbits;
   uint32_t vals;
@@ -50,11 +52,16 @@ static void write_pip(parser_t *parser,
   debit_log(L_PARSER, "%s", pname);
 
   /* lookup the pip in the database */
-  (void) bitpip_lookup(spip, chip, parser->pipdb,
-		       &cfgbits, &nbits, &vals);
+  err = bitpip_lookup(spip, chip, parser->pipdb,
+		      &cfgbits, &nbits, &vals);
+  if (err) {
+    debit_log(L_PARSER, "Error: unknown sited pip %s", pname);
+    return err;
+  }
 
   /* process the bitstream accordingly */
-
+/*   set_bitstream_site_bits(bitstream->bit, csite, vals, cfgbits, nbits); */
+  return err;
 }
 
 
@@ -87,21 +94,36 @@ static void treat_pip(parser_t *parser,
     goto out_err;
   }
 
-  write_pip(parser, spip);
+  (void) write_pip(parser, spip);
 
  out_err:
   return;
+}
+
+#include <time.h>
+static void treat_time(parsed_header_t *header) {
+  static const char *date = "2006/11/ 5";
+  static const char *time = "11: 4:42";
+  write_option(header, BUILD_DATE, date, strlen(date));
+  write_option(header, BUILD_TIME, time, strlen(time));
 }
 
 static void treat_design(parser_t *parser,
 			 const char *design_name,
 			 const char *device) {
   const char *datadir = parser->datadir;
-  /* Load the wire/pip db at this time. Obviously, should use the
-   * type of device here... */
+  parsed_header_t header;
+  treat_time(&header);
+
+  /* Fill in the pseudo-header, to be used by the bitstream writer */
+  write_option(&header, FILENAME, design_name, strlen(design_name));
+  write_option(&header, DEVICE_TYPE, device, strlen(device));
+
+  /* Load the wire/pip dbs, using the correct type */
   parser->pipdb = get_pipdb(datadir);
   parser->chip = get_chip(datadir, XC2V2000);
   parser->design = strdup(design_name);
+/*   parser->bitstream = alloc_bitstream(datadir, XC2V2000); */
   printf("Design %s on device %s\n",design_name,device);
 }
 
