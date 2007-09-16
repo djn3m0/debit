@@ -17,6 +17,7 @@
 #include "debitlog.h"
 /* XXX */
 #include "design_v2.h"
+#include "bitstream.h"
 
 #define YYPARSE_PARAM yyparm
 #define YYDEBUG 1
@@ -42,7 +43,7 @@ static int write_pip(parser_t *parser,
 		     const sited_pip_t spip) {
   const wire_db_t *wdb = parser->pipdb->wiredb;
   const chip_descr_t *chip = parser->chip;
-/*   const csite_descr_t *csite = get_site(chip, spip.site); */
+  const csite_descr_t *csite = get_site(chip, spip.site);
   int err = 0;
   const unsigned *cfgbits;
   size_t nbits;
@@ -55,12 +56,12 @@ static int write_pip(parser_t *parser,
   err = bitpip_lookup(spip, chip, parser->pipdb,
 		      &cfgbits, &nbits, &vals);
   if (err) {
-    debit_log(L_PARSER, "Error: unknown sited pip %s", pname);
+    debit_log(L_PARSER, "Error: unknown arc %s", pname);
     return err;
   }
 
   /* process the bitstream accordingly */
-/*   set_bitstream_site_bits(bitstream->bit, csite, vals, cfgbits, nbits); */
+/*   set_bitstream_site_bits(&parser->bit, csite, vals, cfgbits, nbits); */
   return err;
 }
 
@@ -186,6 +187,7 @@ static int treat_design(parser_t *parser,
 %type <name> wire0
 %type <name> wire1
 %type <name> tile
+%type <name> site
 %type <name> part
 %type <name> device
 %type <name> STRING
@@ -222,10 +224,10 @@ design: design_header ',' config ';' ;
 name: STRING ;
 sitedef: STRING ;
 tile: IDENTIFIER { $$ = $1; } ;
-site: IDENTIFIER ;
+site: IDENTIFIER { $$ = $1; } ;
 
-cfgattr: IDENTIFIER { debit_log(L_PARSER, "Attribute %s", $1); } ;
-cfgval:  | IDENTIFIER { debit_log(L_PARSER, "Config val %s", $1); } ; /* Configuration values / names can be empty (MUXF) */
+cfgattr: IDENTIFIER { debit_log(L_PARSER, "Attribute %s", $1); free($1); } ;
+cfgval:  | IDENTIFIER { debit_log(L_PARSER, "Config val %s", $1); free($1); } ; /* Configuration values / names can be empty (MUXF) */
 whitespace: | TOK_WS ;  /* Whitespace can be empty */
 
 cfgtrait: TOK_CFG_SEP cfgval;
@@ -236,15 +238,15 @@ cfgitem: cfgattr cfgvallist
 
 cfglist: cfgitem | cfglist TOK_WS cfgitem ;
 cfgstring: TOK_QUOTE whitespace cfglist whitespace TOK_QUOTE ;
-placement: PLACED tile site | UNPLACED ;
+placement: PLACED tile site { free($2); free($3); } | UNPLACED ;
 config: CONFIG cfgstring ;
 instance: INSTANCE name sitedef ',' placement ',' config ';' ;
 
 instancelist: instance | instancelist instance;
 
 /* Nets */
-inst_name: STRING ;
-inst_pin: IDENTIFIER ;
+inst_name: STRING { free($1); } ;
+inst_pin: IDENTIFIER { free($1); } ;
 outpin: OUTPIN inst_name inst_pin ',' ;
 inpin: INPIN inst_name inst_pin ',' ;
 inpinlist: inpin | inpinlist inpin ;
@@ -255,13 +257,13 @@ wire1: IDENTIFIER { $$ = $1; };
 dir: CONNECTION;
 pip: PIP tile wire0 dir wire1 ',' {
 	treat_pip(yyparm, $3, $5, $2);
-	free($3); free($5); free($2);
+	free($2); free($3); free($5);
  } ;
 piplist: pip | piplist pip ;
 
 /* Some nets have the vcc qualifier appended after the name */
 qualifier:
-   | IDENTIFIER ;
+   | IDENTIFIER { free($1); };
 net_header: NET STRING qualifier ;
 net: net_header ',' iopinlist piplist ';'
    | net_header ',' config ',' ';' ;
