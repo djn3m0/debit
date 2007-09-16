@@ -111,8 +111,8 @@ static void treat_design(parser_t *parser,
 %pure-parser
 
 %union {
-	char *name;
-	unsigned val;
+  char *name;
+  uint64_t val;
 }
 
 /* Bison declaration */

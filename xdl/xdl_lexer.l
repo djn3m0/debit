@@ -75,9 +75,10 @@ v[0-9]+.[0-9]+  { return VERSION; }
 <S_CLUT>{
 A[1-6]   {
 	/* I definitely love this */
-	static const uint16_t vars[4] = {
-		[0] = 0x00ff, [1] = 0x0f0f,
-		[2] = 0x3333, [3] = 0x5555,
+	static const uint64_t vars[6] = {
+	  [0] = 0xaaaaaaaaaaaaaaaaULL, [1] = 0xccccccccccccccccULL,
+	  [2] = 0xf0f0f0f0f0f0f0f0ULL, [3] = 0xff00ff00ff00ff00ULL,
+	  [4] = 0xffff0000ffff0000ULL, [5] = 0xffffffff00000000ULL,
 	};
 	unsigned index = yytext[1]-'1';
 	assert(index < ARRAY_SIZE(vars));

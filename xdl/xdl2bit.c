@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <glib.h>
 
+#include <stdint.h>
 #include "xdl_parser.h"
 #include "parser.h"
 
