@@ -985,15 +985,15 @@ fill_indexer(bitstream_parsed_t *parsed) {
   gchar **frame_array = (gchar **) &parsed->frames[V2C__NB_CFG];;
   const chip_struct_t *chip_struct = parsed->chip_struct;
   const unsigned total_frames = total_frame_count(parsed);
-  const unsigned framelen = chip_struct->framelen;;
-  gchar *current_frame;
+  const unsigned framelen = chip_struct->framelen;
+  uint32_t *current_frame;
   unsigned i;
 
   /* Alloc *all* frames. A bit tedious... */
-  current_frame = g_new0(gchar, total_frames * framelen);
+  current_frame = g_new0(uint32_t, total_frames * framelen);
 
   for(i = 0; i < total_frames; i++) {
-    frame_array[i] = current_frame;
+    frame_array[i] = (char *)current_frame;
     current_frame += framelen;
   }
 }
