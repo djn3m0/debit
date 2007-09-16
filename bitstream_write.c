@@ -279,7 +279,7 @@ update_crc_h(bitstream_writer_t *writer, const register_index_t reg,
 
   /* writes to the CRC should yield a zero value */
   if (reg == CRC)
-    debit_log(L_BITSTREAM,"write to CRC register yielded %04x", bcc);
+    debit_log(L_WRITE,"write to CRC register yielded %04x", bcc);
 }
 
 static inline void
@@ -311,7 +311,7 @@ update_crc_b(bitstream_writer_t *bit,
 
   /* writes to the CRC should yield a zero value. */
   if (reg == CRC)
-    debit_log(L_BITSTREAM,"write to CRC register yielded %04x", bcc);
+    debit_log(L_WRITE,"write to CRC register yielded %04x", bcc);
 }
 
 
@@ -437,7 +437,7 @@ bs_fdri_write_frames(bitstream_writer_t *bit, int fd,
 
   /* write AutoCRC word and update CRC accordingly */
 
-  debit_log(L_BITSTREAM,"ACRC is %04x", bit->crc);
+  debit_log(L_WRITE,"ACRC is %04x", bit->crc);
   write_u32(fd, bit->crc);
   update_crc_w(bit, CRC, bit->crc);
   /* This yields zero in CRC register */
@@ -484,7 +484,7 @@ bs_write_cmd_footer(bitstream_writer_t *writer, int fd, const bitstream_parsed_t
 
   /* CRC check. We should fuck this up big time intentionally. We don't
      want anyone to load our bitstreams for now... */
-  debit_log(L_BITSTREAM,"CRC is %04x", writer->crc);
+  debit_log(L_WRITE,"CRC is %04x", writer->crc);
   bs_write_wreg_u32(writer, fd, CRC, writer->crc);
 
   bs_write_wreg_u32(writer, fd, CMD, DESYNCH);
@@ -505,6 +505,7 @@ bitstream_write(const bitstream_parsed_t *bit,
   data = g_file_open_tmp(NULL,&tmpname,NULL);
   if (data < 0)
     return data;
+  debit_log(L_WRITE,"Temporary datafile is %s", tmpname);
   writer.fd = data;
 
   /* unlink the temp file from the filesystem early if we can directly
@@ -533,14 +534,18 @@ bitstream_write(const bitstream_parsed_t *bit,
   err = close(data);
   data = -1;
   if (err) {
-    perror("Closing bitstream file");
+    perror("Closing tmp data file");
     goto err_data;
   }
 #endif
 
   /* Prepend header to raw bitstream data */
   bs_add_header(&writer, file, data, tmpname);
-  close(file);
+  err = close(file);
+  if (err) {
+    perror("Closing bitstream file");
+    goto err_data;
+  }
 
  err_data:
 #ifdef HAVE_MMAP
