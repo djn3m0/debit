@@ -103,16 +103,16 @@ bs_write_header(const int fd, const bitstream_parsed_t *bit) {
   const parsed_header_t *header = &bit->header;
 
 #define REWRITE(opt)   do {				\
-  const header_option_t *hopt = get_option(header,opt); \
+  const header_option_p *hopt = get_option(header,opt); \
   bs_write_option(fd, opt,				\
-		  hopt->payload,			\
-		  get_option_len(hopt)); }		\
+		  hopt->data, hopt->len); }		\
   while(0)
 
   REWRITE(FILENAME);
   REWRITE(DEVICE_TYPE);
   REWRITE(BUILD_DATE);
   REWRITE(BUILD_TIME);
+#undef REWRITE
 }
 
 static void

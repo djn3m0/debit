@@ -26,8 +26,10 @@ parse_option (parsed_header_t *parse,
   debit_log(L_HEADER, "data: %.*s",len,opt->payload);
 
   /* If in range, then record the option */
-  if (code < LAST_OPTION)
-    parse->options[code - FILENAME] = opt;
+  if (code < LAST_OPTION) {
+    parse->options[code - FILENAME].len = len;
+    parse->options[code - FILENAME].data = opt->payload;
+  }
   else
     debit_log(L_HEADER, "Option code unknown, please report");
 

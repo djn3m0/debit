@@ -35,8 +35,13 @@ struct synchro_option {
   guint32 data[];
 } __attribute__((packed));
 
+typedef struct _header_option_p {
+  guint16 len;
+  const char *data;
+} header_option_p;
+
 typedef struct _parsed_header {
-  const struct header_option *options[ LAST_OPTION - FILENAME ];
+  header_option_p options[ LAST_OPTION - FILENAME ];
 } parsed_header_t;
 
 typedef struct header_option header_option_t;
@@ -47,10 +52,10 @@ get_option_len(const header_option_t *opt) {
   return GINT16_FROM_BE(opt->length);
 }
 
-static inline const header_option_t*
+static inline const header_option_p*
 get_option(const parsed_header_t *header,
 	   const option_type_t opt) {
-  return header->options[opt - FILENAME];
+  return &header->options[opt - FILENAME];
 }
 
 static inline

@@ -13,16 +13,14 @@
 
 void print_design(parsed_header_t *header) {
   const unsigned ncdv1 = 3, ncdv2 = 1;
-  const header_option_t *devopt = get_option(header, DEVICE_TYPE);
-  const header_option_t *nameopt = get_option(header, FILENAME);
-  const char *name = nameopt->payload;
-  unsigned namel = get_option_len(nameopt);
-  const char *chp = devopt->payload;
-  unsigned chpl = get_option_len(devopt);
+  const header_option_p *devopt = get_option(header, DEVICE_TYPE);
+  const header_option_p *nameopt = get_option(header, FILENAME);
   time_t timestamp;
 
   g_print("design \"%.*s\" %.*s v%i.%i ,\n",
-	  namel, name, chpl, chp, ncdv1, ncdv2);
+	  nameopt->len, nameopt->data,
+	  devopt->len, devopt->data,
+	  ncdv1, ncdv2);
 
   /* At some point get the timestamp from the bitfile */
   timestamp = time(NULL);
