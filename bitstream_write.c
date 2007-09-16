@@ -526,6 +526,7 @@ bitstream_write(const bitstream_parsed_t *bit,
   file = g_open(ofile, O_CREAT | O_TRUNC | O_NDELAY | O_WRONLY, S_IRWXU);
   if (file < 0) {
     err = file;
+    perror("Opening bitstream file");
     goto err_data;
   }
 

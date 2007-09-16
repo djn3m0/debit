@@ -108,23 +108,33 @@ static void treat_time(parsed_header_t *header) {
   write_option(header, BUILD_TIME, time, strlen(time));
 }
 
-static void treat_design(parser_t *parser,
-			 const char *design_name,
-			 const char *device) {
+static int treat_design(parser_t *parser,
+			const char *design_name,
+			const char *device) {
   const char *datadir = parser->datadir;
-  parsed_header_t header;
-  treat_time(&header);
+  parsed_header_t *header = &parser->bit.header;
+  bitstream_parsed_t *bit = &parser->bit;
+  const chip_struct_t *chip_struct;
+  int err;
 
   /* Fill in the pseudo-header, to be used by the bitstream writer */
-  write_option(&header, FILENAME, design_name, strlen(design_name));
-  write_option(&header, DEVICE_TYPE, device, strlen(device));
+  treat_time(header);
+  write_option(header, FILENAME, design_name, strlen(design_name));
+  write_option(header, DEVICE_TYPE, device, strlen(device));
+  debit_log(L_PARSER, "Design %s on device %s\n", design_name, device);
 
-  /* Load the wire/pip dbs, using the correct type */
+  /* Parse device name and allocate bitstream */
+  err = alloc_wbitstream(bit);
+  if (err) {
+    g_warning("Could not parse device name %s", device);
+    return -1;
+  }
+
+  /* Load the wire/pip dbs, using the bitstream type */
+  chip_struct = bit->chip_struct;
   parser->pipdb = get_pipdb(datadir);
-  parser->chip = get_chip(datadir, XC2V2000);
-  parser->design = strdup(design_name);
-/*   parser->bitstream = alloc_bitstream(datadir, XC2V2000); */
-  printf("Design %s on device %s\n",design_name,device);
+  parser->chip = get_chip(datadir, chip_struct->chip);
+  return 0;
 }
 
 %}
@@ -169,6 +179,7 @@ static void treat_design(parser_t *parser,
 %type <name> wire1
 %type <name> tile
 %type <name> part
+%type <name> device
 %type <name> STRING
 %type <name> design_name
 
@@ -194,8 +205,8 @@ device: IDENTIFIER ;
 package: IDENTIFIER ;
 speed: IDENTIFIER ;
 
-design_header: DESIGN design_name part ncd_version { treat_design(yyparm, $2, $3); free($2); free($3); }
-             | DESIGN design_name device package speed ncd_version ;
+design_header: DESIGN design_name part ncd_version { treat_design(yyparm, $2, $3); }
+| DESIGN design_name device package speed ncd_version { treat_design(yyparm, $2, $3); } ;
 
 design: design_header ',' config ';' ;
 

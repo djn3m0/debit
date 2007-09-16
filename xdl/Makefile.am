@@ -9,7 +9,8 @@ BUILT_SOURCES = xdl_parser.h
 
 SHARED_SRC	= ../bitarray.c ../bitheader.c ../filedump.c \
 		../localpips.c  ../wiring.c ../keyfile.c \
-		../analysis.c ../connexity.c ../xdlout.c ../sites.c
+		../analysis.c ../connexity.c ../xdlout.c ../sites.c \
+		../bitstream_write.c
 V2_SRC		= ../bitstream.c ../bitstream_parser.c ../codes/crc-ibm.c
 
 bin_PROGRAMS    = xdl2bit

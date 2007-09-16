@@ -17,6 +17,40 @@
 #include "debitlog.h"
 #include "codes/crc-ibm.h"
 
+/* This should be merged into the things below */
+#if defined(VIRTEX2)
+
+static const gchar *
+chipfiles[XC2__NUM] = {
+  [XC2V40] = "xc2v40",
+  [XC2V80] = "xc2v80",
+  [XC2V250] = "xc2v250",
+  [XC2V500] = "xc2v500",
+  [XC2V1000] = "xc2v1000",
+  [XC2V1500] = "xc2v1500",
+  [XC2V2000] = "xc2v2000",
+  [XC2V3000] = "xc2v3000",
+  [XC2V4000] = "xc2v4000",
+  [XC2V6000] = "xc2v6000",
+  [XC2V8000] = "xc2v8000",
+};
+
+#elif defined(SPARTAN3)
+
+static const gchar *
+chipfiles[XC3__NUM] = {
+  [XC3S50] = "xc3s50",
+  [XC3S200] = "xc3s200",
+  [XC3S400] = "xc3s400",
+  [XC3S1000] = "xc3s1000",
+  [XC3S1500] = "xc3s1500",
+  [XC3S2000] = "xc3s2000",
+  [XC3S4000] = "xc3s4000",
+  [XC3S5000] = "xc3s5000",
+};
+
+#endif
+
 /* This is nothing but a key-value file */
 #if defined(VIRTEX2)
 static const
@@ -890,6 +924,20 @@ void record_frame(bitstream_parsed_t *parsed,
   *frame_loc = dataframe;
 }
 
+static inline gsize
+total_frame_count(bitstream_parsed_t *parsed) {
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  const unsigned *col_count = chip_struct->col_count;
+  const unsigned *frame_count = chip_struct->frame_count;
+  gsize total_count = 0;
+  gsize type;
+
+  for (type = 0; type < V2C__NB_CFG; type++)
+    total_count += frame_count[type] * col_count[type];
+
+  return total_count;
+}
+
 static void
 alloc_indexer(bitstream_parsed_t *parsed) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
@@ -906,8 +954,7 @@ alloc_indexer(bitstream_parsed_t *parsed) {
 
   /* NB: We don't memoize the column lookup -- we prefer a multiplication
      for this  */
-  for (type = 0; type < V2C__NB_CFG; type++)
-    total_size += frame_count[type] * col_count[type] * sizeof(gchar *);
+  total_size += total_frame_count(parsed) * sizeof(gchar *);
 
   /* We allocate only one big array with the type_lut at the beginning
      and the frame_array at the end */
@@ -930,6 +977,47 @@ free_indexer(bitstream_parsed_t *parsed) {
   if (frames)
     g_free(frames);
 }
+
+/* XXX these functions burden the read-only case. To be put elsewhere
+   at some point */
+static void
+fill_indexer(bitstream_parsed_t *parsed) {
+  gchar **frame_array = (gchar **) &parsed->frames[V2C__NB_CFG];;
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  const unsigned total_frames = total_frame_count(parsed);
+  const unsigned framelen = chip_struct->framelen;;
+  gchar *current_frame;
+  unsigned i;
+
+  /* Alloc *all* frames. A bit tedious... */
+  current_frame = g_new0(gchar, total_frames * framelen);
+
+  for(i = 0; i < total_frames; i++) {
+    frame_array[i] = current_frame;
+    current_frame += framelen;
+  }
+}
+
+int
+alloc_wbitstream(bitstream_parsed_t *parsed) {
+  /* Lookup the name */
+  const header_option_p *devopt = get_option(&parsed->header, DEVICE_TYPE);
+  const char *name = devopt->data;
+  unsigned i;
+
+  for (i = 0; i < CHIPS__NUM; i++) {
+    const char *chipname = chipfiles[i];
+    if (!strncmp(name,chipname,strlen(chipname))) {
+      parsed->chip_struct = &bitdescr[i];
+      alloc_indexer(parsed);
+      fill_indexer(parsed);
+      return 0;
+    }
+  }
+  return -1;
+}
+
+/* XXX End-of-burden */
 
 void
 iterate_over_frames(const bitstream_parsed_t *parsed,

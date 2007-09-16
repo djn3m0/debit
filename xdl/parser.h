@@ -11,18 +11,14 @@ typedef struct _parser_t {
 	const chip_descr_t *chip;
 	/* written by the scanner */
 	unsigned pip_counter;
-	char *design;
+	/* yummy bitstream */
+	bitstream_parsed_t bit;
 } parser_t;
 
 static inline void
 free_parser(parser_t *parser) {
 	chip_descr_t *chip = (void *)parser->chip;
 	pip_db_t *pipdb= (void *)parser->pipdb;
-	char *design= (void *)parser->design;
-	if (design) {
-		parser->design = NULL;
-		free(design);
-	}
 	if (pipdb) {
 		parser->pipdb = NULL;
 		free_pipdb(pipdb);
@@ -31,6 +27,7 @@ free_parser(parser_t *parser) {
 		parser->chip = NULL;
 		release_chip(chip);
 	}
+	/* XXX Free bitstream, header */
 }
 
 #endif /* _HAS_PARSER_H */

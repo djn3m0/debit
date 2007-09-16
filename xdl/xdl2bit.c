@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "xdl_parser.h"
 #include "parser.h"
+#include "bitstream_write.h"
 
 /* Parsing, lexing */
 extern int yyparse (void *);
@@ -17,6 +18,7 @@ extern FILE* yyin;
 /* Command-line */
 static gchar *ifile = NULL;
 static gchar *ofile = NULL;
+static gchar *odir = "";
 static gchar *datadir = DATADIR;
 
 #if DEBIT_DEBUG > 0
@@ -26,7 +28,8 @@ unsigned int debit_debug = 0;
 static GOptionEntry entries[] =
 {
   {"input", 'i', 0, G_OPTION_ARG_FILENAME, &ifile, "Read XDL file <ifile>", "<ifile>"},
-  {"output", 'o', 0, G_OPTION_ARG_FILENAME, &ofile, "Write bitstream to file <ofile>", "<ofile>"},
+  {"output", 'b', 0, G_OPTION_ARG_FILENAME, &ofile, "Write bitstream to file <ofile>", "<ofile>"},
+  {"outdir", 'o', 0, G_OPTION_ARG_FILENAME, &odir, "Write data files in directory <odir>", "<odir>"},
 #if DEBIT_DEBUG > 0
   {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
 #endif
@@ -68,7 +71,6 @@ extern int yydebug;
 int main(int argc, char **argv) {
 	parser_t parser = {
 		.pip_counter = 0,
-		.design = NULL,
 		.pipdb = NULL,
 	};
 	int err;
@@ -80,9 +82,20 @@ int main(int argc, char **argv) {
 	  return err;
 	parser.datadir = datadir,
 
-	yyparse(&parser);
+	err = yyparse(&parser);
+	if (err) {
+	  g_warning("XDL parse error");
+	  /* XXX Free on error path */
+	  return err;
+	}
 
-	printf("Processed %u pips\n", parser.pip_counter);
+	debit_log(L_PARSER, "Processed %u pips\n", parser.pip_counter);
+
+	/* Generate bitstream, if asked for */
+	if (ofile)
+	  bitstream_write(&parser.bit, odir, ofile);
+
+	/* XXX Free */
 
 	return 0;
 }

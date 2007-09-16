@@ -11,7 +11,10 @@
 #include <glib.h>
 #include "bitheader.h"
 
-/* This structure holds the finale results of the parsing phase */
+/* This structure holds the final results of the parsing phase.
+   Actually it should be split in two, separating data (mapped files
+   &al), from the rest.
+ */
 typedef struct _bitstream_parsed {
   /* First header informations */
   parsed_header_t header;
@@ -28,6 +31,7 @@ typedef struct _bitstream_parsed {
 
 } bitstream_parsed_t;
 
+int alloc_wbitstream(bitstream_parsed_t *bitstream);
 bitstream_parsed_t *parse_bitstream(const gchar*filename);
 void free_bitstream(bitstream_parsed_t *bitstream);
 
