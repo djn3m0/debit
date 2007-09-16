@@ -61,7 +61,7 @@ static int write_pip(parser_t *parser,
   }
 
   /* process the bitstream accordingly */
-/*   set_bitstream_site_bits(&parser->bit, csite, vals, cfgbits, nbits); */
+  set_bitstream_site_bits(&parser->bit, csite, vals, cfgbits, nbits);
   return err;
 }
 

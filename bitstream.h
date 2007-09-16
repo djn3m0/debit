@@ -22,6 +22,11 @@ query_bitstream_luts(const bitstream_parsed_t *, const csite_descr_t *, guint16[
 guint32
 query_bitstream_site_bits(const bitstream_parsed_t *, const csite_descr_t *,
 			  const guint *, const gsize);
+
+void
+set_bitstream_site_bits(const bitstream_parsed_t *, const csite_descr_t *,
+			const uint32_t vals, const guint cfgbits[], const gsize nbits);
+
 guint16 *
 query_bitstream_bram_data(const bitstream_parsed_t *bitstream, const csite_descr_t *site);
 

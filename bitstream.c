@@ -3,6 +3,7 @@
  * All rights reserved.
  */
 
+#include <assert.h>
 #include <glib.h>
 #include "bitstream.h"
 #include "design.h"
@@ -264,10 +265,10 @@ const type_bits_t type_bits[NR_SITE_TYPE] = {
  * @return the configuration byte asked for
  */
 
-static guchar
-query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
-			  const csite_descr_t *site,
-			  const unsigned cfgbit) {
+static const gchar *
+query_bitstream_site_bytea(const bitstream_parsed_t *bitstream,
+			   const csite_descr_t *site,
+			   const unsigned cfgbit) {
   const chip_struct_t *chip_struct = bitstream->chip_struct;
   const guint site_type = site->type;
   const guint x = site->type_coord.x;
@@ -289,7 +290,14 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
   const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
 				 x+type_bits[site_type].x_type_off, xoff);
 
-  return frame[frame_offset];
+  return &frame[frame_offset];
+}
+
+static inline guchar
+query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
+			  const csite_descr_t *site,
+			  const unsigned cfgbit) {
+  return *query_bitstream_site_bytea(bitstream, site, cfgbit);
 }
 
 /** \brief Get some (up to 4) config bytes from a site
@@ -347,8 +355,6 @@ query_bitstream_site_bit(const bitstream_parsed_t *bitstream,
  *
  * @return the configuration bits asked for, packed into a guint32
  *
- * \bug For now we use the site as a CLB site, whether I think Eric intended
- * this to be a global, type-independent site.
  */
 
 guint32
@@ -381,6 +387,49 @@ query_bitstream_site_bits(const bitstream_parsed_t * bitstream,
 
   return result;
 }
+
+/* Bitstream bit setting function. The value to be set is encoded as
+   the LSB of the address in cfgbits.
+   XXX Optimize calls to query_bitstream_site_bytea and mask/val
+   manipulations by regrouping byte lookups.
+*/
+
+void set_bitstream_site_bits(const bitstream_parsed_t * bitstream,
+			     const csite_descr_t *site,
+			     const uint32_t vals,
+			     const guint cfgbits[], const gsize nbits) {
+  unsigned i;
+
+  for (i = 0; i < nbits; i++) {
+    unsigned cfgbit = cfgbits[i];
+    unsigned val = (vals >> i) & 1;
+    unsigned byteaddr = byte_addr(cfgbit);
+    unsigned byteoff  = bit_offset(cfgbit);
+
+    /* Readback value - XXX */
+    char *bytea = (void *)query_bitstream_site_bytea(bitstream, site, byteaddr);
+    unsigned char byte_val = *bytea;
+
+    /* Update the value */
+    unsigned char mask = 1 << byteoff;
+    unsigned char valm = val << byteoff;
+
+    /* We shouldn't find anybody where we intend to write,
+       for now. Unfortunately this is not true, due to BX3 & al
+       sucking... to be investigated ! */
+    //assert((byte_val & mask) == 0);
+
+    /* Set bits which need to be set */
+    byte_val |= mask & valm;
+    /* Clear others. Should be a noop for now,
+       as we don't want to overwrite anything. */
+/*     byte_val &= ~mask | valm; */
+
+    /* Writeback the value */
+    *bytea = byte_val;
+  }
+}
+
 
 /*
  * Typed queries
