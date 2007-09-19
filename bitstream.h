@@ -18,6 +18,10 @@
 
 void
 query_bitstream_luts(const bitstream_parsed_t *, const csite_descr_t *, guint16[]);
+void
+set_bitstream_lut(const bitstream_parsed_t *bitstream,
+		  const csite_descr_t *site,
+		  const guint16 lut_val, const unsigned lut_i);
 
 guint32
 query_bitstream_site_bits(const bitstream_parsed_t *, const csite_descr_t *,

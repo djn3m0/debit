@@ -13,6 +13,10 @@ typedef struct _parser_t {
 	unsigned pip_counter;
 	/* yummy bitstream */
 	bitstream_parsed_t bit;
+
+	/* Very small state */
+	const csite_descr_t *current_site;
+	slice_index_t slice_idx;
 } parser_t;
 
 static inline void

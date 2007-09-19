@@ -72,6 +72,9 @@ int main(int argc, char **argv) {
 	parser_t parser = {
 		.pip_counter = 0,
 		.pipdb = NULL,
+		/* parser state */
+		.current_site = NULL,
+		.slice_idx = 0,
 	};
 	int err;
 

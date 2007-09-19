@@ -463,7 +463,7 @@ query_bitstream_luts(const bitstream_parsed_t *bitstream,
 		     const csite_descr_t *site, guint16 luts[]) {
   guint i;
 
-  /* query height luts. Bits are MSB first, but in reverse order */
+  /* query eight luts. Bits are MSB first, but in reverse order */
   for (i=0; i < 8; i++) {
     /* X position of the LUT is only guessed for spartan3 */
 #ifdef VIRTEX2
@@ -483,6 +483,32 @@ query_bitstream_luts(const bitstream_parsed_t *bitstream,
     /* Mirroring... of G-luts */
     luts[i] = BITAT(i,0) ? result : reverse_bits(result);
   }
+
+  return;
+}
+
+void
+set_bitstream_lut(const bitstream_parsed_t *bitstream,
+		  const csite_descr_t *site,
+		  const guint16 lut_val, const unsigned lut_i) {
+  /* X position of the LUT is only guessed for spartan3 */
+#ifdef VIRTEX2
+  unsigned byte_lut_offset = bitpos_invert(5 * BITAT(lut_i,1) + 3 * BITAT(lut_i,0), CLB_HEIGHT);
+#else /* VIRTEX2 */
+  unsigned byte_lut_offset = bitpos_invert(4 * BITAT(lut_i,1) + 2 * BITAT(lut_i,0), CLB_HEIGHT);
+#endif /* VIRTEX2 */
+  /* Y-position of the LUT is 1+BITAT(lut_i,2) */
+  guint first_byte = assemble_cfgbit(1+BITAT(lut_i,2), byte_lut_offset);
+  /* minus height, to account for the reverse occuring in
+     bitpos_invert */
+  guint cfgbytes[2] = { first_byte, first_byte-8 };
+  guint16 write_lut_val = BITAT(lut_i,0) ? ~lut_val : reverse_bits(~lut_val);
+  /* XXX */
+  char *addr1 = (void *) query_bitstream_site_bytea(bitstream, site, cfgbytes[0]);
+  char *addr2 = (void *) query_bitstream_site_bytea(bitstream, site, cfgbytes[1]);
+
+  *addr1 = write_lut_val & 0xff;
+  *addr2 = write_lut_val >> 8;
 
   return;
 }

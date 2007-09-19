@@ -460,6 +460,20 @@ snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
 }
 
 int
+parse_slice_simple(const gchar *buf, slice_index_t* idx) {
+  const char *str = "SLICE_X%uY%u";
+  unsigned x, y;
+  int assoc;
+
+  assoc = sscanf(buf, str, &x, &y);
+  if (assoc != 2)
+    return -1;
+
+  *idx = (BITAT(x, 0) << 1) + BITAT(y, 0);
+  return 0;
+}
+
+int
 snprint_switch(gchar *buf, size_t bufs,
 	       const chip_descr_t *chip,
 	       const site_ref_t site_ref) {

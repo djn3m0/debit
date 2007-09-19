@@ -142,7 +142,8 @@ int snprint_switch(gchar *data, const size_t bufs,
 		   const chip_descr_t *chip,
 		   const site_ref_t swb);
 int snprint_slice(gchar *buf, size_t buf_len, const chip_descr_t *chip,
-		   const csite_descr_t *site, const slice_index_t slice);
+		  const csite_descr_t *site, const slice_index_t slice);
+int parse_slice_simple(const gchar *buf, slice_index_t* idx);
 
 /**
  * \brief Site string parsing function
