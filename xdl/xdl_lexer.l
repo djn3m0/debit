@@ -9,6 +9,7 @@
 %{
 #include <stdio.h>
 #include <stdint.h>
+#include <ctype.h>
 #include <assert.h>
 #include "debitlog.h"
 #include "xdl_parser.h"
@@ -20,6 +21,10 @@ extern void yyerror(char *);
 		yylval->name = strdup(yytext);	\
 		return(token_type);		\
 	}
+static inline char hextoint(const char c) {
+  return isdigit(c) ? c - '0' : c - 'A' + 10;
+}
+
 %}
 
 /* options */
@@ -85,7 +90,12 @@ A[1-6]   {
 	yylval->val = vars[index];
 	return(TOK_E_VAL);
 }
-0x[a-fA-F0-9]+ { yylval->val = 0; /* XXX */
+0x[a-fA-F0-9]+ { int i; uint64_t tmp = 0;
+                 for (i = 2; i < yyleng; i++) {
+		   tmp <<= 4;
+		   tmp += hextoint(toupper(yytext[i]));
+		 }
+                 yylval->val = tmp;
 	         return(TOK_E_VAL); }
 0        { yylval->val = 0;
 	   return(TOK_E_VAL); }
