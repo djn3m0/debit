@@ -130,7 +130,7 @@ static GOptionEntry entries[] =
   {"lutdump", 'l', 0, G_OPTION_ARG_NONE, &lutdump, "Dump lut data from the bitstream", NULL},
   {"bramdump", 'b', 0, G_OPTION_ARG_NONE, &bramdump, "Dump bram data from the bitstream", NULL},
   {"netdump", 'n', 0, G_OPTION_ARG_NONE, &netdump, "Dump nets rebuilt from the bitstream (experimental)", NULL},
-  { NULL, '\0', 0, 0, 0, NULL, NULL }
+  { NULL, '\0', 0, 0, NULL, NULL, NULL }
 };
 
 int

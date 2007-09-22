@@ -430,13 +430,42 @@ static inline gchar *make_lab_string(unsigned x, unsigned y) {
   return g_string_free(string, FALSE);
 }
 
-static inline int bitarray_dump(const gchar *dir, const gchar *file,
-				const bitarray_t *data);
+static inline int dump_data(const gchar *odir,
+			    const gchar *filename,
+			    const char *data,
+			    unsigned length) {
+  gchar *name;
+  GError *error = NULL;
+  gboolean ret;
+
+  /* Assemble the filename */
+  if (odir)
+    name = g_build_filename(odir, filename, NULL);
+  else
+    name = g_build_filename(filename, NULL);
+
+  /* Actually write the file */
+  ret = g_file_set_contents(name, data, length, &error);
+
+  g_free(name);
+
+  if (ret)
+    return 0;
+
+  g_print("could not dump file %s: %s",filename,error->message);
+  g_error_free (error);
+  return -1;
+}
+
+static inline int bitarray_dump(const gchar *odir, const gchar *filename,
+				const bitarray_t *data) {
+  return dump_data(odir, filename, (gchar *)data->array, data->size);
+}
 
 typedef void (*lab_iterator_t)(const altera_bitstream_t *bitstream,
 			       unsigned x, unsigned y, void *data);
 
-void
+static void
 iterate_over_labs(const altera_bitstream_t *bitstream,
 		  lab_iterator_t iter, void *data) {
   unsigned x;
@@ -466,7 +495,7 @@ iter_over_tables(const altera_bitstream_t *bitstream,
     iter(bitstream, x, y, n);
 }
 
-void
+static void
 iterate_over_tables(const altera_bitstream_t *bitstream,
 		    table_iterator_t iter) {
   iterate_over_labs(bitstream, iter_over_tables, iter);
@@ -508,38 +537,6 @@ dump_lut_tables(const altera_bitstream_t *bitstream) {
 void
 zero_lut_tables(const altera_bitstream_t *bitstream) {
   iterate_over_tables(bitstream, zero_truth_table);
-}
-
-static inline int dump_data(const gchar *odir,
-			    const gchar *filename,
-			    const char *data,
-			    unsigned length) {
-  gchar *name;
-  GError *error = NULL;
-  gboolean ret;
-
-  /* Assemble the filename */
-  if (odir)
-    name = g_build_filename(odir, filename, NULL);
-  else
-    name = g_build_filename(filename, NULL);
-
-  /* Actually write the file */
-  ret = g_file_set_contents(name, data, length, &error);
-
-  g_free(name);
-
-  if (ret)
-    return 0;
-
-  g_print("could not dump file %s: %s",filename,error->message);
-  g_error_free (error);
-  return -1;
-}
-
-static inline int bitarray_dump(const gchar *odir, const gchar *filename,
-				const bitarray_t *data) {
-  return dump_data(odir, filename, (gchar *)data->array, data->size);
 }
 
 int

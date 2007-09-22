@@ -16,7 +16,7 @@
 static gchar *ifile = NULL;
 static gchar *datadir = DATADIR;
 
-static void glade_do_init() {
+static void glade_do_init(void) {
   GtkWidget *menu;
 /*   GtkWidget *birdseye; */
 
@@ -86,6 +86,9 @@ static GOptionEntry entries[] =
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
   { NULL }
 };
+
+extern int
+display_bitstream(const gchar *filename);
 
 int
 display_bitstream(const gchar *filename) {

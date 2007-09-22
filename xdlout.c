@@ -69,7 +69,7 @@ typedef enum iopin_dir {
   IO_END,
 } iopin_dir_t;
 
-const char *ioname[IO_END] = {
+static const char *ioname[IO_END] = {
   [IO_INPUT] = "inpin",
   [IO_OUTPUT] = "outpin",
 };
@@ -182,10 +182,10 @@ pip_iterator(gpointer data, const pip_t pip,
 	     const site_ref_t site) {
   slice_iter_t *slit = data;
   const wire_db_t *db = slit->wiredb;
-  (void) site;
   /* Print the configuration of the slice */
   const char *owire = wire_name(db, pip.target);
   const char *iwire = wire_name(db, pip.source);
+  (void) site;
   g_print(" %s::%s", owire, iwire);
 }
 
@@ -224,9 +224,10 @@ slice_iterator(unsigned site_x, unsigned site_y,
   */
   gchar slicen[MAX_SITE_NLEN];
   gchar siten[MAX_SITE_NLEN];
+  const char *sliceid = "slice";
+
   snprint_slice(slicen, MAX_SITE_NLEN, chip, site, 0);
   snprint_csite(siten, ARRAY_SIZE(siten), site, site_x, site_y);
-  const char *sliceid = "slice";
 
   /* Combine the situation and site to get the location */
   /*  inst "Q_1" "SLICE",placed R6C4 SLICE_X7Y4  ,

@@ -209,7 +209,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
  * @see query_bitstream_site_byte
  */
 
-guint32
+__attribute__((unused)) static guint32
 query_bitstream_site_bytes(const bitstream_parsed_t * bitstream, const csite_descr_t *site,
 			   const guint *cfgbytes, const gsize nbytes) {
   guint32 result = 0;
@@ -324,7 +324,7 @@ typedef int property_t;
  * Same kind of interface, for different properties. Merge with above
  * once the config bits are unified.
  */
-guint16
+__attribute__((unused)) static guint16
 query_bistream_config(const bitstream_parsed_t *bitstream,
 		      const site_t *site, const guint subsite,
 		      const property_t *prop) {
@@ -359,7 +359,7 @@ query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
  * @return the bram parity bits array
  */
 
-const gchar *
+__attribute__((unused)) static const gchar *
 query_bitstream_bram_parity(const bitstream_parsed_t *bitstream,
 			    const site_t *site) {
   /* Actually this is only bit reordering */

@@ -67,7 +67,7 @@ _draw_name(cairo_t *cr, const csite_descr_t *site) {
   cairo_stroke(cr);
 }
 
-void
+static void
 _draw_clb_pattern(cairo_t *cr) {
   _draw_box(cr);
   _draw_switchbox(cr);
@@ -86,7 +86,7 @@ _draw_clb(const drawing_context_t *ctx,
     _draw_name(cr, site);
 }
 
-cairo_pattern_t *
+static cairo_pattern_t *
 draw_clb_pattern(drawing_context_t *ctx) {
   cairo_t *cr = ctx->cr;
   const double zoom = ctx->zoom;
@@ -117,7 +117,7 @@ draw_clb_pattern(drawing_context_t *ctx) {
   return pat;
 }
 
-void
+static void
 _draw_clb_compose(const drawing_context_t *ctx,
 		  const csite_descr_t *site) {
   cairo_t *cr = ctx->cr;
@@ -191,7 +191,7 @@ draw_site_vector(unsigned x, unsigned y,
   }
 }
 
-cairo_pattern_t *
+__attribute__((unused)) static cairo_pattern_t *
 draw_full_clb_pattern(drawing_context_t *ctx,
 		      chip_descr_t *chip) {
   cairo_t *cr = ctx->cr;
@@ -303,7 +303,7 @@ draw_chip(drawing_context_t *ctx, const chip_descr_t *chip) {
 
 /* create a context from all of a parsed bitstream */
 drawing_context_t *
-drawing_context_create() {
+drawing_context_create(void) {
   drawing_context_t *ctx = g_new(drawing_context_t, 1);
   init_drawing_context(ctx);
   return ctx;

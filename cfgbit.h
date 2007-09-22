@@ -104,6 +104,6 @@ typedef struct _type_bits {
   guint y_width;
 } type_bits_t;
 
-const type_bits_t type_bits[NR_SITE_TYPE];
+extern const type_bits_t type_bits[NR_SITE_TYPE];
 
 #endif /* _HAS_CFGBIT_H */

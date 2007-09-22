@@ -50,7 +50,7 @@ static GOptionEntry entries[] =
   { NULL }
 };
 
-static int do_real_work() {
+static int do_real_work(void) {
   pip_db_t *pipdb;
   alldata_t *dat;
 

@@ -28,6 +28,7 @@
 #include "bitheader.h"
 #include "bitstream_packets.h"
 #include "design.h"
+#include "bitstream_write.h"
 
 /* State necessary for bitstream computation */
 typedef struct _bitstream_writer {

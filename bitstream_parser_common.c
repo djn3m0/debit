@@ -440,7 +440,8 @@ idcode_write(bitstream_parsed_t *parsed,
   return -1;
 }
 
-int synchronize_bitstream(bitstream_parser_t *parser) {
+static int
+synchronize_bitstream(bitstream_parser_t *parser) {
   bytearray_t *ba = &parser->ba;
   guint32 synch;
 

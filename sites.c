@@ -156,7 +156,7 @@ init_group_chip_type(GKeyFile *file, const gchar *group,
 		     gpointer data) {
   chip_descr_t *chip = data;
   GError *error = NULL;
-  gint *intervals[2] = {0, 0};
+  gint *intervals[2] = {NULL, NULL};
   gsize sizes[2];
   unsigned type;
 

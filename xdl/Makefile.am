@@ -1,8 +1,8 @@
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\" -I$(top_srcdir)
-AM_CFLAGS	= -Wall -Wextra -Wunused -O3 -g
+AM_CFLAGS	= -Wall -Wunused -Werror -O3 -g
 
 AM_YFLAGS = -d
-AM_LFLAGS = -Cfe --perf-report --verbose
+AM_LFLAGS = -Cfe --perf-report --verbose --nounput
 
 # The generated header from flex can be useful
 BUILT_SOURCES = xdl_parser.h

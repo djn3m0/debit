@@ -34,7 +34,7 @@ static GOptionEntry entries[] =
   {"debug", 'g', 0, G_OPTION_ARG_INT, &debit_debug, "Debug verbosity", NULL},
 #endif
   {"datadir", 'd', 0, G_OPTION_ARG_FILENAME, &datadir, "Read data files from directory <datadir>", "<datadir>"},
-  { NULL, '\0', 0, 0, 0, NULL, NULL }
+  { NULL, '\0', 0, 0, NULL, NULL, NULL }
 };
 
 static int

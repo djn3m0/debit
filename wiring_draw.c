@@ -71,7 +71,7 @@ _draw_wire(const drawing_context_t *ctx,
   cairo_stroke (cr);
 }
 
-cairo_pattern_t *
+static cairo_pattern_t *
 draw_wire_pattern(const drawing_context_t *ctx,
 		  const wire_db_t *wdb,
 		  const wire_atom_t wire) {
@@ -104,7 +104,7 @@ draw_wire_pattern(const drawing_context_t *ctx,
   return pat;
 }
 
-void
+__attribute__((unused)) static void
 draw_wire_buffered(const drawing_context_t *ctx, const wire_db_t *wdb, wire_atom_t wire) {
   cairo_pattern_t *pat;
   /* compose the pattern if need be */
@@ -287,7 +287,8 @@ draw_cairo_wires(cairo_t *cr, const bitstream_analyzed_t *nlz) {
  * More intelligent way of drawing things, somewhat structured
  */
 
-void draw_wires_by_net(const drawing_context_t *ctx) {
+__attribute__((unused)) static void
+draw_wires_by_net(const drawing_context_t *ctx) {
   // iterate_over_nets
   (void) ctx;
   return;

@@ -209,9 +209,9 @@ egg_xildraw_face_expose (GtkWidget *widget, GdkEventExpose *event)
 {
   EggXildrawFace *xildraw = EGG_XILDRAW_FACE(widget);
   GdkPixmap *pixmap = xildraw->pixmap;
-  debit_log(L_GUI, "expose event");
   double x = event->area.x, y = event->area.y;
 
+  debit_log(L_GUI, "expose event");
   /* Just redisplay the bitmap correctly */
   gdk_draw_drawable(widget->window,
 		    widget->style->fg_gc[GTK_WIDGET_STATE (widget)],

@@ -982,7 +982,7 @@ free_indexer(bitstream_parsed_t *parsed) {
    at some point */
 static void
 fill_indexer(bitstream_parsed_t *parsed) {
-  gchar **frame_array = (gchar **) &parsed->frames[V2C__NB_CFG];;
+  gchar **frame_array = (gchar **) &parsed->frames[V2C__NB_CFG];
   const chip_struct_t *chip_struct = parsed->chip_struct;
   const unsigned total_frames = total_frame_count(parsed);
   const unsigned framelen = chip_struct->framelen;
@@ -1179,7 +1179,8 @@ idcode_write(bitstream_parsed_t *parsed,
   return -1;
 }
 
-int synchronize_bitstream(bitstream_parser_t *parser) {
+static int
+synchronize_bitstream(bitstream_parser_t *parser) {
   bytearray_t *ba = &parser->ba;
   guint32 synch;
 

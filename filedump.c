@@ -11,6 +11,7 @@
 #include <glib.h>
 
 #include "bitstream_parser.h"
+#include "filedump.h"
 
 /* XXX This is currently needed but should be removed */
 #include "design.h"

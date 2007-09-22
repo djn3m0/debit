@@ -459,7 +459,8 @@ static guint32 get_pip_data_from_file(GKeyFile *keyfile,
 				      const gchar *start,
 				      const gchar *end);
 
-void build_wirenode(gpointer data, const gchar *start, const gchar *end) {
+static void
+build_wirenode(gpointer data, const gchar *start, const gchar *end) {
   build_wirenode_t *exam = data;
   localpip_data_t *dat = g_new(localpip_data_t, 1);
   GNode *wirenode;
@@ -488,10 +489,43 @@ typedef struct _build_groupnode {
   const site_type_t type;
 } build_groupnode_t;
 
+/** \brief Raw query of the file representing the pip control database
+ *
+ * This function returns the site-independent control information
+ * present in the database and directly used to locate the configuration
+ * bits of the pip in the bitstream.
+ *
+ * @param pipdb pip database
+ * @param end pip endpoint
+ * @param length pointer to variable holding the number of bits part of
+ * the returned configuration
+ *
+ * @return the list of bits
+ *
+ */
+
+/* XXX Do the transform at database-generation time */
+
 static inline gint *get_pip_structure_from_file(GKeyFile *keyfile,
 						const gchar *end,
-						gsize *length,
-						const site_type_t type);
+						gsize *length, const site_type_t type) {
+  gint *array = g_key_file_get_integer_list(keyfile, end, "BITLIST", length, NULL);
+  const guint width = type_bits[type].y_width;
+  gsize i;
+
+#if DEBIT_DEBUG > 1
+  if (array == NULL) {
+    g_warning("Problem parsing group %s in pip database", end);
+    return NULL;
+  }
+#else
+  g_assert(array != NULL);
+#endif
+
+  for (i = 0; i < *length; i++)
+    array[i] = bitpos_to_cfgbit(array[i], width);
+  return array;
+}
 
 static void build_groupnode(GKeyFile *datadb, const gchar* endp,
 			    gpointer data) {
@@ -523,9 +557,51 @@ typedef struct _connex_control_data {
   logic_atom_t *data;
 } connex_control_data_t;
 
+/** \brief Raw query of the file representing the connexity control database
+ *
+ * This function returns the site-independent connexity control information
+ * present in the database and directly used to locate the entry points
+ * of a logic element in the design.
+ *
+ * @param pipdb pip database
+ * @param end pip endpoint
+ * @param length pointer to variable holding the number of bits part of
+ * the returned configuration
+ *
+ * @return the list of bits
+ *
+ */
+
 static inline wire_atom_t *
-get_con_structure_from_file(GKeyFile *keyfile, const gchar *end,
-                            gsize *length, const wire_db_t *wires);
+get_con_structure_from_file(GKeyFile *keyfile, const gchar *end, gsize *length,
+			    const wire_db_t *wires) {
+  gchar **endp = g_key_file_get_string_list(keyfile, end, "EPLIST", length, NULL);
+  wire_atom_t *array = NULL;
+  gsize i;
+
+#if DEBIT_DEBUG > 1
+  if (endp == NULL) {
+    g_warning("Problem parsing group %s in connexity database", end);
+    return NULL;
+  }
+#else
+  g_assert(endp != NULL);
+#endif
+
+  array = g_new(logic_atom_t, *length);
+  for (i = 0; i < *length; i++) {
+    int err = parse_logic_simple(wires, &array[i], endp[i]);
+    if (err) {
+      g_warning("unparsable target wire \"%s\"", endp[i]);
+      g_free(array);
+      array = NULL;
+      break;
+    }
+  }
+
+  g_strfreev(endp);
+  return array;
+}
 
 static void
 build_connexnode(GKeyFile *datadb, const gchar* endp, gpointer data) {
@@ -646,7 +722,7 @@ print_pip_hook(gpointer data, const gchar *start, const gchar *end) {
  *
  * @param pipdb the pip database to print
  */
-void print_pipdb(GKeyFile *pipdb)
+__attribute__((unused)) static void print_pipdb(GKeyFile *pipdb)
 {
   iterate_over_pips(pipdb, print_pip_hook, NULL);
 }
@@ -666,90 +742,6 @@ static guint32 get_pip_data_from_file(GKeyFile *keyfile,
 				      const gchar *start,
 				      const gchar *end) {
   return g_key_file_get_integer(keyfile, end, start, NULL);
-}
-
-/** \brief Raw query of the file representing the pip control database
- *
- * This function returns the site-independent control information
- * present in the database and directly used to locate the configuration
- * bits of the pip in the bitstream.
- *
- * @param pipdb pip database
- * @param end pip endpoint
- * @param length pointer to variable holding the number of bits part of
- * the returned configuration
- *
- * @return the list of bits
- *
- */
-
-/* XXX Do the transform at database-generation time */
-
-static inline gint *get_pip_structure_from_file(GKeyFile *keyfile,
-						const gchar *end,
-						gsize *length, const site_type_t type) {
-  gint *array = g_key_file_get_integer_list(keyfile, end, "BITLIST", length, NULL);
-  const guint width = type_bits[type].y_width;
-  gsize i;
-
-#if DEBIT_DEBUG > 1
-  if (array == NULL) {
-    g_warning("Problem parsing group %s in pip database", end);
-    return NULL;
-  }
-#else
-  g_assert(array != NULL);
-#endif
-
-  for (i = 0; i < *length; i++)
-    array[i] = bitpos_to_cfgbit(array[i], width);
-  return array;
-}
-
-/** \brief Raw query of the file representing the connexity control database
- *
- * This function returns the site-independent connexity control information
- * present in the database and directly used to locate the entry points
- * of a logic element in the design.
- *
- * @param pipdb pip database
- * @param end pip endpoint
- * @param length pointer to variable holding the number of bits part of
- * the returned configuration
- *
- * @return the list of bits
- *
- */
-
-static inline wire_atom_t *
-get_con_structure_from_file(GKeyFile *keyfile, const gchar *end, gsize *length,
-			    const wire_db_t *wires) {
-  gchar **endp = g_key_file_get_string_list(keyfile, end, "EPLIST", length, NULL);
-  wire_atom_t *array = NULL;
-  gsize i;
-
-#if DEBIT_DEBUG > 1
-  if (endp == NULL) {
-    g_warning("Problem parsing group %s in connexity database", end);
-    return NULL;
-  }
-#else
-  g_assert(endp != NULL);
-#endif
-
-  array = g_new(logic_atom_t, *length);
-  for (i = 0; i < *length; i++) {
-    int err = parse_logic_simple(wires, &array[i], endp[i]);
-    if (err) {
-      g_warning("unparsable target wire \"%s\"", endp[i]);
-      g_free(array);
-      array = NULL;
-      break;
-    }
-  }
-
-  g_strfreev(endp);
-  return array;
 }
 
 typedef struct _examine_data_memory {
@@ -992,7 +984,7 @@ query_impldb(GNode *db, wire_atom_t *wire,
   return TRUE;
 }
 
-gboolean
+static gboolean
 _get_implicit_startpoint(wire_atom_t *wire,
 			 const pip_db_t *pipdb,
 			 const wire_atom_t orig,
