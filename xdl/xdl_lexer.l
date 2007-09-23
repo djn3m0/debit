@@ -97,8 +97,12 @@ A[1-6]   {
 		 }
                  yylval->val = tmp;
 	         return(TOK_E_VAL); }
-0        { yylval->val = 0;
-	   return(TOK_E_VAL); }
+0|1            {
+                 /* In LUT context, we're parsing this as constant true
+		    or false */
+                 yylval->val = yytext[0] == '0' ? 0 : -1;
+                 return(TOK_E_VAL);
+               }
 [()+*@~] { return(yytext[0]); }
 [ \t\n]+ { BEGIN(S_CSTRING); return(TOK_WS); } /* end-of-thing */
 }
