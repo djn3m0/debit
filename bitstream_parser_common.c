@@ -78,8 +78,9 @@ update_crc(bitstream_parser_t *parser,
 
   /* writes to the CRC should yield a zero value.
      In case of strict checks, this should abort the parsing. */
-  if (reg == CRC)
+  if (reg == CRC) {
     debit_log(L_BITSTREAM,"write to CRC register yielded %04x", bcc);
+  }
 }
 
 /***
@@ -480,8 +481,9 @@ _parse_bitstream_data(bitstream_parsed_t *dest,
     advance = read_next_token(dest, parser);
   } while(advance > 0);
 
-  if (advance < 0)
+  if (advance < 0) {
     debit_log(L_BITSTREAM,"Error parsing bitstream: %i", advance);
+  }
 
   return advance;
 }

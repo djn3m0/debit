@@ -175,6 +175,7 @@ print_bram_iter(unsigned site_x, unsigned site_y,
   bram = query_bitstream_bram_data(bitstream, site);
   print_bram_data(site,bram);
   debit_log(L_SITES, "Did BRAM %i x %i", site_x, site_y);
+  (void) site_x; (void) site_y;
   g_free(bram);
 }
 

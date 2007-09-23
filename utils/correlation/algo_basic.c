@@ -256,6 +256,7 @@ isolate_bit(const pip_db_t *pipdb,
   pip_ref_t *pips = get_pip(pipdb, bit);
 
   debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pips->name);
+  (void) pips;
   intersect_same_pips(pipdb, ndb, db, bit);
   (void) flag_pip(pipdb, bit);
 }
@@ -277,6 +278,7 @@ isolate_bit_thorough(const pip_db_t *pipdb,
   pip_ref_t *pips = get_pip(pipdb, bit);
 
   debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pips->name);
+  (void) pips;
   intersect_same_pips(pipdb, ndb, db, bit);
   _intersect_compatible_pips(pipdb, ndb, db, bit);
 }
@@ -331,6 +333,7 @@ isolate_bit_internal(const pip_db_t *pipdb, const unsigned bit,
   (void) dat;
 
   debit_log(L_CORRELATE, "doing pip #%08i, %s... ", bit, pips->name);
+  (void) pips;
   intersect_same_pips(pipdb, ndb, db, bit);
   _intersect_compatible_pips(pipdb, ndb, db, bit);
 }

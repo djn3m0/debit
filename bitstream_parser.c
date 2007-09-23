@@ -489,9 +489,10 @@ char *cmd_names[__NUM_CMD_CODE] = {
   [DESYNCH] = "DESYNCH",
 };
 
+#endif /* DEBIT_DEBUG > 0 */
+
 #define chip_id_t s3_id_t
 
-#endif /* DEBIT_DEBUG > 0 */
 #endif /* SPARTAN3 */
 
 /* This structure contains the internal structure of the parser */
@@ -574,8 +575,9 @@ update_crc(bitstream_parser_t *parser,
 
   /* writes to the CRC should yield a zero value.
      In case of strict checks, this should abort the parsing. */
-  if (reg == CRC)
+  if (reg == CRC) {
     debit_log(L_BITSTREAM,"write to CRC register yielded %04x", bcc);
+  }
 }
 
 /***
@@ -616,6 +618,7 @@ static inline void
 print_far(sw_far_t *far) {
   debit_log(L_BITSTREAM, "FAR is [ba %i, mja %i, mna %i, bn %i]",
 	    far->ba, far->mja, far->mna, far->bn);
+  (void) far;
 }
 
 typedef enum _ba_col_type {
@@ -850,8 +853,10 @@ decode_reg(const uint32_t rval,
     unsigned offset = bitfields[i].off;
     unsigned flen = bitfields[i+1].off - offset;
     unsigned fval = (rval >> offset) & MSK(flen);
-    if (fval)
+    if (fval) {
       debit_log(L_BITSTREAM, "%s=%i", names[i], fval);
+      (void) names;
+    }
   }
 }
 
@@ -1219,8 +1224,9 @@ _parse_bitstream_data(bitstream_parsed_t *dest,
     advance = read_next_token(dest, parser);
   } while(advance > 0);
 
-  if (advance < 0)
+  if (advance < 0) {
     debit_log(L_BITSTREAM,"Error parsing bitstream: %i", advance);
+  }
 
   return advance;
 }

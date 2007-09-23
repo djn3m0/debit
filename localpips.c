@@ -550,7 +550,6 @@ static void build_groupnode(GKeyFile *datadb, const gchar* endp,
   iterate_over_starts(datadb, build_wirenode, &arg, endp);
 }
 
-
 typedef struct _connex_control_data {
   wire_atom_t endwire;
   gsize size;
@@ -1225,6 +1224,8 @@ iterate_over_bitpips_complex(const pip_parsed_dense_t *pipdat,
   }
 }
 
+#ifndef __COMPILED_PIPSDB
+
 /*
  * Implicit database implementation
  */
@@ -1419,3 +1420,30 @@ bitpip_lookup(const sited_pip_t spip,
   debit_log(L_PIPS, "bitpip lookup succeeded with value %08x", *vals);
   return 0;
 }
+
+#else /* __COMPILED_PIPSDB */
+
+
+gboolean
+get_implicit_startpoint(wire_atom_t *wire,
+			const pip_db_t *pipdb,
+			const chip_descr_t *chip,
+			const wire_atom_t orig,
+			const site_ref_t site) {
+  (void) wire; (void) pipdb; (void) chip;
+  (void) orig; (void) site;
+  return FALSE;
+}
+
+int
+bitpip_lookup(const sited_pip_t spip,
+	      const chip_descr_t *chip,
+	      const pip_db_t *pipdb,
+	      const unsigned **cfgbits, size_t *nbits,
+	      uint32_t *vals) {
+  (void) spip; (void) chip; (void) pipdb;
+  (void) cfgbits; (void) nbits; (void) vals;
+  return -1;
+}
+
+#endif /* __COMPILED_PIPSDB */

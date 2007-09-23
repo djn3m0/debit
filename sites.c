@@ -436,6 +436,7 @@ snprint_csite(gchar *buf, size_t bufs,
       return snprintf(buf, bufs, str, gx, gy);
   }
   g_assert_not_reached();
+  return -1;
 }
 
 /* Print the slice name. At some point, the site should be embedded into
@@ -504,6 +505,7 @@ snprint_switch(gchar *buf, size_t bufs,
   }
   }
   g_assert_not_reached();
+  return -1;
 }
 
 /*

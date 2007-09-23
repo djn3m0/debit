@@ -279,8 +279,9 @@ update_crc_h(bitstream_writer_t *writer, const register_index_t reg,
   writer->crc = bcc;
 
   /* writes to the CRC should yield a zero value */
-  if (reg == CRC)
+  if (reg == CRC) {
     debit_log(L_WRITE,"write to CRC register yielded %04x", bcc);
+  }
 }
 
 static inline void
@@ -311,8 +312,9 @@ update_crc_b(bitstream_writer_t *bit,
   bit->crc = bcc;
 
   /* writes to the CRC should yield a zero value. */
-  if (reg == CRC)
+  if (reg == CRC) {
     debit_log(L_WRITE,"write to CRC register yielded %04x", bcc);
+  }
 }
 
 

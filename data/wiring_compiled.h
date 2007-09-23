@@ -51,7 +51,7 @@ static const wire_simple_t wires[] = {
 };
 
 static const wire_t details[] = {
-#define _WIRE_ENTRY(s, n, vdx, vdy, vep, vtype, vdir, vsit) [n] = { .type = vtype, .direction = vdir, .situation = vsit },
+#define _WIRE_ENTRY(s, n, vdx, vdy, vep, new_nep, new_eps, vtype, vdir, vsit) [n] = { .type = vtype, .direction = vdir, .situation = vsit },
 #include WIREDB
 #undef _WIRE_ENTRY
 };

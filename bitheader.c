@@ -30,9 +30,9 @@ parse_option (parsed_header_t *parse,
     parse->options[code - FILENAME].len = len;
     parse->options[code - FILENAME].data = opt->payload;
   }
-  else
+  else {
     debit_log(L_HEADER, "Option code unknown, please report");
-
+  }
 }
 
 int
