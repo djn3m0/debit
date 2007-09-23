@@ -99,6 +99,23 @@ static void write_lut(const parser_t *parser,
   set_bitstream_lut(&parser->bit, site, val, lut_idx);
 }
 
+static void write_property(const parser_t *parser,
+			   const char *prop) {
+  if (!strcmp(prop, "F") || !strcmp(prop, "G")) {
+    assert(peek_property(parser) && !strcmp(peek_property(parser),"#OFF"));
+    write_lut(parser, 0, prop);
+    return;
+  }
+  if (!strcmp(prop, "_GND_SOURCE")) {
+    /* I've only ever seen Y, so check for this assumption.
+       When used as a ground source, it seems the LUTs are initialized.
+     */
+    assert(peek_property(parser) && !strcmp(peek_property(parser),"Y"));
+    write_lut(parser, 0, "F");
+    write_lut(parser, 0, "G");
+  }
+}
+
 static void treat_pip(parser_t *parser,
 		      const char *start,
 		      const char *end,
@@ -225,7 +242,9 @@ static int treat_design(parser_t *parser,
 %type <name> device
 %type <name> STRING
 %type <name> design_name
+%type <name> cfgval
 %type <name> cfgattr
+%type <name> cfgtrait
 
 %type <val> TOK_E_VAL
 %type <val> lutexpr
@@ -261,14 +280,15 @@ tile: IDENTIFIER { $$ = $1; } ;
 site: IDENTIFIER { $$ = $1; } ;
 
 cfgattr: IDENTIFIER { debit_log(L_PARSER, "Attribute %s", $1); $$=$1; } ;
-cfgval:  | IDENTIFIER { debit_log(L_PARSER, "Config val %s", $1); free($1); } ; /* Configuration values / names can be empty (MUXF) */
+cfgval: { $$ = NULL; } | IDENTIFIER { $$ = $1; } ; /* Configuration values / names can be empty (MUXF) */
 whitespace: | TOK_WS ;  /* Whitespace can be empty */
 
-cfgtrait: TOK_CFG_SEP cfgval;
+cfgtrait: TOK_CFG_SEP cfgval { $$ = $2; };
 cfglut: TOK_CFG_SEP lutexpr { $$ = $2; };
-cfgvallist: cfgtrait | cfgvallist cfgtrait ;
-cfgitem: cfgattr cfgvallist { free($1); }
-| cfgattr cfgvallist cfglut { write_lut(yyparm, $3, $1); free($1); };
+cfgvallist: cfgtrait { push_property(yyparm, $1); };
+| cfgvallist cfgtrait { push_property(yyparm, $2); };
+cfgitem: cfgattr cfgvallist { write_property(yyparm, $1); free($1); free_properties(yyparm); }
+| cfgattr cfgvallist cfglut { write_lut(yyparm, $3, $1); free($1); free_properties(yyparm); };
 
 cfglist: cfgitem | cfglist TOK_WS cfgitem ;
 cfgstring: TOK_QUOTE whitespace cfglist whitespace TOK_QUOTE ;
@@ -310,9 +330,9 @@ net: net_header ',' iopinlist piplist ';'
 netlist: net | netlist net ;
 
 /* LUT expressions */
-lutexpr: TOK_E_VAL               { $$ = $1; };
-| lutexpr '*' lutexpr            { $$ = $1 & $3; };
-| lutexpr '+' lutexpr            { $$ = $1 | $3; };
-| lutexpr '@' lutexpr            { $$ = $1 ^ $3; };
-| '~' lutexpr %prec NEG          { $$ = ~ $2; };
+lutexpr: TOK_E_VAL               { $$ = $1; }
+| lutexpr '*' lutexpr            { $$ = $1 & $3; }
+| lutexpr '+' lutexpr            { $$ = $1 | $3; }
+| lutexpr '@' lutexpr            { $$ = $1 ^ $3; }
+| '~' lutexpr %prec NEG          { $$ = ~ $2; }
 | '(' lutexpr ')'                { $$ = $2; };
