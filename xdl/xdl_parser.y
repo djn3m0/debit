@@ -274,8 +274,8 @@ design_header: DESIGN design_name part ncd_version { treat_design(yyparm, $2, $3
 design: design_header ',' config ';' ;
 
 /* Instances */
-name: STRING ;
-sitedef: STRING ;
+name: STRING { free($1); };
+sitedef: STRING { free($1); } ;
 tile: IDENTIFIER { $$ = $1; } ;
 site: IDENTIFIER { $$ = $1; } ;
 
@@ -323,7 +323,7 @@ piplist: pip | piplist pip ;
 /* Some nets have the vcc qualifier appended after the name */
 qualifier:
    | IDENTIFIER { free($1); };
-net_header: NET STRING qualifier ;
+net_header: NET STRING qualifier { free($2); } ;
 net: net_header ',' iopinlist piplist ';'
    | net_header ',' config ',' ';' ;
 

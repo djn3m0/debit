@@ -66,7 +66,10 @@ push_property(parser_t *parser, char *p) {
 static inline void
 free_parser(parser_t *parser) {
 	chip_descr_t *chip = (void *)parser->chip;
-	pip_db_t *pipdb= (void *)parser->pipdb;
+	pip_db_t *pipdb = (void *)parser->pipdb;
+	char *datadir = (void *)parser->datadir;
+	bitstream_parsed_t *bit = &parser->bit;
+
 	if (pipdb) {
 		parser->pipdb = NULL;
 		free_pipdb(pipdb);
@@ -75,7 +78,16 @@ free_parser(parser_t *parser) {
 		parser->chip = NULL;
 		release_chip(chip);
 	}
-	/* XXX Free bitstream, header */
+	if (datadir) {
+		parser->datadir = NULL;
+		g_free(datadir);
+	}
+	/* XXX not sufficient */
+	if (bit->frames) {
+		g_free(bit->frames);
+		parser->bit.frames = NULL;
+	}
+	/* free bitstream header */
 }
 
 #endif /* _HAS_PARSER_H */

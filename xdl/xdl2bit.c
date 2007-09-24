@@ -13,6 +13,7 @@
 
 /* Parsing, lexing */
 extern int yyparse (void *);
+extern int yylex_destroy (void);
 extern FILE* yyin;
 
 /* Command-line */
@@ -99,6 +100,8 @@ int main(int argc, char **argv) {
 	  bitstream_write(&parser.bit, odir, ofile);
 
 	/* XXX Free */
+	free_parser(&parser);
+	(void) yylex_destroy();
 
 	return 0;
 }
