@@ -1008,9 +1008,9 @@ alloc_wbitstream(bitstream_parsed_t *parsed) {
   /* Lookup the name */
   const header_option_p *devopt = get_option(&parsed->header, DEVICE_TYPE);
   const char *name = devopt->data;
-  unsigned i;
+  int i;
 
-  for (i = 0; i < CHIPS__NUM; i++) {
+  for (i = CHIPS__NUM - 1; i >= 0; i--) {
     const char *chipname = chipfiles[i];
     if (!strncmp(name,chipname,strlen(chipname))) {
       parsed->chip_struct = &bitdescr[i];
