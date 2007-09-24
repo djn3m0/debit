@@ -46,6 +46,7 @@ typedef struct _chip_descr {
   unsigned width;
   unsigned height;
   csite_descr_t *data;
+  GData *lookup;
 } chip_descr_t;
 
 /* Describes a rectangular site range */

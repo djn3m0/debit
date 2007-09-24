@@ -260,10 +260,26 @@ init_local_coordinates(chip_descr_t *chip) {
 }
 
 static void
+fill_lookup(unsigned x, unsigned y,
+	    csite_descr_t *site, gpointer dat) {
+  chip_descr_t *chip = dat;
+  gchar name[MAX_SITE_NLEN];
+  snprint_csite(name, ARRAY_SIZE(name), site, x, y);
+  g_datalist_set_data(&chip->lookup, name, site);
+  return;
+}
+
+static inline void
+init_lookup(chip_descr_t *chip) {
+  iterate_over_sites(chip, fill_lookup, chip);
+}
+
+static void
 init_chip(chip_descr_t *chip, GKeyFile *file) {
   /* for each of the types, call the init functions */
   iterate_over_groups(file, init_group_chip_type, chip);
   init_local_coordinates(chip);
+  init_lookup(chip);
 }
 
 /* exported alloc and destroy functions */
@@ -300,6 +316,7 @@ get_chip(const gchar *dirname, const unsigned chipid) {
   if (err)
     goto out_err;
 
+  g_datalist_init(&chip->lookup);
   init_chip(chip, keyfile);
   g_key_file_free(keyfile);
 
@@ -318,6 +335,7 @@ void
 release_chip(chip_descr_t *chip) {
   g_free(chip->data);
   chip->data = NULL;
+  g_datalist_clear(&chip->lookup);
   g_free(chip);
 }
 
@@ -509,46 +527,20 @@ snprint_switch(gchar *buf, size_t bufs,
 }
 
 /*
- * Very, very, dumb site lookup by name
+ * Site to csite translation
  */
-
-typedef struct _site_lookup {
-  const chip_descr_t *chip;
-  const char *str;
-  int _found;
-  site_ref_t pos;
-} site_lookup_t;
-
-static void
-lookup_iterator(unsigned x, unsigned y,
-		csite_descr_t *site, gpointer dat) {
-  gchar name[MAX_SITE_NLEN];
-  site_lookup_t *sl = (void *) dat;
-  int _found;
-
-  if (!sl->_found)
-    return;
-
-  snprint_csite(name, ARRAY_SIZE(name), site, x, y);
-  //  printf("comparing %s to %s\n", sl->str, name);
-  _found = strcmp(name,sl->str);
-  if (_found == 0) {
-    sl->_found = _found;
-    sl->pos = get_site_ref(sl->chip, site);
-  }
-  return;
-}
 
 int parse_site_simple(const chip_descr_t *chip,
 		      site_ref_t* sref,
 		      const gchar *lookup) {
-  site_lookup_t sl = { .str = lookup,
-		       ._found = 1,
-		       .chip = chip, };
-  iterate_over_sites(chip, lookup_iterator, &sl);
-  if (sl._found == 0)
-    *sref = sl.pos;
-  return sl._found;
+  chip_descr_t *mchip = (void *) chip;
+  csite_descr_t *site = g_datalist_get_data(&mchip->lookup, lookup);
+
+  if (site == NULL)
+    return -1;
+
+  *sref = get_site_ref(chip, site);
+  return 0;
 }
 
 static void

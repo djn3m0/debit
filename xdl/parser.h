@@ -5,7 +5,7 @@
 #include "localpips.h"
 #include "sites.h"
 
-#define PROP_MAX 5
+#define PROP_MAX 10
 
 typedef struct _parser_t {
 /* 	yyscan_t scanner; */
