@@ -339,7 +339,6 @@ void free_datadb(GNode **db) {
 }
 
 static void free_impldb(GNode **db);
-
 /** \brief Free a filled pip database
  *
  * Free all structures allocated during the database loading
@@ -360,6 +359,7 @@ free_pipdb(pip_db_t *pipdb) {
   for(i = 0; i < NR_SWITCH_TYPE; i++) {
     free_impldb (&pipdb->implicitdb[i]);
     free_datadb (&pipdb->memorydb[i]);
+    free_datadb (&pipdb->connexdb[i]);
   }
 
   g_free(pipdb);
@@ -927,12 +927,13 @@ read_implicitdb(wire_db_t *wiredb,
   err = read_keyfile(&data,filename);
   g_free(filename);
   if (err)
-    goto out_err_nofree;
+    goto out_err_free;
 
   head = build_impldb_from_keyfile(data, wiredb);
-  g_key_file_free(data);
 
- out_err_nofree:
+ out_err_free:
+  if (data)
+    g_key_file_free(data);
   return head;
 }
 

@@ -64,6 +64,12 @@ push_property(parser_t *parser, char *p) {
 }
 
 static inline void
+free_option(parsed_header_t *header, option_type_t opt) {
+  void *dat = (void *) get_option(header, opt)->data;
+  free(dat);
+}
+
+static inline void
 free_parser(parser_t *parser) {
 	chip_descr_t *chip = (void *)parser->chip;
 	pip_db_t *pipdb = (void *)parser->pipdb;
@@ -82,12 +88,11 @@ free_parser(parser_t *parser) {
 		parser->datadir = NULL;
 		g_free(datadir);
 	}
-	/* XXX not sufficient */
-	if (bit->frames) {
-		g_free(bit->frames);
-		parser->bit.frames = NULL;
-	}
-	/* free bitstream header */
+
+
+	free_option(&bit->header, FILENAME);
+	free_option(&bit->header, DEVICE_TYPE);
+	free_wbitstream(bit);
 }
 
 #endif /* _HAS_PARSER_H */

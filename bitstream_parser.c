@@ -981,6 +981,7 @@ free_indexer(bitstream_parsed_t *parsed) {
   gchar ***frames = (gchar ***)parsed->frames;
   if (frames)
     g_free(frames);
+  parsed->frames = NULL;
 }
 
 /* XXX these functions burden the read-only case. To be put elsewhere
@@ -1003,6 +1004,14 @@ fill_indexer(bitstream_parsed_t *parsed) {
   }
 }
 
+static void
+empty_indexer(bitstream_parsed_t *parsed) {
+  gchar **frame_array = (gchar **) &parsed->frames[V2C__NB_CFG];
+  /* Free *all* frames at once. Easy... */
+  g_free (frame_array[0]);
+}
+
+
 int
 alloc_wbitstream(bitstream_parsed_t *parsed) {
   /* Lookup the name */
@@ -1020,6 +1029,12 @@ alloc_wbitstream(bitstream_parsed_t *parsed) {
     }
   }
   return -1;
+}
+
+void
+free_wbitstream(bitstream_parsed_t *parsed) {
+  empty_indexer(parsed);
+  free_indexer(parsed);
 }
 
 /* XXX End-of-burden */

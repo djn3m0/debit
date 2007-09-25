@@ -32,6 +32,8 @@ typedef struct _bitstream_parsed {
 } bitstream_parsed_t;
 
 int alloc_wbitstream(bitstream_parsed_t *bitstream);
+void free_wbitstream(bitstream_parsed_t *parser);
+
 bitstream_parsed_t *parse_bitstream(const gchar*filename);
 void free_bitstream(bitstream_parsed_t *bitstream);
 

@@ -136,6 +136,17 @@ do { \
   return retval;
 }
 
+static inline void
+free_wire_atom(const wire_db_t *db, gint id)
+{
+  wire_simple_t *wire = (void *) &db->wires[id];
+  int *fut = wire->fut;
+  if (fut) {
+    wire->fut = NULL;
+    g_free(fut);
+  }
+}
+
 static inline int
 fill_db_from_file(const wire_db_t *wires, GKeyFile *db,
 		  const gsize nwires, gchar **wirenames) {
@@ -149,6 +160,13 @@ fill_db_from_file(const wire_db_t *wires, GKeyFile *db,
   }
 
   return err;
+}
+
+static inline void
+empty_db(wire_db_t *wires, const gsize nwires) {
+  gsize i;
+  for(i = 0; i < nwires; i++)
+    free_wire_atom(wires, i);
 }
 
 /** Fill in a wire db with data from a file
@@ -228,6 +246,7 @@ void free_wiredb(wire_db_t *wires) {
     g_string_chunk_free(wirenames);
   g_free((void *)wires->details);
   g_free(wires->names);
+  empty_db(wires, wires->dblen);
   g_free((void *)wires->wires);
   g_free(wires);
 }
