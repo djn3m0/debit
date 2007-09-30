@@ -22,9 +22,15 @@
    local typed grid */
 
 typedef struct _coord {
-  gint16 x;
-  gint16 y;
+  guint16 x;
+  guint16 y;
 } site_t;
+
+static inline site_t
+add_sites(const site_t s1, const site_t s2) {
+  site_t added = { .x = s1.x + s2.x, .y = s1.y + s2.y };
+  return added;
+}
 
 /* more compact vision of the data */
 typedef struct _site_descr {
@@ -42,20 +48,86 @@ typedef uint16_t site_ref_t;
 typedef uint8_t  slice_index_t;
 #define BITAT(x,off) ((x >> off) & 1)
 
+typedef uint32_t nsite_ref_t;
+#define NSITE_NULL ((nsite_ref_t)-1)
+
+/* Describes a rectangular site range */
+typedef struct nsite_area {
+  /* coordinates of the upper left corner of the area on the whole FPGA
+     grid */
+  site_t grid_base;
+  /* Width and height of the rectangle */
+  site_t dimension;
+  /* coordinates of the upper left corner of the area on the subsampled
+     grid of places of the same type */
+  site_t type_base;
+  site_type_t type;
+} nsite_area_t;
+
 typedef struct _chip_descr {
   unsigned width;
   unsigned height;
   csite_descr_t *data;
   GData *lookup;
+  /* New kind of optimized site database */
+  unsigned o_width;
+  unsigned o_height;
+  const nsite_area_t *area;
 } chip_descr_t;
 
-/* Describes a rectangular site range */
-typedef struct site_area {
-  unsigned x;
-  unsigned width;
-  unsigned y;
-  unsigned height;
-} site_area_t;
+/* New nsite_ref_t container, on 32 bits. The nsite_ref_t contains 2
+   coodinates: the linear coordinates in the nsite_area_t array, and the
+   relative coordinate in this space, each on 16 bits. The linear
+   coordinate is computed in standard way (y*width+x).
+ */
+#define AREA_COORD(x) ((x) >> 16)
+#define RELATIVE_COORD(x) ((x) & ((1 << 16) - 1))
+
+static inline const nsite_area_t *
+area_of_site(const chip_descr_t *chip,
+	     const nsite_ref_t site) {
+  const unsigned lco = AREA_COORD(site);
+  return &chip->area[lco];
+}
+
+/**
+ * Site properties accessors, replace the csite_descr_t structure
+ */
+static site_t
+relative_coords(const chip_descr_t *chip, const nsite_ref_t site) {
+  const nsite_area_t *area = area_of_site(chip, site);
+  const unsigned lco = RELATIVE_COORD(site);
+  site_t rel = { .x = lco % area->dimension.x,
+		 .y = lco / area->dimension.x, };
+  return rel;
+}
+
+/*
+ * Have these directly a site_t, and see how this fares. Could be
+ * faster. In particulare, we could use a pseudo-simd by compacting the
+ * site_t into only one guint32.
+ */
+
+static inline site_t
+global_coords(const chip_descr_t *chip, const nsite_ref_t site) {
+  const nsite_area_t *area = area_of_site(chip, site);
+  const site_t rel = relative_coords(chip, site);
+  return add_sites(area->grid_base, rel);
+}
+
+static inline site_t
+local_coords(const chip_descr_t *chip, const nsite_ref_t site) {
+  const nsite_area_t *area = area_of_site(chip, site);
+  const site_t rel = relative_coords(chip, site);
+  return add_sites(area->type_base, rel);
+}
+
+static inline site_type_t
+type(const chip_descr_t *chip, const nsite_ref_t site) {
+  const nsite_area_t *area = area_of_site(chip, site);
+  return area->type;
+}
+
 
 /* get a site index, in-order WRT iterate_over_sites */
 static inline unsigned
@@ -159,9 +231,15 @@ int parse_slice_simple(const gchar *buf, slice_index_t* idx);
  * @see snprint_csite
  * @see parse_wire_simple
  */
+
 int parse_site_simple(const chip_descr_t *chip,
 		      site_ref_t* sref,
 		      const gchar *lookup);
+
+int parse_site_complex(const chip_descr_t *chip,
+		       site_ref_t* sref,
+		       const gchar *lookup);
+
 
 typedef void (*site_iterator_t)(unsigned site_x, unsigned site_y,
 				csite_descr_t *site, gpointer dat);

@@ -76,6 +76,16 @@ void _draw_site_compose(const drawing_context_t *ctx, const csite_descr_t *site)
 
 /* wire drawing primitives -- this is where the real work happens */
 void draw_all_wires(drawing_context_t *ctx, const bitstream_analyzed_t *nlz);
+
+/* Describes a rectangular site range. Possibly merged into
+ * nsite_area_t once it is completed. */
+typedef struct site_area {
+  unsigned x;
+  unsigned width;
+  unsigned y;
+  unsigned height;
+} site_area_t;
+
 void draw_all_wires_limited(drawing_context_t *ctx,
 			    const bitstream_analyzed_t *nlz,
 			    const site_area_t *area);
