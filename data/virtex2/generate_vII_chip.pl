@@ -1,6 +1,7 @@
 #! /usr/bin/perl -w
 
 use strict;
+require "../intervals.pl";
 
 # This script generates chip_control and chip_data databases for the
 # virtex-II family
@@ -146,7 +147,7 @@ for $chip (keys %clbwidth) {
 
     # Generate the chip_descr file
     $filename = "${dirname}/chip_data";
-    open(DESCR, ">$filename") || die "opening $filename";
+    open(NEW, ">$filename") or die "Opening $filename.new";
 
     # The CLBs are interleaved with other things
     my $type;
@@ -159,107 +160,105 @@ for $chip (keys %clbwidth) {
 	    next;
 	}
 
-	print DESCR "[$type]\n";
 	# No switch...
 	# CLBs for starters
 	if ($type =~ /^CLB$/) {
 	    #function print_clb_height
 	    #hard, according to type...
-	    #print_clb_width();
-	    print_clb_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_clb_height($clbheight{$chip}, \*DESCR);
+	    print_clb_width($brams{$chip}, $clbwidth{$chip}, $type);
+	    print_clb_height($clbheight{$chip}, $type);
 	} elsif ($type =~ /^BRAM$/) {
-	    print_bram_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_clb_height($clbheight{$chip}, \*DESCR);
+	    print_bram_width($brams{$chip}, $clbwidth{$chip}, $type);
+	    print_clb_height($clbheight{$chip}, $type);
 	} elsif ($type =~ /^TIOI$/) {
 	    # They follow the CLB on the width
-	    print_clb_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_top_height(\*DESCR);
+	    print_clb_width($brams{$chip}, $clbwidth{$chip}, $type);
+	    print_top_height($type);
 	} elsif ($type =~ /^BIOI$/) {
-	    print_clb_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_bottom_height($clbheight{$chip},\*DESCR);
+	    print_clb_width($brams{$chip}, $clbwidth{$chip}, $type);
+	    print_bottom_height($clbheight{$chip},$type);
 	} elsif ($type =~ /^TIOIBRAM$/) {
-	    print_bram_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_top_height(\*DESCR);
+	    print_bram_width($brams{$chip}, $clbwidth{$chip}, $type);
+	    print_top_height($type);
 	} elsif ($type =~ /^BIOIBRAM$/) {
-	    print_bram_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_bottom_height($clbheight{$chip},\*DESCR);
+	    print_bram_width($brams{$chip}, $clbwidth{$chip}, $type);
+	    print_bottom_height($clbheight{$chip},$type);
 	} elsif ($type =~ /^TTERMBRAM$/) {
-	    print_bram_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_termtop_height(\*DESCR);
+	    print_bram_width($brams{$chip}, $clbwidth{$chip}, $type);
+	    print_termtop_height($type);
 	} elsif ($type =~ /^BTERMBRAM$/) {
-	    print_bram_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_termbottom_height($clbheight{$chip},\*DESCR);
+	    print_bram_width($brams{$chip}, $clbwidth{$chip}, $type);
+	    print_termbottom_height($clbheight{$chip},$type);
 	} elsif ($type =~ /^TTERM$/) {
-	    print_clb_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_termtop_height(\*DESCR);
+	    print_clb_width($brams{$chip}, $clbwidth{$chip}, $type);
+	    print_termtop_height($type);
 	} elsif ($type =~ /^BTERM$/) {
-	    print_clb_width($brams{$chip}, $clbwidth{$chip}, \*DESCR);
-	    print_termbottom_height($clbheight{$chip},\*DESCR);
+	    print_clb_width($brams{$chip}, $clbwidth{$chip}, $type);
+	    print_termbottom_height($clbheight{$chip},$type);
 	} elsif ($type =~ /^LIOI$/) {
-	    print_left_width(\*DESCR);
-	    print_clb_height($clbheight{$chip}, \*DESCR);
+	    print_left_width($type);
+	    print_clb_height($clbheight{$chip}, $type);
 	} elsif ($type =~ /^RIOI$/) {
-	    print_right_width($clbwidth{$chip},$brams{$chip},\*DESCR);
-	    print_clb_height( $clbheight{$chip}, \*DESCR);
+	    print_right_width($clbwidth{$chip},$brams{$chip},$type);
+	    print_clb_height( $clbheight{$chip}, $type);
 	} elsif ($type =~ /^LTERM$/) {
-	    print_termleft_width(\*DESCR);
-	    print_clb_height($clbheight{$chip}, \*DESCR);
+	    print_termleft_width($type);
+	    print_clb_height($clbheight{$chip}, $type);
 	} elsif ($type =~ /^RTERM$/) {
-	    print_termright_width($clbwidth{$chip}, $brams{$chip}, \*DESCR);
-	    print_clb_height( $clbheight{$chip}, \*DESCR);
+	    print_termright_width($clbwidth{$chip}, $brams{$chip}, $type);
+	    print_clb_height( $clbheight{$chip}, $type);
 	} elsif ($type =~ /^LIOIBRAM$/) {
-	    print_left_width(\*DESCR);
-	    print_bram_height($brams{$chip}, $clbheight{$chip}, \*DESCR);
+	    print_left_width($type);
+	    print_bram_height($brams{$chip}, $clbheight{$chip}, $type);
 	} elsif ($type =~ /^RIOIBRAM$/) {
-	    print_right_width($clbwidth{$chip},$brams{$chip},\*DESCR);
-	    print_bram_height($brams{$chip}, $clbheight{$chip}, \*DESCR);
+	    print_right_width($clbwidth{$chip},$brams{$chip},$type);
+	    print_bram_height($brams{$chip}, $clbheight{$chip}, $type);
 	} elsif ($type =~ /^LTERMBRAM$/) {
-	    print_termleft_width(\*DESCR);
-	    print_bram_height($brams{$chip}, $clbheight{$chip}, \*DESCR);
+	    print_termleft_width($type);
+	    print_bram_height($brams{$chip}, $clbheight{$chip}, $type);
 	} elsif ($type =~ /^RTERMBRAM$/) {
-	    print_termright_width($clbwidth{$chip},$brams{$chip},\*DESCR);
-	    print_bram_height($brams{$chip}, $clbheight{$chip}, \*DESCR);
+	    print_termright_width($clbwidth{$chip},$brams{$chip},$type);
+	    print_bram_height($brams{$chip}, $clbheight{$chip}, $type);
 	} #corners
 	elsif ($type =~ /^BR$/) {
 	    #ICAP is here. Bottom is top
-	    print_right_width($clbwidth{$chip},$brams{$chip},\*DESCR);
-	    print_bottom_height($clbheight{$chip},\*DESCR);
+	    print_right_width($clbwidth{$chip},$brams{$chip},$type);
+	    print_bottom_height($clbheight{$chip},$type);
 	} elsif ($type =~ /^BL$/) {
-	    print_left_width(\*DESCR);
-	    print_bottom_height($clbheight{$chip},\*DESCR);
+	    print_left_width($type);
+	    print_bottom_height($clbheight{$chip},$type);
 	} elsif ($type =~ /^TR$/) {
 	    #BSCAN is here
-	    print_right_width($clbwidth{$chip},$brams{$chip},\*DESCR);
-	    print_top_height(\*DESCR);
+	    print_right_width($clbwidth{$chip},$brams{$chip},$type);
+	    print_top_height($type);
 	} elsif ($type =~ /^TL$/) {
-	    print_left_width(\*DESCR);
-	    print_top_height(\*DESCR);
+	    print_left_width($type);
+	    print_top_height($type);
 	} elsif ($type =~ /^(R|L)(T|B)TERM$/) {
 	    my $lr = $1;
 	    my $tb = $2;
 	    if ($lr =~ /R/) {
-		print_termright_width($clbwidth{$chip},$brams{$chip},\*DESCR);
+		print_termright_width($clbwidth{$chip},$brams{$chip},$type);
 	    } else {
-		print_termleft_width(\*DESCR);
+		print_termleft_width($type);
 	    }
 	    if ($tb =~ /T/) {
-		print_top_height(\*DESCR);
+		print_top_height($type);
 	    } else {
-		print_bottom_height($clbheight{$chip},\*DESCR);
+		print_bottom_height($clbheight{$chip},$type);
 	    }
 	} elsif ($type =~ /^(T|B)(L|R)TERM$/) {
 	    my $lr = $2;
 	    my $tb = $1;
 	    if ($lr =~ /R/) {
-		print_right_width($clbwidth{$chip},$brams{$chip},\*DESCR);
+		print_right_width($clbwidth{$chip},$brams{$chip},$type);
 	    } else {
-		print_left_width(\*DESCR);
+		print_left_width($type);
 	    }
 	    if ($tb =~ /T/) {
-		print_termtop_height(\*DESCR);
+		print_termtop_height($type);
 	    } else {
-		print_termbottom_height($clbheight{$chip},\*DESCR);
+		print_termbottom_height($clbheight{$chip}, $type);
 	    }
 	}
 	#corner terms
@@ -270,188 +269,132 @@ for $chip (keys %clbwidth) {
 	# print_bram_height
 
 	# Corner cases, haha
-	print DESCR "type=$C_enum{$type}\n";
-	print DESCR "\n";
+	print_database_std(\*NEW,\%C_enum);
+	reset_database();
     }
-
-    close(DESCR);
+    close(NEW);
 }
 
 sub print_clb_height
 {
-    my ($ncols, $output) = @_;
+    my ($ncols, $type) = @_;
     my $last_y = $y_offset + $ncols;
-    print $output "y=$y_offset;$last_y\n";
+    register_interval_vert($type,$y_offset,$ncols);
 }
 
 sub print_clb_width
 {
-    my ($nbrams, $ncols, $output) = @_;
-    print $output "x=";
+    my ($nbrams, $ncols, $type) = @_;
     if ($nbrams == 2) {
 	my $inter = $ncols / 4;
-	print_interval($output,$x_offset,$x_offset+$inter);
-	print_sep( $output );
-	print_interval($output,$x_offset+$inter+1,$x_offset+3*$inter+1);
-	print_sep( $output );
-	print_interval($output,$x_offset+3*$inter+2,$x_offset+4*$inter+2);
+	register_interval_horiz($type, $x_offset,$inter);
+	register_interval_horiz($type, $x_offset+$inter+1,2*$inter);
+	register_interval_horiz($type, $x_offset+3*$inter+2,$inter);
     } elsif ($nbrams == 4) {
 	my $inter = ($ncols - 8) / 2;
-	#first small col
-	print_interval($output,$x_offset,$x_offset+2);
-	print_sep( $output );
-	#first big
-	print_interval($output,$x_offset+3,$x_offset+$inter+3);
-	print_sep( $output );
-	#the middle
-	print_interval($output,$x_offset+$inter+4,$x_offset+$inter+8);
-	print_sep( $output );
-	#the second big
-	print_interval($output,$x_offset+$inter+9,$x_offset+2*$inter+9);
-	print_sep( $output );
-	#the last small
-	print_interval($output,$x_offset+2*$inter+10,$x_offset+2*$inter+12);
+	register_interval_horiz($type, $x_offset,2);
+	register_interval_horiz($type, $x_offset+3,$inter);
+	register_interval_horiz($type, $x_offset+$inter+4,4);
+	register_interval_horiz($type, $x_offset+$inter+9,$inter);
+	register_interval_horiz($type, $x_offset+2*$inter+10,2);
     } else {
 	#nbrams on colomns
 	my $inter = ($ncols - 8) / 4;
-	#first small col
-	print_interval($output,$x_offset,$x_offset+2);
-	print_sep( $output );
-	#first big
-	print_interval($output,$x_offset+3,$x_offset+$inter+3);
-	print_sep( $output );
-	print_interval($output,$x_offset+$inter+4,$x_offset+2*$inter+4);
-	print_sep( $output );
-	#the middle
-	print_interval($output,$x_offset+2*$inter+5,$x_offset+2*$inter+9);
-	print_sep( $output );
-	#the second big
-	print_interval($output,$x_offset+2*$inter+10,$x_offset+3*$inter+10);
-	print_sep( $output );
-	print_interval($output,$x_offset+3*$inter+11,$x_offset+4*$inter+11);
-	print_sep( $output );
-	#the last small
-	print_interval($output,$x_offset+4*$inter+12,$x_offset+4*$inter+14);
+	register_interval_horiz($type, $x_offset,2);
+	register_interval_horiz($type, $x_offset+3,$inter);
+	register_interval_horiz($type, $x_offset+$inter+4,$inter);
+	register_interval_horiz($type, $x_offset+2*$inter+5,4);
+	register_interval_horiz($type, $x_offset+2*$inter+10,$inter);
+	register_interval_horiz($type, $x_offset+3*$inter+11,$inter);
+	register_interval_horiz($type, $x_offset+4*$inter+12,2);
     }
-
-    print $output "\n";
 }
 
 sub print_bram_width
 {
-    my ($nbrams, $ncols, $output) = @_;
-    print $output "x=";
+    my ($nbrams, $ncols, $type) = @_;
     if ($nbrams == 2) {
 	my $inter = $ncols / 4;
-	print_interval($output,$x_offset+$inter,$x_offset+$inter+1);
-	print_sep( $output );
-	print_interval($output,$x_offset+3*$inter+1,$x_offset+3*$inter+2);
+	register_interval_horiz($type, $x_offset+$inter,1);
+	register_interval_horiz($type, $x_offset+3*$inter+1,1);
     } elsif ($nbrams == 4) {
 	my $inter = ($ncols - 8) / 2;
-	#first small col
-	print_interval($output,$x_offset+2,$x_offset+3);
-	print_sep( $output );
-	#first big
-	print_interval($output,$x_offset+$inter+3,$x_offset+$inter+4);
-	print_sep( $output );
-	#the middle
-	print_interval($output,$x_offset+$inter+8,$x_offset+$inter+9);
-	print_sep( $output );
-	#the second big
-	print_interval($output,$x_offset+2*$inter+9,$x_offset+2*$inter+10);
+	register_interval_horiz($type, $x_offset+2,1);
+	register_interval_horiz($type, $x_offset+$inter+3,1);
+	register_interval_horiz($type, $x_offset+$inter+8,1);
+	register_interval_horiz($type, $x_offset+2*$inter+9,1);
     } else {
 	#nbrams on 6 columns
 	my $inter = ($ncols - 8) / 4;
-	#first small col
-	print_interval($output,$x_offset+2,$x_offset+3);
-	print_sep( $output );
-	#first big
-	print_interval($output,$x_offset+$inter+3,$x_offset+$inter+4);
-	print_sep( $output );
-	print_interval($output,$x_offset+2*$inter+4,$x_offset+2*$inter+5);
-	print_sep( $output );
-	#the middle
-	print_interval($output,$x_offset+2*$inter+9,$x_offset+2*$inter+10);
-	print_sep( $output );
-	#the second big
-	print_interval($output,$x_offset+3*$inter+10,$x_offset+3*$inter+11);
-	print_sep( $output );
-	print_interval($output,$x_offset+4*$inter+11,$x_offset+4*$inter+12);
+	register_interval_horiz($type, $x_offset+2,1);
+	register_interval_horiz($type, $x_offset+$inter+3,1);
+	register_interval_horiz($type, $x_offset+2*$inter+4,1);
+	register_interval_horiz($type, $x_offset+2*$inter+9,1);
+	register_interval_horiz($type, $x_offset+3*$inter+10,1);
+	register_interval_horiz($type, $x_offset+4*$inter+11,1);
     }
-
-    print $output "\n";
 }
 
 # This prints a 1-width thing
 sub print_isolated
 {
-    my ($output, $start, $dir) = @_;
+    my ($type, $start, $dir) = @_;
     my $end = $start + 1;
-    print $output "$dir=$start;$end\n";
+    if ($dir =~ "y") {
+	register_interval_vert($type,$start,$end-$start);
+    } else {
+	register_interval_horiz($type,$start,$end-$start);
+    }
 }
 
 sub print_top_height
 {
-    my ($output) = @_;
-    print_isolated($output, $y_offset - 1, "y");
+    my ( $type) = @_;
+    print_isolated($type, $y_offset - 1, "y");
 }
 
 sub print_bottom_height
 {
-    my ($ncols, $output) = @_;
+    my ($ncols, $type) = @_;
     my $last_y = $y_offset + $ncols;
-    print_isolated($output, $last_y, "y");
+    print_isolated($type, $last_y, "y");
 }
 
 sub print_left_width
 {
-    my ($output) = @_;
-    print_isolated($output, $x_offset - 1, "x");
+    my ( $type) = @_;
+    print_isolated($type, $x_offset - 1, "x");
 }
 
 sub print_right_width
 {
-    my ($ncols, $brams, $output) = @_;
+    my ($ncols, $brams, $type) = @_;
     my $last_x = $x_offset + $brams + $ncols;
-    print_isolated($output, $last_x, "x");
+    print_isolated($type, $last_x, "x");
 }
 
 sub print_termtop_height
 {
-    my ($output) = @_;
-    print_isolated($output, "0", "y");
+    my ( $type) = @_;
+    print_isolated($type, "0", "y");
 }
 
 sub print_termbottom_height
 {
-    my ($ncols, $output) = @_;
+    my ($ncols, $type) = @_;
     my $last_y = $y_offset + $ncols + 1;
-    print_isolated($output, $last_y, "y");
+    print_isolated($type, $last_y, "y");
 }
 
 sub print_termleft_width
 {
-    my ($output) = @_;
-    print_isolated($output, "0", "x");
+    my ( $type) = @_;
+    print_isolated($type, "0", "x");
 }
 
 sub print_termright_width
 {
-    my ($ncols, $brams, $output) = @_;
+    my ($ncols, $brams, $type) = @_;
     my $last_x = $x_offset + $ncols + $brams + 1;
-    print_isolated($output, $last_x, "x");
-}
-
-sub print_interval
-{
-    my ($out, $start, $end) = @_;
-    print $out $start;
-    print $out ";";
-    print $out $end;
-}
-
-sub print_sep
-{
-    my ($out) = @_;
-    print $out ";";
+    print_isolated($type, $last_x, "x");
 }
