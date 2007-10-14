@@ -1,7 +1,7 @@
 # This directory only contains data file
 SUBDIRS=virtex2 virtex4 virtex5 spartan3
 
-DBGENSCRIPTS=wires_to_db.pl wires_to_db_v5.pl intervals.pl
+DBGENSCRIPTS=wires_to_db.pl wires_to_db_v5.pl intervals.pl v2s3.pl
 
 dist_noinst_SCRIPTS=$(DBGENSCRIPTS) dbtoh.m4  dbtoini.m4 \
 		    piptoctrlini.m4 piptodataini.m4 \

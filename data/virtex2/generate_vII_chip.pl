@@ -2,16 +2,16 @@
 
 use strict;
 require "../intervals.pl";
+require "../v2s3.pl";
 
 # This script generates chip_control and chip_data databases for the
 # virtex-II family
 
+my $x_offset = 2;
+
 # It could be worse, but not much more... DSPs-enabled V4 and V2P will be fun !
 # Type => num
 my $i = 0;
-
-my $y_offset = 2;
-my $x_offset = 2;
 
 my %C_enum = (
 	      SITE_TYPE_NEUTRAL => $i++,
@@ -112,46 +112,19 @@ my %brams = (
     "8000" => 6
 );
 
-# my %idcode = (
-#     "40" => 0x10008093,
-#     "80" => ,
-#     "250" => ,
-#     "500" => ,
-#     "1000" => ,
-#     "1500" => ,
-#     "2000" => ,
-#     "3000" => ,
-#     "4000" => ,
-#     "6000" => ,
-#     "8000" =>
-# )
-
 # From this we infer the geometry
-my $chip;
-
-for $chip (keys %clbwidth) {
+for my $chip (keys %clbwidth) {
     # Generate the chip_data file
     # The width of the chip is 2 IOI + IOB + BRAM COLS
     # The height of the chip is 2 TIOI + IOB
 
     my $dirname = "xc2v${chip}";
-    my $filename = "${dirname}/chip_control";
     mkdir $dirname;
-    open(CTRL, ">$filename") or die "opening $filename";
-    print CTRL "[DIMENTIONS]\n";
-    my $width = $clbwidth{$chip} + $brams{$chip} + 4;
-    print CTRL "WIDTH=$width\n";
-    my $height = $clbheight{$chip} + 4;
-    print CTRL "HEIGHT=$height\n";
-    close(CTRL);
-
-    # Generate the chip_descr file
-    $filename = "${dirname}/chip_data";
-    open(NEW, ">$filename") or die "Opening $filename.new";
+    open(CTRL, ">${dirname}/chip_control") or die "opening control";
+    open(NEW, ">${dirname}/chip_data") or die "Opening data";
 
     # The CLBs are interleaved with other things
-    my $type;
-    for $type (keys %C_enum) {
+    for my $type (keys %C_enum) {
 
 	if ($type =~ /^NR_SITE_TYPE$/) {
 	    next;
@@ -260,26 +233,18 @@ for $chip (keys %clbwidth) {
 	    } else {
 		print_termbottom_height($clbheight{$chip}, $type);
 	    }
+	} else {
+	    # Corner cases, haha
+	    print NEW "[$type]\n";
+	    print NEW "type=$C_enum{$type}\n";
+	    print NEW "\n";
 	}
-	#corner terms
-
-	# Miss right, left,
-	# brams need their own function
-	# print_bram_width
-	# print_bram_height
-
-	# Corner cases, haha
-	print_database_std(\*NEW,\%C_enum);
-	reset_database();
     }
+    print_database_std(\*NEW,\%C_enum);
+    print_database_ctrl(\*CTRL);
+    reset_database();
     close(NEW);
-}
-
-sub print_clb_height
-{
-    my ($ncols, $type) = @_;
-    my $last_y = $y_offset + $ncols;
-    register_interval_vert($type,$y_offset,$ncols);
+    close(CTRL);
 }
 
 sub print_clb_width
@@ -333,68 +298,4 @@ sub print_bram_width
 	register_interval_horiz($type, $x_offset+3*$inter+10,1);
 	register_interval_horiz($type, $x_offset+4*$inter+11,1);
     }
-}
-
-# This prints a 1-width thing
-sub print_isolated
-{
-    my ($type, $start, $dir) = @_;
-    my $end = $start + 1;
-    if ($dir =~ "y") {
-	register_interval_vert($type,$start,$end-$start);
-    } else {
-	register_interval_horiz($type,$start,$end-$start);
-    }
-}
-
-sub print_top_height
-{
-    my ( $type) = @_;
-    print_isolated($type, $y_offset - 1, "y");
-}
-
-sub print_bottom_height
-{
-    my ($ncols, $type) = @_;
-    my $last_y = $y_offset + $ncols;
-    print_isolated($type, $last_y, "y");
-}
-
-sub print_left_width
-{
-    my ( $type) = @_;
-    print_isolated($type, $x_offset - 1, "x");
-}
-
-sub print_right_width
-{
-    my ($ncols, $brams, $type) = @_;
-    my $last_x = $x_offset + $brams + $ncols;
-    print_isolated($type, $last_x, "x");
-}
-
-sub print_termtop_height
-{
-    my ( $type) = @_;
-    print_isolated($type, "0", "y");
-}
-
-sub print_termbottom_height
-{
-    my ($ncols, $type) = @_;
-    my $last_y = $y_offset + $ncols + 1;
-    print_isolated($type, $last_y, "y");
-}
-
-sub print_termleft_width
-{
-    my ( $type) = @_;
-    print_isolated($type, "0", "x");
-}
-
-sub print_termright_width
-{
-    my ($ncols, $brams, $type) = @_;
-    my $last_x = $x_offset + $ncols + $brams + 1;
-    print_isolated($type, $last_x, "x");
 }

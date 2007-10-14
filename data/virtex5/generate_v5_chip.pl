@@ -1,6 +1,7 @@
 #! /usr/bin/perl -w
 
 use strict;
+require "../intervals.pl";
 
 # This script generates chip_control and chip_data databases for the
 # virtex-5 family
@@ -294,50 +295,38 @@ my %height_refs = (
 
 sub print_ranges
 {
-    my ($ncol_type, $pfx, $output) = @_;
+    my ($ncol_type, $pfx) = @_;
     my $varname = "$root"."$pfx";
-    my $last_col;
-    my $first = 1;
-    my $i;
+    my ($last_col, $start_of_col);
     my %ref = %{$dat_refs{$varname}};
 
-#    print $output "printing range $ncol_type for chip $pfx";
-
-    for ($i = 0; ;$i++) {
+    for (my $i = 0; ;$i++) {
 	my $cur_col = $ref{$i};
 	if ( ! defined($cur_col) ) {
 	    if ( $last_col eq $ncol_type ) {
-		#print the thing
-		print $output "$i";
+		register_interval_horiz($ncol_type, $start_of_col, $i-$start_of_col);
 	    }
 	    last;
 	}
 
-#	print $output "current col is $cur_col, last col $last_col";
-
 	if (! defined($last_col)) {
 	    if ($cur_col eq $ncol_type) {
 		#very beginning
-		print $output "$i;";
-		$first = 0;
+		$start_of_col = $i;
 	    }
-	} elsif ("$cur_col" eq "$last_col") { } else {
-#	    print $output "Chainsaw btw $cur_col and $ncol_type";
+	} elsif ("$cur_col" eq "$last_col") {
+	    # two adjascent same column types
+	} else {
+            # two adjascent columns of differing type
 	    if ("$cur_col" eq "$ncol_type") {
-#		print $output "Got it !";
-		#beginning
-		if ($first == 1) {
-		    print $output "$i;";
-		    $first = 0;
-		} else {
-		    print $output ";$i;";
-		}
+		# the new column is what we look for
+		$start_of_col = $i;
 	    } elsif ("$last_col" eq "$ncol_type") {
-		#end
-		print $output "$i";
+		# end-of row of what we look for
+		register_interval_horiz($ncol_type, $start_of_col, $i-$start_of_col);
 	    }
 	}
-	# if equal, do nothing
+
 	$last_col = $cur_col;
     }
 }
@@ -352,17 +341,8 @@ sub print_chip
     my $nrows = $width_refs{$varname};
 
     mkdir $dirname;
-    my $filename = "${dirname}/chip_control";
-
-    open(CTRL, ">$filename") or die "opening $filename";
-    print CTRL "[DIMENTIONS]\n";
-    print CTRL "WIDTH=$nrows\n";
-    print CTRL "HEIGHT=$ncols\n";
-    close(CTRL);
-
-    # Generate the chip_descr file
-    $filename = "${dirname}/chip_data";
-    open(DESCR, ">$filename") || die "opening $filename";
+    open(CTRL, ">${dirname}/chip_control") or die "opening control";
+    open(DESCR, ">${dirname}/chip_data") || die "opening data";
 
     for $key (keys %C_enum) {
 	my $number = $C_enum{$key};
@@ -370,15 +350,16 @@ sub print_chip
 	    $number != $C_enum{SITE_TYPE_NEUTRAL} &&
 	    $number != $C_enum{PAD} &&
 	    $number != $C_enum{GCLK}) {
-	    print DESCR "[$key]\n";
-	    print DESCR "x=";
-	    print_ranges $key, $chip, \*DESCR;
-	    print DESCR "\n";
-	    print DESCR "y=0;$ncols\n";
-	    print DESCR "type=$C_enum{$key}\n";
+	    print_ranges $key, $chip;
+	    register_interval_vert($key,0,$ncols);
 	}
     }
 
+    print_database_std(\*DESCR,\%C_enum);
+    print_database_ctrl(\*CTRL);
+    reset_database();
+
+    close CTRL;
     close DESCR;
 }
 

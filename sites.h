@@ -52,12 +52,12 @@ typedef uint32_t nsite_ref_t;
 #define NSITE_NULL ((nsite_ref_t)-1)
 
 /* Describes a rectangular site range */
+typedef struct interval {
+  unsigned base;
+  unsigned length;
+} interval_t;
+
 typedef struct nsite_area {
-  /* coordinates of the upper left corner of the area on the whole FPGA
-     grid */
-  site_t grid_base;
-  /* Width and height of the rectangle */
-  site_t dimension;
   /* coordinates of the upper left corner of the area on the subsampled
      grid of places of the same type */
   site_t type_base;
@@ -69,9 +69,12 @@ typedef struct _chip_descr {
   unsigned height;
   csite_descr_t *data;
   GData *lookup;
-  /* New kind of optimized site database */
-  unsigned o_width;
-  unsigned o_height;
+  /* New kind of optimized site database. the descr arrays must
+     contain and end-of-line element, with length 0 and base = width+1 */
+  unsigned awidth;
+  const interval_t *x_descr;
+  unsigned aheight;
+  const interval_t *y_descr;
   const nsite_area_t *area;
 } chip_descr_t;
 
@@ -83,23 +86,77 @@ typedef struct _chip_descr {
 #define AREA_COORD(x) ((x) >> 16)
 #define RELATIVE_COORD(x) ((x) & ((1 << 16) - 1))
 
+#define MAKE_AREA(chip, x, y) (x | (y << 8))
+#define MAKE_RELATIVE(chip, x, y) (x | (y << 8))
+#define GET_RELATIVE_X(chip, lco) (lco & (0xff))
+#define GET_RELATIVE_Y(chip, lco) ((lco >> 8) & 0xff)
+#define GET_AREA_X(chip, area) (area & (0xff))
+#define GET_AREA_Y(chip, area) ((area >> 8) & 0xff)
+#define MAKE_NSITE(area, rel) (rel | area << 16)
+
+static inline
+int find_index(const interval_t *itv, const unsigned itv_l,
+	       const int seek) {
+  /* Simple, linear search */
+  unsigned coord;
+  for (coord = 0; coord < itv_l; coord++) {
+    int base = itv[coord].base;
+    if (seek < base)
+      return (int)(coord-1);
+  }
+  return -1;
+}
+
+/*
+ * Translate global coordinates into the nsite system of coordinates.
+ * This definitely allows better *everything*
+ */
+
+static inline nsite_ref_t
+nsite_of_global(const chip_descr_t *chip,
+		const unsigned x, const unsigned y) {
+  int ycoord, xcoord;
+  unsigned x_off, y_off, lco, off;
+  xcoord = find_index(chip->x_descr, chip->awidth, x);
+  x_off = (xcoord < 0) ? 0 : x - chip->x_descr[xcoord].base;
+  ycoord = find_index(chip->y_descr, chip->aheight, y);
+  y_off = (ycoord < 0) ? 0 : y - chip->y_descr[ycoord].base;
+  lco = MAKE_AREA(chip, xcoord, ycoord);
+  off = MAKE_RELATIVE(chip, x_off, y_off);
+  return MAKE_NSITE(lco, off);
+}
+
+static inline unsigned
+linear_global(const chip_descr_t *chip, nsite_ref_t site) {
+  const unsigned rel = RELATIVE_COORD(site);
+  return GET_RELATIVE_Y(chip, rel) * chip->awidth + GET_RELATIVE_X(chip, rel);
+}
+
 static inline const nsite_area_t *
 area_of_site(const chip_descr_t *chip,
 	     const nsite_ref_t site) {
-  const unsigned lco = AREA_COORD(site);
-  return &chip->area[lco];
+  return &chip->area[linear_global(chip, site)];
 }
 
 /**
  * Site properties accessors, replace the csite_descr_t structure
  */
-static site_t
+static inline site_t
 relative_coords(const chip_descr_t *chip, const nsite_ref_t site) {
-  const nsite_area_t *area = area_of_site(chip, site);
   const unsigned lco = RELATIVE_COORD(site);
-  site_t rel = { .x = lco % area->dimension.x,
-		 .y = lco / area->dimension.x, };
+  site_t rel = { .x = GET_RELATIVE_X(chip, lco),
+		 .y = GET_RELATIVE_Y(chip, lco) };
+  (void) chip;
   return rel;
+}
+
+static inline site_t
+area_coords(const chip_descr_t *chip, const nsite_ref_t site) {
+  const unsigned area = AREA_COORD(site);
+  site_t glob = { .x = GET_AREA_X(chip, area),
+		  .y = GET_AREA_Y(chip, area) };
+  (void) chip;
+  return glob;
 }
 
 /*
@@ -110,9 +167,9 @@ relative_coords(const chip_descr_t *chip, const nsite_ref_t site) {
 
 static inline site_t
 global_coords(const chip_descr_t *chip, const nsite_ref_t site) {
-  const nsite_area_t *area = area_of_site(chip, site);
+  const site_t area = area_coords(chip, site);
   const site_t rel = relative_coords(chip, site);
-  return add_sites(area->grid_base, rel);
+  return add_sites(area, rel);
 }
 
 static inline site_t
@@ -123,11 +180,33 @@ local_coords(const chip_descr_t *chip, const nsite_ref_t site) {
 }
 
 static inline site_type_t
-type(const chip_descr_t *chip, const nsite_ref_t site) {
+type_of_site(const chip_descr_t *chip, const nsite_ref_t site) {
   const nsite_area_t *area = area_of_site(chip, site);
   return area->type;
 }
 
+/*
+static nsite_ref_t
+nsite_of_site(const chip_descr_t *chip,
+	      const site_ref_t site) {
+  const unsigned width = chip->width;
+  const unsigned offset = site;
+  const unsigned x = offset % width;
+  const unsigned y = offset / width;
+  return nsite_of_global(chip, x, y);
+}
+
+static site_ref_t
+site_of_nsite(const chip_descr_t *chip,
+	      const nsite_ref_t site) {
+  const site_t scoords = global_coords(chip, site);
+  return chip->width * scoords.y + scoords.x;
+}
+*/
+
+/*
+ * Old compatibility interface
+ */
 
 /* get a site index, in-order WRT iterate_over_sites */
 static inline unsigned

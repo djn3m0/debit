@@ -149,6 +149,36 @@ static inline void
 alloc_chip(chip_descr_t *descr) {
   unsigned nelems = descr->width * descr->height;
   descr->data = g_new0(csite_descr_t, nelems);
+  g_datalist_init(&descr->lookup);
+}
+
+static inline void
+free_chip(chip_descr_t *descr) {
+  g_datalist_clear(&descr->lookup);
+  g_free(descr->data);
+  descr->data = NULL;
+}
+
+static inline void
+alloc_nchip(chip_descr_t *descr) {
+  unsigned aelems = descr->awidth * descr->aheight;
+  descr->area = g_new0(nsite_area_t, aelems);
+  descr->x_descr = g_new0(interval_t, descr->awidth + 1);
+  descr->y_descr = g_new0(interval_t, descr->aheight + 1);
+  g_warning("allocated chip %u X %u", descr->awidth, descr->aheight);
+}
+
+#define FREE_FIELD(str, field) {		\
+    void *field = (void *)str->field;		\
+    str->field = NULL;				\
+    g_free(field);				\
+}
+
+static inline void
+free_nchip(chip_descr_t *descr) {
+  FREE_FIELD(descr, area);
+  FREE_FIELD(descr, x_descr);
+  FREE_FIELD(descr, y_descr);
 }
 
 static void
@@ -282,6 +312,134 @@ init_chip(chip_descr_t *chip, GKeyFile *file) {
   init_lookup(chip);
 }
 
+static inline void
+write_same(unsigned *pos, const unsigned val) {
+  if (*pos != 0 && *pos != val) {
+    g_warning("replacing %u with %u", *pos, val);
+  }
+  g_assert(*pos == 0 || *pos == val);
+  *pos = val;
+}
+
+static inline void
+fill_interval(interval_t *descr,  const gsize dlen,
+	      const gint *idx_descr,
+	      const gint *intervals,
+	      const gsize len) {
+  gsize i;
+  (void) intervals;
+  for (i = 0; i < len; i++) {
+    const unsigned idx = idx_descr[i];
+    const unsigned idx2 = i << 1;
+    (void) idx2;
+    g_assert(idx < dlen);
+    g_warning("writing to interval index %u for i=%u", idx, i);
+    write_same(&descr[idx].base, intervals[idx2]);
+    write_same(&descr[idx].length, intervals[idx2 + 1] - intervals[idx2]);
+  }
+  descr[dlen].base = descr[dlen-1].base + descr[dlen-1].length;
+  descr[dlen].length = 0;
+}
+
+static inline void
+fill_area(nsite_area_t *area,
+	  const site_type_t type, const gsize width,
+	  const gint *descr_x, const interval_t *x_descr, const gsize dxlen,
+	  const gint *descr_y, const interval_t *y_descr, const gsize dylen) {
+  unsigned i,j;
+  unsigned xpos = 1, ypos = 1;
+
+  for (j = 0; j < dylen; j++) {
+    unsigned yidx = descr_y[j];
+    for (i = 0; i < dxlen; i++) {
+      unsigned xidx = descr_x[i];
+      unsigned pos = xidx + width * yidx;
+      area[pos].type = type;
+      area[pos].type_base.x = xpos;
+      area[pos].type_base.y = ypos;
+      xpos += x_descr[xidx].length;
+    }
+    xpos = 1;
+    ypos += y_descr[yidx].length;
+  }
+}
+
+static void
+init_nchip_type(chip_descr_t *chip, site_type_t type,
+		const gint *descr_x, const gint *intervals_x, const gsize dxlen,
+		const gint *descr_y, const gint *intervals_y, const gsize dylen) {
+  /* XXX do this properly */
+  nsite_area_t *area = (void *) chip->area;
+  interval_t *x_descr = (void *) chip->x_descr;
+  interval_t *y_descr = (void *) chip->y_descr;
+
+  /* fill/check the x and y descriptors */
+  g_warning("X descr");
+  fill_interval(x_descr, chip->awidth, descr_x, intervals_x, dxlen);
+  g_warning("Y descr");
+  fill_interval(y_descr, chip->aheight, descr_y, intervals_y, dylen);
+  /* Then fill the area array for this type */
+  fill_area(area, type, chip->awidth,
+	    descr_x, x_descr, dxlen,
+	    descr_y, y_descr, dylen);
+}
+
+static void
+init_area_chip_type(GKeyFile *file, const gchar *group,
+		    gpointer data) {
+  chip_descr_t *chip = data;
+  GError *error = NULL;
+  gint *intervals[2] = {NULL, NULL};
+  gint *geom[2] = {NULL, NULL};
+  gsize sizes[2], geomsizes[2];
+  unsigned type;
+
+  /* get group name & al from the group, fill in with this */
+  intervals[0] = g_key_file_get_integer_list(file, group, "x", &sizes[0], &error);
+  if (error)
+    goto out_err;
+  geom[0] = g_key_file_get_integer_list(file, group, "xpos", &geomsizes[0], &error);
+  g_assert(geomsizes[0] * 2 == sizes[0]);
+  if (error)
+    goto out_err;
+  intervals[1] = g_key_file_get_integer_list(file, group, "y", &sizes[1], &error);
+  if (error)
+    goto out_err;
+  geom[1] = g_key_file_get_integer_list(file, group, "ypos", &geomsizes[1], &error);
+  g_assert(geomsizes[1] * 2 == sizes[1]);
+  if (error)
+    goto out_err;
+  type = g_key_file_get_integer(file, group, "type", &error);
+  if (error)
+    goto out_err;
+  g_assert(type < NR_SITE_TYPE);
+  init_nchip_type(chip, type,
+		  geom[0], intervals[0], geomsizes[0],
+		  geom[1], intervals[1], geomsizes[1]);
+
+ out_err:
+  if (geom[1])
+    g_free(geom[1]);
+  if (intervals[1])
+    g_free(intervals[1]);
+  if (geom[0])
+    g_free(geom[0]);
+  if (intervals[0])
+    g_free(intervals[0]);
+  if (error) {
+    g_warning("Error treating group %s: %s",
+	      group, error->message);
+    g_error_free(error);
+  }
+  return;
+}
+
+static void
+init_nchip(chip_descr_t *chip, GKeyFile *file) {
+  /* Initialize area */
+  iterate_over_groups(file, init_area_chip_type, chip);
+}
+
 /* exported alloc and destroy functions */
 chip_descr_t *
 get_chip(const gchar *dirname, const unsigned chipid) {
@@ -306,8 +464,15 @@ get_chip(const gchar *dirname, const unsigned chipid) {
   chip->height = g_key_file_get_integer(keyfile, DIM, "HEIGHT", &error);
   if (error)
     goto out_err_free_err_keyfile;
+  chip->awidth  = g_key_file_get_integer(keyfile, DIM, "CWIDTH", &error);
+  if (error)
+    goto out_err_free_err_keyfile;
+  chip->aheight = g_key_file_get_integer(keyfile, DIM, "CHEIGHT", &error);
+  if (error)
+    goto out_err_free_err_keyfile;
 
   alloc_chip(chip);
+  alloc_nchip(chip);
   g_key_file_free(keyfile);
 
   filename = g_build_filename(dirname, CHIP, chipname, "chip_data", NULL);
@@ -316,8 +481,8 @@ get_chip(const gchar *dirname, const unsigned chipid) {
   if (err)
     goto out_err;
 
-  g_datalist_init(&chip->lookup);
   init_chip(chip, keyfile);
+  init_nchip(chip, keyfile);
   g_key_file_free(keyfile);
 
   return chip;
@@ -327,15 +492,16 @@ get_chip(const gchar *dirname, const unsigned chipid) {
   g_error_free(error);
   g_key_file_free(keyfile);
  out_err:
+  free_chip(chip);
+  free_nchip(chip);
   g_free(chip);
   return NULL;
 }
 
 void
 release_chip(chip_descr_t *chip) {
-  g_free(chip->data);
-  chip->data = NULL;
-  g_datalist_clear(&chip->lookup);
+  free_nchip(chip);
+  free_chip(chip);
   g_free(chip);
 }
 
@@ -541,6 +707,46 @@ int parse_site_simple(const chip_descr_t *chip,
 
   *sref = get_site_ref(chip, site);
   return 0;
+}
+
+int parse_site_complex(const chip_descr_t *chip,
+		       site_ref_t* sref,
+		       const gchar *lookup) {
+  unsigned x = 0, y = 0;
+  site_type_t i;
+
+  (void) chip; (void) sref;
+
+  for (i = SITE_TYPE_NEUTRAL; i < NR_SITE_TYPE; i++) {
+    int num = 0, exp = 1;
+    const char *str = print_str[i];
+    if (!str)
+      continue;
+
+    switch (print_type[i]) {
+    case PRINT_BOTH:
+      num = sscanf(lookup, str, &y, &x);
+      exp = 2;
+      break;
+    case PRINT_X:
+      num = sscanf(lookup, str, &x);
+      break;
+    case PRINT_Y:
+      num = sscanf(lookup, str, &y);
+      break;
+    default:
+      num = -1;
+    }
+
+    if (num == exp)
+      break;
+  }
+
+  if (i == NR_SITE_TYPE)
+    return -1;
+
+  return -1;
+  //  return find_site(x-1, y-1, i, sref);
 }
 
 static void

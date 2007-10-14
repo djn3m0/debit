@@ -31,14 +31,28 @@ sub print_database_std
     my %C_enum = %{ $db };
     # Standard database printing
     # Iterate over types...
+
+    # Fill horiz_pos and vert_pos
+    my %horiz_pos;
+    my @intervals = sort {$a <=> $b} ( keys %horiz_length );
+    my $i = 0;
+    for my $long ( @intervals ) {
+	$horiz_pos{$long} = $i++;
+    }
+    $i = 0;
+    my %vert_pos;
+    @intervals = sort {$a <=> $b} ( keys %vert_length );
+    for my $long ( @intervals ) {
+	$vert_pos{$long} = $i++;
+    }
+
     for my $type ( keys %horiz_types ) {
-	my $start;
 	print $output "[$type]\n";
 	print $output "x=";
 	# Sort things...
-	my @intervals = sort {$a <=> $b} ( keys %{$horiz_types{$type}} );
+	@intervals = sort {$a <=> $b} ( keys %{$horiz_types{$type}} );
 	my $first = 1;
-	for $start (@intervals) {
+	for my $start (@intervals) {
 	    my $len = $horiz_types{$type}{$start};
 	    if ($first) {
 		$first = 0;
@@ -48,9 +62,22 @@ sub print_database_std
 	    print_interval($output,$start,$start+$len);
 	}
 	print $output "\n";
-	print $output "y=";
+	print $output "xpos=";
 	$first = 1;
-	for $start ( keys %{$vert_types{$type}} ) {
+	for my $start ( @intervals ) {
+	    my $pos = $horiz_pos{$start};
+	    if ($first) {
+		$first = 0;
+	    } else {
+		print_sep($output);
+	    }
+	    print_pos($output,$pos);
+	}
+	print $output "\n";
+	print $output "y=";
+	@intervals = sort {$a <=> $b} ( keys %{$vert_types{$type}} );
+	$first = 1;
+	for my $start ( @intervals ) {
 	    my $len = $vert_types{$type}{$start};
 	    if ($first) {
 		$first = 0;
@@ -60,9 +87,47 @@ sub print_database_std
 	    print_interval($output,$start,$start+$len);
 	}
 	print $output "\n";
+	print $output "ypos=";
+	$first = 1;
+	for my $start ( @intervals ) {
+	    my $pos = $vert_pos{$start};
+	    if ($first) {
+		$first = 0;
+	    } else {
+		print_sep($output);
+	    }
+	    print_pos($output,$pos);
+	}
+	print $output "\n";
 	print $output "type=$C_enum{$type}\n";
 	print $output "\n";
     }
+}
+
+sub integrate
+{
+    my $tlen = 0;
+    for my $len ( @_ ) {
+	$tlen += $len;
+    }
+    return $tlen;
+}
+
+sub print_database_ctrl
+{
+    my ($output) = @_;
+    # print control things
+    # XXX fix this horror
+    print $output "[DIMENTIONS]\n";
+    my $width = integrate (values %horiz_length);
+    print $output "WIDTH=$width\n";
+    my $height = integrate (values %vert_length);
+    print $output "HEIGHT=$height\n";
+
+    my $nwidth = scalar (keys %horiz_length);
+    my $nheight = scalar (keys %vert_length);
+    print $output "CWIDTH=$nwidth\n";
+    print $output "CHEIGHT=$nheight\n";
 }
 
 sub reset_database
@@ -79,6 +144,12 @@ sub print_interval
     print $out $start;
     print $out ";";
     print $out $end;
+}
+
+sub print_pos
+{
+    my ($out, $pos) = @_;
+    print $out $pos;
 }
 
 sub print_sep
