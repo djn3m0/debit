@@ -27,13 +27,43 @@ AC_SUBST(GLIB_LIBS)
 
 dnl Check for Cairo pdf/ps backend for bit2pdf
 CAIRO_REQUIRED=1.2.0
-DEBIT_FEATURE_ENABLE(cairo, Cairo, auto, [
-  PKG_CHECK_MODULES(CAIRO, [cairo-pdf >= $CAIRO_REQUIRED cairo-ps >= $CAIRO_REQUIRED],
+DEBIT_FEATURE_ENABLE(cairo, Cairo support, auto, [
+  PKG_CHECK_MODULES(CAIRO, [cairo >= $CAIRO_REQUIRED],
 			   [use_cairo=yes], [use_cairo=no])
 ])
 AM_CONDITIONAL([BUILD_BIT2PDF], [test "x$use_cairo" = xyes])
 AC_SUBST(CAIRO_CFLAGS)
 AC_SUBST(CAIRO_LIBS)
+
+DEBIT_FEATURE_ENABLE(pdfcairo, Cairo pdf support, auto, [
+  PKG_CHECK_MODULES(CAIRO_PDF, [cairo-pdf >= $CAIRO_REQUIRED],
+			       [use_pdfcairo=yes], [use_pdfcairo=no])
+])
+if test "x$use_pdfcairo" = xyes; then
+   CPPFLAGS="$CPPFLAGS -DPDF_CAIRO "
+fi
+AC_SUBST(CAIRO_PDF_CFLAGS)
+AC_SUBST(CAIRO_PDF_LIBS)
+
+DEBIT_FEATURE_ENABLE(pscairo, Cairo postscript support, auto, [
+  PKG_CHECK_MODULES(CAIRO_PS, [cairo-ps >= $CAIRO_REQUIRED],
+			      [use_pscairo=yes], [use_pscairo=no])
+])
+if test "x$use_pscairo" = xyes; then
+   CPPFLAGS="$CPPFLAGS -DPS_CAIRO "
+fi
+AC_SUBST(CAIRO_PS_CFLAGS)
+AC_SUBST(CAIRO_PS_LIBS)
+
+DEBIT_FEATURE_ENABLE(svgcairo, Cairo svg support, auto, [
+  PKG_CHECK_MODULES(CAIRO_SVG, [cairo-svg >= $CAIRO_REQUIRED],
+			       [use_svgcairo=yes], [use_svgcairo=no])
+])
+if test "x$use_svgcairo" = xyes; then
+   CPPFLAGS="$CPPFLAGS -DSVG_CAIRO "
+fi
+AC_SUBST(CAIRO_SVG_CFLAGS)
+AC_SUBST(CAIRO_SVG_LIBS)
 
 dnl Check for gtk+ for building the gui
 GTK_REQUIRED=2.8.0

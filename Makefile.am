@@ -58,8 +58,8 @@ debit_v5_CFLAGS	= $(AM_CFLAGS) -DVIRTEX5 @GLIB_CFLAGS@
 debit_v5_LDADD	= @GLIB_LIBS@
 
 bit2pdf_SOURCES = $(SHARED_SRC) $(SHARED_SRC_V2) bit2pdf.c sites_draw.c wiring_draw.c bitdraw.h
-bit2pdf_CFLAGS = $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@ @CAIRO_CFLAGS@
-bit2pdf_LDADD  = @GLIB_LIBS@ @CAIRO_LIBS@
+bit2pdf_CFLAGS = $(AM_CFLAGS) -DVIRTEX2 @GLIB_CFLAGS@ @CAIRO_CFLAGS@ @CAIRO_PDF_CFLAGS@ @CAIRO_PS_CFLAGS@ @CAIRO_SVG_CFLAGS@
+bit2pdf_LDADD  = @GLIB_LIBS@ @CAIRO_LIBS@ @CAIRO_PDF_LIBS@ @CAIRO_PS_LIBS@ @CAIRO_SVG_LIBS@
 
 #Distribution hook so that the tarballs are tagged with the git tree
 #SHA1 hash
