@@ -1,24 +1,25 @@
-#ifndef __BITARRAY_H__
-#define __BITARRAY_H__ 1
 /*
-   Copyright (C) 2003 rzyjontko
-   Copyright (C) 2006 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
+ * Copyright (C) 2003 rzyjontko
+ * Copyright (C) 2006, 2007 Jean-Baptiste Note <jean-baptiste.note@m4x.org>
+ *
+ * This file is part of debit.
+ *
+ * Debit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Debit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with debit.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-
-*/
+#ifndef __BITARRAY_H__
+#define __BITARRAY_H__
 
 /*
  * This will evolve. We'll need more subtle stack structure for Altera's
@@ -66,4 +67,4 @@ extern int         bitarray_true_for_all (bitarray_t *a, int (*fun)(int));
 extern int         bitarray_first_set (const bitarray_t *a);
 extern int         bitarray_none_is_set (const bitarray_t *a);
 
-#endif
+#endif /* __BITARRAY_H__ */

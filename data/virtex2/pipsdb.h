@@ -12,3 +12,4 @@ _PIPS_DB(SW_BTERMBRAM, data/virtex2/btermbram, 2)
 _PIPS_DB(SW_TTERMBRAM, data/virtex2/ttermbram, 2)
 _PIPS_DB(SW_BIOIBRAM, data/virtex2/tbioibram, 10)
 _PIPS_DB(SW_TIOIBRAM, data/virtex2/tbioibram, 10)
+
