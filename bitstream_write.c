@@ -436,38 +436,40 @@ write_frame(const char *frame, guint type, guint index, guint frameidx, void *da
 #define S2U(x) GUINT32_FROM_BE(*((uint32_t *)x))
 
 static void
-bs_fdri_write_frames(bitstream_writer_t *bit, int fd,
-		     const bitstream_parsed_t *parsed) {
+bs_fdri_write_frames(bitstream_writer_t *writer) {
+  int fd = writer->fd;
+  const bitstream_parsed_t *bit = writer->bit;
+  const chip_struct_t *chip = bit->chip_struct;
   /* Compute total word count */
-  const chip_struct_t *chip = parsed->chip_struct;
   const unsigned framec = nframes(chip);
   const unsigned wordc = (framec + 1) * chip->framelen;
 
   /* prepare for FRDI write */
   /* FAR initialization. For non-compressed bitstream, it is set to be zero */
-  bs_write_wreg_u32(bit, fd, FAR, 0);
-  bs_write_wreg_u32(bit, fd, CMD, WCFG);
+  bs_write_wreg_u32(writer, fd, FAR, 0);
+  bs_write_wreg_u32(writer, fd, CMD, WCFG);
 
   /* Prepare long FDRI write */
   bs_write_wreg(fd, TYPE_V2, FDRI, wordc);
 
   /* simply write *all* frames, in FAR order */
-  iterate_over_frames_far(parsed, write_frame, bit);
+  iterate_over_frames_far(bit, write_frame, writer);
 
   /* padding frame */
-  bs_write_padding(bit, FDRI, chip->framelen);
+  bs_write_padding(writer, FDRI, chip->framelen);
 
   /* write AutoCRC word and update CRC accordingly */
 
-  debit_log(L_WRITE,"ACRC is %04x", bit->crc);
-  write_u32(fd, bit->crc);
-  update_crc_w(bit, CRC, bit->crc);
+  debit_log(L_WRITE,"ACRC is %04x", writer->crc);
+  write_u32(fd, writer->crc);
+  update_crc_w(writer, CRC, writer->crc);
   /* This yields zero in CRC register */
 }
 
 static void
-bs_write_cmd_header(bitstream_writer_t *writer,
-		    int fd, const bitstream_parsed_t *bit) {
+bs_write_cmd_header(bitstream_writer_t *writer) {
+  int fd = writer->fd;
+  const bitstream_parsed_t *bit = writer->bit;
   const chip_struct_t *chip = bit->chip_struct;
 
   bs_write_wreg_u32(writer, fd, CMD, RCRC);
@@ -488,7 +490,9 @@ bs_write_cmd_header(bitstream_writer_t *writer,
 }
 
 static void
-bs_write_cmd_footer(bitstream_writer_t *writer, int fd, const bitstream_parsed_t *bit) {
+bs_write_cmd_footer(bitstream_writer_t *writer) {
+  int fd = writer->fd;
+  const bitstream_parsed_t *bit = writer->bit;
   const chip_struct_t *chip = bit->chip_struct;
   unsigned i;
   (void) chip;
@@ -512,6 +516,15 @@ bs_write_cmd_footer(bitstream_writer_t *writer, int fd, const bitstream_parsed_t
   bs_write_wreg_u32(writer, fd, CMD, DESYNCH);
   for (i = 0; i < 4; i++)
     bs_write_noop(fd);
+}
+
+static void
+bs_write_body(bitstream_writer_t *writer) {
+  /* write all raw bitstream data to disk */
+  bs_write_synchro(writer->fd);
+  bs_write_cmd_header(writer);
+  bs_fdri_write_frames(writer);
+  bs_write_cmd_footer(writer);
 }
 
 int
@@ -538,11 +551,7 @@ bitstream_write(const bitstream_parsed_t *bit,
   tmpname = NULL;
 #endif /* HAVE_MMAP */
 
-  /* write all raw bitstream data to disk */
-  bs_write_synchro(data);
-  bs_write_cmd_header(&writer, data, bit);
-  bs_fdri_write_frames(&writer, data, bit);
-  bs_write_cmd_footer(&writer, data, bit);
+  bs_write_body(&writer);
 
   /* open bitstream itself */
   file = g_open(ofile, O_CREAT | O_TRUNC | O_NDELAY | O_WRONLY, S_IRWXU);
