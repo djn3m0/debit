@@ -43,7 +43,6 @@
 #include <unistd.h>
 
 #include "bitstream_parser.h"
-#include "codes/crc-ibm.h"
 #include "bitheader.h"
 #include "bitstream_packets.h"
 #include "design.h"
@@ -201,6 +200,7 @@ bs_add_header(const bitstream_writer_t *writer,
 }
 
 /* packet writing functions */
+#if defined(VIRTEX2) || defined(SPARTAN3)
 
 typedef enum _io_type {
   PKT_READ = 0,
@@ -262,6 +262,89 @@ static const bitfield_t cor_bitfields[COR_FIELD_LAST+1] = {
   [COR_FIELD_LAST] = { .off = 30 },
 };
 
+#elif defined(VIRTEX4)
+
+typedef enum _io_type {
+  PKT_READ = 0,
+  PKT_WRITE = 1,
+} io_type_t;
+
+typedef enum _registers_index {
+  CRC = 0, FAR, FDRI, FDRO,
+  CMD, CTL, MASK,
+  STAT, LOUT, COR,
+  /* error in ug071 */
+  MFWR, CBC, IDCODE, AXSS,
+  __NUM_REGISTERS,
+} register_index_t;
+
+typedef enum _cmd_code {
+  C_NULL = 0, WCFG,
+  C_MFWR,
+  C_LFRM, RCFG, START, RCAP, RCRC,
+  AGHIGH, SWITCH, GRESTORE,
+  SHUTDOWN, GCAPTURE,
+  DESYNCH,
+  __NUM_CMD_CODE,
+} cmd_code_t;
+
+/* Other shitty registers */
+/* XXX Duplicated, along with above */
+
+typedef struct _bitfield_t {
+  /* length is implicit as the difference of lengths */
+  unsigned char off;
+} bitfield_t;
+
+typedef enum _cor_fields {
+  GWE_CYCLE = 0,
+  GTS_CYCLE, LOCK_CYCLE,
+  MATCH_CYCLE, DONE_CYCLE,
+  SSCLKSRC, OSCFSEL,
+  SINGLE, DRIVE_DONE, DONE_PIPE,
+  RSV, CRC_BYPASS, COR_FIELD_LAST,
+} cor_bits_t;
+
+static const bitfield_t cor_bitfields[COR_FIELD_LAST+1] = {
+  [GWE_CYCLE] = { .off = 0 },
+  [GTS_CYCLE] = { .off = 3 },
+  [LOCK_CYCLE] = { .off = 6 },
+  [MATCH_CYCLE] = { .off = 9 },
+  [DONE_CYCLE] = { .off = 12 },
+  [SSCLKSRC] = { .off = 15 },
+  [OSCFSEL] = { .off = 17 },
+  [SINGLE] = { .off = 23 },
+  [DRIVE_DONE] = { .off = 24 },
+  [DONE_PIPE] = { .off = 25 },
+  [RSV] = { .off = 26 },
+  [CRC_BYPASS] = { .off = 28 },
+  [COR_FIELD_LAST] = { .off = 29 },
+};
+
+typedef enum _ctl_fields {
+  GTS_USR_B = 0,
+  RSV0,
+  PERSIST, SBITS,
+  RSV1,
+  GLUTMASK_B,
+  RSV2, ICAPSEL,
+  CTL_FIELD_LAST,
+} ctl_bits_t;
+
+static const bitfield_t ctl_bitfields[CTL_FIELD_LAST+1] = {
+  [GTS_USR_B] = { .off = 0 },
+  [RSV0] = { .off = 1 },
+  [PERSIST] = { .off = 3 },
+  [SBITS] = { .off = 4 },
+  [RSV1] = { .off = 6 },
+  [GLUTMASK_B] = { .off = 8 },
+  [RSV2] = { .off = 9 },
+  [ICAPSEL] = { .off = 30 },
+  [CTL_FIELD_LAST] = { .off = 31 },
+};
+
+#endif
+
 #define MSK(x) ((1<<x)-1)
 static inline uint32_t
 setfiel(const uint32_t val,
@@ -276,6 +359,18 @@ setfiel(const uint32_t val,
 #define COR_F(name, val) \
   setfiel(val, name, cor_bitfields)
 
+#if defined(VIRTEX2) || defined (SPARTAN3)
+#include "codes/crc-ibm.h"
+#define crc_byte crc_ibm_byte
+#define crc_addr5 crc_ibm_addr5
+#else
+#if defined (VIRTEX4)
+#include "codes/crc32-c.h"
+#define crc_byte crc32c_byte
+#define crc_addr5 crc32c_addr5
+#endif
+#endif
+
 /* crc update function, from host-interpreted data.
    TODO: Share with update function in parser. */
 static inline void
@@ -286,12 +381,12 @@ update_crc_h(bitstream_writer_t *writer, const register_index_t reg,
 
   for (i = 0; i < wordc; i++) {
     uint32_t val = dat[i];
-    bcc = crc_ibm_byte(bcc, val);
-    bcc = crc_ibm_byte(bcc, val >> 8);
-    bcc = crc_ibm_byte(bcc, val >> 16);
-    bcc = crc_ibm_byte(bcc, val >> 24);
+    bcc = crc_byte(bcc, val);
+    bcc = crc_byte(bcc, val >> 8);
+    bcc = crc_byte(bcc, val >> 16);
+    bcc = crc_byte(bcc, val >> 24);
     /* the 5 bits of register address */
-    bcc = crc_ibm_addr5(bcc, reg);
+    bcc = crc_addr5(bcc, reg);
   }
 
   /* write back the new CRC register */
@@ -319,12 +414,12 @@ update_crc_b(bitstream_writer_t *bit,
   assert(len % 4 == 0);
 
   for (i = 0; i < len; i+=4) {
-    bcc = crc_ibm_byte(bcc, val[i+3]);
-    bcc = crc_ibm_byte(bcc, val[i+2]);
-    bcc = crc_ibm_byte(bcc, val[i+1]);
-    bcc = crc_ibm_byte(bcc, val[i+0]);
+    bcc = crc_byte(bcc, val[i+3]);
+    bcc = crc_byte(bcc, val[i+2]);
+    bcc = crc_byte(bcc, val[i+1]);
+    bcc = crc_byte(bcc, val[i+0]);
     /* the 5 bits of register address */
-    bcc = crc_ibm_addr5(bcc, reg);
+    bcc = crc_addr5(bcc, reg);
   }
 
   /* write back the new CRC register */
@@ -335,7 +430,6 @@ update_crc_b(bitstream_writer_t *bit,
     debit_log(L_WRITE,"write to CRC register yielded %04x", bcc);
   }
 }
-
 
 /* Low-level packet write functions */
 
@@ -408,6 +502,8 @@ bs_write_padding(bitstream_writer_t *writer, const unsigned rega, const unsigned
     update_crc_w(writer, rega, 0);
   }
 }
+
+#if defined(VIRTEX2) || defined(SPARTAN3)
 
 /* Scatter-gather data write, for frames */
 
@@ -526,6 +622,130 @@ bs_write_body(bitstream_writer_t *writer) {
   bs_fdri_write_frames(writer);
   bs_write_cmd_footer(writer);
 }
+
+#elif defined(VIRTEX4)
+
+static void
+bs_write_cmd_header(bitstream_writer_t *writer) {
+  int fd = writer->fd;
+  const bitstream_parsed_t *bit = writer->bit;
+  const chip_struct_t *chip = bit->chip_struct;
+  int nop;
+
+  /* V4 inserts noops */
+  bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, CMD, RCRC);
+  /* reset the CRC appropriately */
+  writer->crc = 0;
+
+  bs_write_noop(fd);
+  bs_write_noop(fd);
+
+  /* These values are meaningless for me now */
+  bs_write_wreg_u32(writer, fd, COR, 0xffff);
+  bs_write_wreg_u32(writer, fd, IDCODE, chip->idcode);
+  bs_write_wreg_u32(writer, fd, CMD, SWITCH);
+  bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, MASK, 0);
+  bs_write_wreg_u32(writer, fd, CTL, 0);
+
+  /* 1150 for xc4vlx100
+   * 1150 for xc4vls40
+   */
+#define NOOPS_SYNC 1150
+  for(nop = 0; nop < NOOPS_SYNC; nop++)
+    bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, MASK, 0xffff);
+  bs_write_wreg_u32(writer, fd, CTL, 0xffff);
+
+  bs_write_wreg_u32(writer, fd, CMD, C_NULL);
+  bs_write_noop(fd);
+
+  /* Start-of-write */
+}
+
+static void
+bs_fdri_write_frames(bitstream_writer_t *writer) {
+  int fd = writer->fd;
+  const bitstream_parsed_t *bit = writer->bit;
+  const chip_struct_t *chip = bit->chip_struct;
+  /* Compute total word count */
+  const unsigned framec = 10;//nframes(chip);
+  const unsigned wordc = framec * chip->framelen;
+
+  /* prepare for FRDI write */
+  /* FAR initialization. For non-compressed bitstream, it is set to be zero */
+  bs_write_wreg_u32(writer, fd, FAR, 0);
+  bs_write_wreg_u32(writer, fd, CMD, WCFG);
+  bs_write_noop(fd);
+
+  /* Prepare long FDRI write */
+  bs_write_wreg(fd, TYPE_V2, FDRI, wordc);
+
+  /* simply write *all* frames, in FAR order. Along with noop padding */
+  //iterate_over_frames_far(bit, write_frame, writer);
+
+  /* explicit CRC check for v4 */
+  bs_write_wreg_u32(writer, fd, CRC, writer->crc);
+}
+
+static void
+bs_write_cmd_footer(bitstream_writer_t *writer) {
+  int fd = writer->fd;
+  const bitstream_parsed_t *bit = writer->bit;
+  const chip_struct_t *chip = bit->chip_struct;
+  unsigned i;
+  (void) chip;
+  /* All frames have been written */
+
+  bs_write_wreg_u32(writer, fd, CMD, GRESTORE);
+  bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, CMD, C_LFRM);
+  bs_write_noop(fd);
+
+  /* Series of noop packets, waiting for flush of the last written
+     frame */
+  for (i = 0; i < chip->framelen; i++)
+    bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, CMD, GRESTORE);
+  bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, CMD, C_NULL);
+  bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, FAR, 0xffff);
+
+  bs_write_wreg_u32(writer, fd, CMD, START);
+  bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, MASK, 0xffff);
+  bs_write_wreg_u32(writer, fd, CTL, 0xffff);
+
+  /* CRC check. We should fuck this up big time intentionally. We don't
+     want anyone to load our bitstreams for now... */
+  debit_log(L_WRITE,"CRC is %04x", writer->crc);
+  bs_write_wreg_u32(writer, fd, CRC, writer->crc);
+
+  bs_write_wreg_u32(writer, fd, CMD, DESYNCH);
+  for (i = 0; i < 16; i++)
+    bs_write_noop(fd);
+}
+
+static void
+bs_write_body(bitstream_writer_t *writer) {
+  /* write all raw bitstream data to disk */
+  bs_write_synchro(writer->fd);
+  bs_write_cmd_header(writer);
+  bs_fdri_write_frames(writer);
+  bs_write_cmd_footer(writer);
+}
+
+#endif
 
 int
 bitstream_write(const bitstream_parsed_t *bit,
