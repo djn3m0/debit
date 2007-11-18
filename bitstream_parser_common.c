@@ -159,9 +159,24 @@ _far_increment_col(bitstream_parser_t *bitstream,
 }
 
 static inline gboolean
-_far_is_pad(const bitstream_parser_t *bitstream,
+_last_frame(const bitstream_parser_t *bitstream,
 	    const sw_far_t *addr) {
   const id_vlx_t chiptype = bitstream->type;
+  const unsigned *col_count = bitdescr[chiptype].col_count;
+  const col_type_t type = addr->type;
+  unsigned col = addr->col;
+
+  /* There are pad frames for all three types of data frames */
+  if (col >= col_count[type] &&
+      type == LAST_COL_TYPE)
+    return TRUE;
+
+  return FALSE;
+}
+
+static inline gboolean
+_far_is_pad(const id_vlx_t chiptype,
+	    const sw_far_t *addr) {
   const unsigned *col_count = bitdescr[chiptype].col_count;
   const col_type_t type = addr->type;
   unsigned col = addr->col;
@@ -174,9 +189,10 @@ _far_is_pad(const bitstream_parser_t *bitstream,
 
 static inline gboolean
 far_is_pad(bitstream_parser_t *bitstream, guint32 myfar) {
+  const id_vlx_t chiptype = bitstream->type;
   sw_far_t far;
   fill_swfar(&far, myfar);
-  return _far_is_pad(bitstream, &far);
+  return _far_is_pad(chiptype, &far);
 }
 
 static inline void
@@ -364,6 +380,15 @@ iterate_over_unk_frames(const bitstream_parsed_t *parsed,
     frame = &g_array_index (array, frame_record_t, i);
     iter(frame, itdat);
   }
+}
+
+/* Iterate over frames in FAR-ordered mode. This is a bit complex... */
+void
+iterate_over_frames_far(const bitstream_parsed_t *parsed,
+			frame_iterator_t iter, void *itdat) {
+  (void) parsed;
+  (void) iter;
+  (void) itdat;
 }
 
 static gint

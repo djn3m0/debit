@@ -227,7 +227,7 @@ typedef struct _bitstream_parser {
  */
 
 static inline void _far_increment_type(sw_far_t *addr);
-static inline gboolean _far_is_pad(const bitstream_parser_t *bitstream,
+static inline gboolean _far_is_pad(const id_vlx_t chiptype,
 				   const sw_far_t *addr);
 
 static inline void
@@ -269,7 +269,7 @@ _type_of_far(const bitstream_parser_t *bitstream,
   const id_vlx_t chiptype = bitstream->type;
   const col_type_t type = addr->type;
 
-  if (_far_is_pad(bitstream, addr))
+  if (_far_is_pad(chiptype, addr))
     return V5C_PAD;
 
   switch (type) {
@@ -310,7 +310,7 @@ _typed_col_of_far(const bitstream_parser_t *bitstream,
   const unsigned col = addr->col;
 
   /* unlikely, move this out of main exec flow */
-  if (_far_is_pad(bitstream, addr))
+  if (_far_is_pad(chiptype, addr))
     return type;
 
   switch (type) {

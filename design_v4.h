@@ -80,6 +80,8 @@ typedef enum _v4_col_type {
   V4__NB_COL_TYPES,
 } v4_col_type_t;
 
+#define LAST_COL_TYPE V4_TYPE_CFG_BRAM
+
 typedef enum _v4_tb_t {
   V4_TB_TOP = 0,
   V4_TB_BOTTOM,
