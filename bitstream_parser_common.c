@@ -159,9 +159,8 @@ _far_increment_col(bitstream_parser_t *bitstream,
 }
 
 static inline gboolean
-_last_frame(const bitstream_parser_t *bitstream,
+_last_frame(const id_vlx_t chiptype,
 	    const sw_far_t *addr) {
-  const id_vlx_t chiptype = bitstream->type;
   const unsigned *col_count = bitdescr[chiptype].col_count;
   const col_type_t type = addr->type;
   unsigned col = addr->col;
@@ -200,7 +199,7 @@ _far_increment_mna(bitstream_parser_t *bitstream,
 		   sw_far_t *addr) {
   const id_vlx_t chiptype = bitstream->type;
   const unsigned *frame_count = bitdescr[chiptype].frame_count;
-  const design_col_t col_type = _type_of_far(bitstream, addr);
+  const design_col_t col_type = _type_of_far(chiptype, addr);
   unsigned mna = addr->mna;
 
   mna += 1;
@@ -263,16 +262,21 @@ default_register_write(bitstream_parser_t *parser,
 }
 
 static inline const gchar **
+get_frameloc_from_swfar(const bitstream_parsed_t *parsed,
+			const id_vlx_t chiptype,
+			const sw_far_t *far) {
+  const design_col_t type = _type_of_far(chiptype, far);
+  const unsigned typed_col = _typed_col_of_far(chiptype, far);
+  return get_frame_loc(parsed, type, far->row, far->tb, typed_col, far->mna);
+}
+
+static inline const gchar **
 get_frameloc_from_far(const bitstream_parsed_t *parsed,
-		      const bitstream_parser_t *parser,
+		      const id_vlx_t chiptype,
 		      const guint32 myfar) {
   sw_far_t far;
-  design_col_t type;
-  unsigned typed_col;
   fill_swfar(&far, myfar);
-  type = _type_of_far(parser, &far);
-  typed_col = _typed_col_of_far(parser, &far);
-  return get_frame_loc(parsed, type, far.row, far.tb, typed_col, far.mna);
+  return get_frameloc_from_swfar(parsed, chiptype, &far);
 }
 
 static
@@ -295,7 +299,8 @@ void record_frame(bitstream_parsed_t *parsed,
 
   /* record the frame in the flat descriptor */
   {
-    const gchar **framepos = get_frameloc_from_far(parsed, bitstream, myfar);
+    const id_vlx_t chiptype = bitstream->type;
+    const gchar **framepos = get_frameloc_from_far(parsed, chiptype, myfar);
     if (*framepos)
       g_warning("Replacing frame already present for far [%08x]", myfar);
     *framepos = dataframe;
@@ -364,7 +369,21 @@ free_indexer(bitstream_parsed_t *parsed) {
 void
 iterate_over_frames(const bitstream_parsed_t *parsed,
 		    frame_iterator_t iter, void *itdat) {
-  (void) parsed; (void) iter; (void) itdat;
+  const id_vlx_t chiptype = 5; /* XC4VLX100 */
+  sw_far_t far;
+  (void) parsed;
+  fill_swfar(&far, 0);
+
+  /* Iterate over the whole thing very dumbly */
+  while (!_last_frame(chiptype, &far)) {
+/*     const int type = _type_of_far(chip_id, &far); */
+/*     const int index = _col_of_far(chip_id, &far); */
+/*     const int frame = far.mna; */
+    const gchar *data = *get_frameloc_from_swfar(parsed, chiptype, &far);
+    iter(data, 0, 0, 0, itdat);
+    //_far_increment_mna(chiptype, &far);
+  }
+
   return;
 }
 

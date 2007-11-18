@@ -264,9 +264,8 @@ snprintf_far(char *buf, const size_t buf_len,
    parameters. */
 
 static inline design_col_t
-_type_of_far(const bitstream_parser_t *bitstream,
+_type_of_far(const id_vlx_t chiptype,
 	     const sw_far_t *addr) {
-  const id_vlx_t chiptype = bitstream->type;
   const col_type_t type = addr->type;
 
   if (_far_is_pad(chiptype, addr))
@@ -303,9 +302,8 @@ typed_col_dumb(const design_col_t *array,
 
 
 static inline unsigned
-_typed_col_of_far(const bitstream_parser_t *bitstream,
+_typed_col_of_far(const id_vlx_t chiptype,
 		  const sw_far_t *addr) {
-  const id_vlx_t chiptype = bitstream->type;
   const col_type_t type = addr->type;
   const unsigned col = addr->col;
 

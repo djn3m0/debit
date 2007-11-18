@@ -267,9 +267,8 @@ snprintf_far(char *buf, const size_t buf_len,
 #define DSP_V4_OF_END(x) ((x) > 50 ? 13 : 9)
 
 static inline design_col_t
-_type_of_far(const bitstream_parser_t *bitstream,
+_type_of_far(const id_vlx_t chiptype,
 	     const sw_far_t *addr) {
-  const id_vlx_t chiptype = bitstream->type;
   const col_type_t type = addr->type;
 
   /* unlikely */
@@ -309,9 +308,8 @@ _type_of_far(const bitstream_parser_t *bitstream,
 }
 
 static inline unsigned
-_typed_col_of_far(const bitstream_parser_t *bitstream,
+_typed_col_of_far(const id_vlx_t chiptype,
 		  const sw_far_t *addr) {
-  const id_vlx_t chiptype = bitstream->type;
   const col_type_t type = addr->type;
   const unsigned col = addr->col;
 
