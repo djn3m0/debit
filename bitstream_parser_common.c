@@ -384,22 +384,25 @@ iterate_over_unk_frames(const bitstream_parsed_t *parsed,
 
 #include <assert.h>
 
+/* Get chip ID directly */
+static id_vlx_t chipid(const bitstream_parsed_t *parsed) {
+  const chip_struct_t *chip = parsed->chip_struct;
+  return chip->chip;
+}
+
 /* Iterate over frames in FAR-ordered mode. This is a bit complex... */
 void
 iterate_over_frames_far(const bitstream_parsed_t *parsed,
 			frame_iterator_t iter, void *itdat) {
-  const id_vlx_t chiptype = 5; /* XC4VLX100 */
+  const id_vlx_t chiptype = chipid(parsed);
   sw_far_t far;
-  (void) parsed;
   fill_swfar(&far, 0);
 
   /* Iterate over the whole thing very dumbly */
   while (!_last_frame(&far)) {
-/*     const int type = _type_of_far(chip_id, &far); */
-/*     const int index = _col_of_far(chip_id, &far); */
-/*     const int frame = far.mna; */
     const gchar *data = *get_frameloc_from_swfar(parsed, chiptype, &far);
     assert(data || _far_is_pad(chiptype, &far));
+    /* XXX */
     iter(data, 0, 0, 0, itdat);
     _far_increment_mna(chiptype, &far);
   }
