@@ -163,31 +163,6 @@ typedef struct _chip_struct_v4 {
 } chip_struct_t;
 
 static inline unsigned
-num_of_type(const chip_struct_t *chip,
-	    const v4_design_col_t type) {
-  const unsigned *col_count = chip->col_count;
-  switch (type) {
-  case V4C_IOB:
-    return 3;
-  case V4C_GCLK:
-    return 1;
-  case V4C_DSP48:
-    return 1;
-  case V4C_CLB:
-    return col_count[V4_TYPE_CLB] - 5;
-  case V4C_BRAM:
-    return col_count[V4_TYPE_BRAM];
-  case V4C_BRAM_INT:
-    return col_count[V4_TYPE_BRAM_INT];
-  case V4C_PAD:
-    return 3;
-  default:
-    return -1;
-  }
-  return -1;
-}
-
-static inline unsigned
 type_frame_count(const chip_struct_t *chip,
 		 const v4_design_col_t type) {
   return chip->frame_count[type];

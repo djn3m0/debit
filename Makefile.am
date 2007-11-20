@@ -14,6 +14,7 @@ SHARED_SRC	= bitarray.c bitarray.h \
 		wiring.c wiring.h \
 		bitstream_parser.h bitstream_packets.h \
 		debitlog.h design.h bitstream_high.h \
+		bitstream_write.c bitstream_write.h \
 		xdlout.h xdlout.c
 
 SHARED_SRC_V2	= codes/crc-ibm.c codes/crc-ibm.h \
@@ -42,7 +43,6 @@ debit_v4_SOURCES	= $(SHARED_SRC) debit.c \
 			design_v4.h design_common.h \
 			codes/crc32-c.c codes/crc32-c.h \
 			codes/xhamming.c codes/xhamming.h \
-			bitstream_write.c bitstream_write.h \
 			config.h
 debit_v4_CFLAGS	= $(AM_CFLAGS) -DVIRTEX4 @GLIB_CFLAGS@
 debit_v4_LDADD	= @GLIB_LIBS@

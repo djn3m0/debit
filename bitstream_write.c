@@ -343,6 +343,43 @@ static const bitfield_t ctl_bitfields[CTL_FIELD_LAST+1] = {
   [CTL_FIELD_LAST] = { .off = 31 },
 };
 
+#elif defined(VIRTEX5)
+
+typedef enum _io_type {
+  PKT_READ = 0,
+  PKT_WRITE = 1,
+} io_type_t;
+
+typedef struct _bitfield_t {
+  /* length is implicit as the difference of lengths */
+  unsigned char off;
+} bitfield_t;
+
+typedef enum _v5_registers_index {
+  /* from xilinx ug071.pdf */
+  CRC = 0, FAR, FDRI, FDRO,
+  CMD, CTL0, MASK,
+  STAT, LOUT, COR0,
+  MFWR, CBC, IDCODE,
+  AXSS, COR1, CSOB, WBSTAR,
+  TIMER,
+  REG18, REG19, REG20, REG21,
+  BOOTSTS = 22, REG23,
+  CTL1 = 24,
+  __V5_NUM_REGISTERS,
+} register_index_t;
+
+typedef enum _cmd_code {
+  CMD_NULL = 0,
+  WCFG, MFW,
+  DGHIGH_LFRM, RCFG, START, RCAP, RCRC,
+  AGHIGH, SWITCH, GRESTORE,
+  SHUTDOWN, GCAPTURE,
+  DESYNCH, RESERVED0, IPROG,
+  CRCC, LTIMER,
+  __NUM_CMD_CODE,
+} cmd_code_t;
+
 #endif
 
 #define MSK(x) ((1<<x)-1)
@@ -367,7 +404,7 @@ setfiel(const uint32_t val,
 #define crc_byte crc_ibm_byte
 #define crc_addr5 crc_ibm_addr5
 #else
-#if defined (VIRTEX4)
+#if defined (VIRTEX4) || defined (VIRTEX5)
 #include "codes/crc32-c.h"
 #define crc_byte crc32c_byte
 #define crc_addr5 crc32c_addr5
@@ -624,27 +661,17 @@ bs_write_cmd_footer(bitstream_writer_t *writer) {
     bs_write_noop(fd);
 }
 
-static void
-bs_write_body(bitstream_writer_t *writer) {
-  /* write all raw bitstream data to disk */
-  bs_write_synchro(writer->fd);
-  bs_write_cmd_header(writer);
-  bs_fdri_write_frames(writer);
-  bs_write_cmd_footer(writer);
-}
-
 #elif defined(VIRTEX4)
 
 #include "design_v4.h"
 
 static inline unsigned nframes(const chip_struct_t *chip) {
   const unsigned *frame_count = chip->frame_count;
+  const unsigned *col_count = chip->col_count;
   unsigned total = 0;
   design_col_t type;
-  for (type = 0; type < V4C__NB_CFG; type++) {
-    /* cast the type to a col_type_t */
-    total += frame_count[type] * num_of_type(chip, type);
-  }
+  for (type = 0; type < V4C__NB_CFG; type++)
+    total += frame_count[type] * type_col_count_v4(col_count, type);
   return total * (chip->row_count << 1);
 }
 
@@ -678,9 +705,6 @@ bs_write_cmd_header(bitstream_writer_t *writer) {
   bs_write_wreg_u32(writer, fd, MASK, CTL_F(RSV2, 0x3));
   bs_write_wreg_u32(writer, fd, CTL, CTL_F(RSV2, 0x3));
 
-  /* 1150 for xc4vlx100
-   * 1150 for xc4vls40
-   */
 #define NOOPS_SYNC 1150
   for(nop = 0; nop < NOOPS_SYNC; nop++)
     bs_write_noop(fd);
@@ -735,9 +759,8 @@ bs_write_cmd_footer(bitstream_writer_t *writer) {
   bs_write_wreg_u32(writer, fd, CMD, C_LFRM);
   bs_write_noop(fd);
 
-  /* Series of noop packets, waiting for flush of the last
-     two written frame */
-  for (i = 0; i < chip->framelen * 2 + 5 + 4 * 3; i++)
+  /* Series of noop packets, waiting for flush */
+  for (i = 0; i < 99; i++)
     bs_write_noop(fd);
 
   bs_write_wreg_u32(writer, fd, CMD, GRESTORE);
@@ -766,6 +789,135 @@ bs_write_cmd_footer(bitstream_writer_t *writer) {
     bs_write_noop(fd);
 }
 
+#elif defined(VIRTEX5)
+
+#include "design_v5.h"
+
+static inline unsigned nframes(const chip_struct_t *chip) {
+  const unsigned *frame_count = chip->frame_count;
+  const unsigned *col_count = chip->col_count;
+  unsigned total = 0;
+  design_col_t type;
+  for (type = 0; type < V5C__NB_CFG; type++)
+    total += frame_count[type] * type_col_count_v5(col_count, type);
+  return total * (chip->row_count << 1);
+}
+
+static void
+bs_write_cmd_header(bitstream_writer_t *writer) {
+  int fd = writer->fd;
+  const bitstream_parsed_t *bit = writer->bit;
+  const chip_struct_t *chip = bit->chip_struct;
+  int nop;
+
+  /* V5 inserts noops too */
+  bs_write_noop(fd);
+
+  /* V5-specific */
+  bs_write_wreg_u32(writer, fd, WBSTAR, 0xffff);
+  bs_write_wreg_u32(writer, fd, CMD, CMD_NULL);
+  bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, CMD, RCRC);
+  /* reset the CRC appropriately */
+  writer->crc = 0;
+
+  bs_write_noop(fd);
+  bs_write_noop(fd);
+
+  /* V5-specific */
+  bs_write_wreg_u32(writer, fd, TIMER, 0xabadface);
+  bs_write_wreg_u32(writer, fd, REG19, 0xabadface);
+
+  /* These values are meaningless for me now */
+  bs_write_wreg_u32(writer, fd, COR0, 0xabadface);
+  bs_write_wreg_u32(writer, fd, COR1, 0xabadface);
+
+  bs_write_wreg_u32(writer, fd, IDCODE, chip->idcode);
+  bs_write_wreg_u32(writer, fd, CMD, SWITCH);
+  bs_write_noop(fd);
+
+  /* Set unknown bits */
+  bs_write_wreg_u32(writer, fd, MASK, 0xabadface);
+  bs_write_wreg_u32(writer, fd, CTL0, 0xabadface);
+  bs_write_wreg_u32(writer, fd, MASK, 0xabadface);
+  bs_write_wreg_u32(writer, fd, CTL1, 0xabadface);
+
+#define NOOPS_SYNC 8
+  for(nop = 0; nop < NOOPS_SYNC; nop++)
+    bs_write_noop(fd);
+
+  /* Start-of-write */
+}
+
+static void
+bs_fdri_write_frames(bitstream_writer_t *writer) {
+  int fd = writer->fd;
+  const bitstream_parsed_t *bit = writer->bit;
+  const chip_struct_t *chip = bit->chip_struct;
+  /* Compute total word count */
+  const unsigned framec = nframes(chip);
+  const unsigned wordc = framec * chip->framelen;
+
+  /* prepare for FRDI write */
+  /* FAR initialization. For non-compressed bitstream, it is set to be zero */
+  bs_write_wreg_u32(writer, fd, FAR, 0);
+  bs_write_wreg_u32(writer, fd, CMD, WCFG);
+  bs_write_noop(fd);
+
+  /* Prepare long FDRI write */
+  bs_write_wreg(fd, TYPE_V2, FDRI, wordc);
+
+  /* simply write *all* frames, in FAR order. Along with noop padding */
+  iterate_over_frames_far(bit, write_frame, writer);
+
+  /* explicit CRC check for v4 */
+  /* and v5 */
+  bs_write_wreg_u32(writer, fd, CRC, writer->crc);
+}
+
+/* only slightly different from V4 */
+static void
+bs_write_cmd_footer(bitstream_writer_t *writer) {
+  int fd = writer->fd;
+  const bitstream_parsed_t *bit = writer->bit;
+  const chip_struct_t *chip = bit->chip_struct;
+  unsigned final_far, i;
+  (void) chip;
+  /* All frames have been written */
+
+  bs_write_wreg_u32(writer, fd, CMD, GRESTORE);
+  bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, CMD, DGHIGH_LFRM);
+  bs_write_noop(fd);
+
+  /* Series of noop packets, waiting for flush */
+  for (i = 0; i < 99; i++)
+    bs_write_noop(fd);
+
+  bs_write_wreg_u32(writer, fd, CMD, START);
+  bs_write_noop(fd);
+
+  final_far = (chip->col_count[V5_TYPE_CLB] << FAR_V5_COL_OFFSET) |
+    (chip->row_count << FAR_V5_ROW_OFFSET);
+  bs_write_wreg_u32(writer, fd, FAR, final_far);
+
+  bs_write_wreg_u32(writer, fd, MASK, 0);
+  bs_write_wreg_u32(writer, fd, CTL0, 0);
+
+  /* CRC check. We should fuck this up big time intentionally. We don't
+     want anyone to load our bitstreams for now... */
+  debit_log(L_WRITE,"CRC is %04x", writer->crc);
+  bs_write_wreg_u32(writer, fd, CRC, writer->crc);
+
+  bs_write_wreg_u32(writer, fd, CMD, DESYNCH);
+  for (i = 0; i < 99; i++)
+    bs_write_noop(fd);
+}
+
+#endif
+
 static void
 bs_write_body(bitstream_writer_t *writer) {
   /* write all raw bitstream data to disk */
@@ -774,8 +926,6 @@ bs_write_body(bitstream_writer_t *writer) {
   bs_fdri_write_frames(writer);
   bs_write_cmd_footer(writer);
 }
-
-#endif
 
 int
 bitstream_write(const bitstream_parsed_t *bit,

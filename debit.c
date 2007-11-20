@@ -83,12 +83,10 @@ debit_file(gchar *input_file, gchar *output_dir) {
   if (unkdump)
     design_dump_frames(bit, output_dir);
 
-#if defined(VIRTEX2) || defined(SPARTAN3) || defined(VIRTEX4)
   /* Just rewrite the bitstream. This is a test for the
      bitstream-writing code */
   if (ofile)
     bitstream_write(bit,output_dir,ofile);
-#endif /* defined(VIRTEX2) || defined(SPARTAN3) || defined(VIRTEX4) */
 
   if (sitedump || pipdump || lutdump || bramdump || netdump) {
     bitstream_analyzed_t *analysis = analyze_bitstream(bit, datadir);

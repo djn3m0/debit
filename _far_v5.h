@@ -124,7 +124,8 @@ typedef enum _v5_registers_index {
   MFWR, CBC, IDCODE,
   AXSS, COR1, CSOB, WBSTAR,
   TIMER,
-  BOOTSTS = 22,
+  REG18, REG19, REG20, REG21,
+  BOOTSTS = 22, REG23,
   CTL1 = 24,
   __V5_NUM_REGISTERS,
 } register_index_t;
@@ -141,6 +142,7 @@ typedef enum _cmd_code {
 } cmd_code_t;
 
 #if DEBIT_DEBUG > 0
+
 static const
 char *reg_names[__V5_NUM_REGISTERS] = {
   [CRC] = "CRC",
@@ -161,7 +163,10 @@ char *reg_names[__V5_NUM_REGISTERS] = {
   [CSOB] = "CSOB",
   [WBSTAR] = "WBSTAR",
   [TIMER] = "TIMER",
+  [REG18] = "REG18", [REG19] = "REG19",
+  [REG20] = "REG20", [REG21] = "REG21",
   [BOOTSTS] = "BOOTSTS",
+  [REG23] = "REG23",
   [CTL1] = "CTL1",
 };
 
@@ -170,7 +175,7 @@ char *cmd_names[__NUM_CMD_CODE] = {
   [CMD_NULL] = "NULL",
   [WCFG] = "WCFG",
   [MFW] = "MFWR",
-  [DGHIGH_LFRM] = "LFRM",
+  [DGHIGH_LFRM] = "DGHIGH_LFRM",
   [RCFG] = "RCFG",
   [START] = "START",
   [RCAP] = "RCAP",
