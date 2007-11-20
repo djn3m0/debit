@@ -243,7 +243,7 @@ typedef enum _cor_fields {
   SINGLE, DRIVE_DONE, DONE_PIPE,
   SHUT_RST_DCM, RSV, CRC_BYPASS,
   COR_FIELD_LAST,
-} ctl_bits_t;
+} cor_bits_t;
 
 static const bitfield_t cor_bitfields[COR_FIELD_LAST+1] = {
   [GWE_CYCLE] = { .off = 0 },
@@ -358,6 +358,9 @@ setfiel(const uint32_t val,
 
 #define COR_F(name, val) \
   setfiel(val, name, cor_bitfields)
+
+#define CTL_F(name, val) \
+  setfiel(val, name, ctl_bitfields)
 
 #if defined(VIRTEX2) || defined (SPARTAN3)
 #include "codes/crc-ibm.h"
@@ -663,13 +666,17 @@ bs_write_cmd_header(bitstream_writer_t *writer) {
   bs_write_noop(fd);
 
   /* These values are meaningless for me now */
-  bs_write_wreg_u32(writer, fd, COR, 0xffff);
+  bs_write_wreg_u32(writer, fd, COR,
+		    COR_F(GWE_CYCLE, 5) | COR_F(GTS_CYCLE, 4) |
+		    COR_F(LOCK_CYCLE, 7) | COR_F(MATCH_CYCLE, 0) |
+		    COR_F(DONE_CYCLE, 3) | COR_F(OSCFSEL, 2));
   bs_write_wreg_u32(writer, fd, IDCODE, chip->idcode);
   bs_write_wreg_u32(writer, fd, CMD, SWITCH);
   bs_write_noop(fd);
 
-  bs_write_wreg_u32(writer, fd, MASK, 0);
-  bs_write_wreg_u32(writer, fd, CTL, 0);
+  /* Set unknown bits */
+  bs_write_wreg_u32(writer, fd, MASK, CTL_F(RSV2, 0x3));
+  bs_write_wreg_u32(writer, fd, CTL, CTL_F(RSV2, 0x3));
 
   /* 1150 for xc4vlx100
    * 1150 for xc4vls40
@@ -678,8 +685,9 @@ bs_write_cmd_header(bitstream_writer_t *writer) {
   for(nop = 0; nop < NOOPS_SYNC; nop++)
     bs_write_noop(fd);
 
-  bs_write_wreg_u32(writer, fd, MASK, 0xffff);
-  bs_write_wreg_u32(writer, fd, CTL, 0xffff);
+  /* Clear those same bits */
+  bs_write_wreg_u32(writer, fd, MASK, CTL_F(RSV2, 0x3));
+  bs_write_wreg_u32(writer, fd, CTL, 0);
 
   bs_write_wreg_u32(writer, fd, CMD, C_NULL);
   bs_write_noop(fd);
