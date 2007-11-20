@@ -122,9 +122,8 @@ _far_increment_type(sw_far_t *addr) {
 }
 
 static inline void
-_far_increment_row(bitstream_parser_t *bitstream,
+_far_increment_row(const id_vlx_t chiptype,
 		   sw_far_t *addr) {
-  const id_vlx_t chiptype = bitstream->type;
   const unsigned row_count = bitdescr[chiptype].row_count;
   unsigned row = addr->row;
 
@@ -138,9 +137,8 @@ _far_increment_row(bitstream_parser_t *bitstream,
 }
 
 static inline void
-_far_increment_col(bitstream_parser_t *bitstream,
+_far_increment_col(const id_vlx_t chiptype,
 		   sw_far_t *addr) {
-  const id_vlx_t chiptype = bitstream->type;
   const unsigned *col_count = bitdescr[chiptype].col_count;
   const col_type_t type = addr->type;
   guint col;
@@ -151,7 +149,7 @@ _far_increment_col(bitstream_parser_t *bitstream,
   /* There are two pad columns */
   if (col == col_count[type] + 1) {
     col = 0;
-    _far_increment_row(bitstream, addr);
+    _far_increment_row(chiptype, addr);
   }
 
   /* writeback the col value */
@@ -159,15 +157,10 @@ _far_increment_col(bitstream_parser_t *bitstream,
 }
 
 static inline gboolean
-_last_frame(const id_vlx_t chiptype,
-	    const sw_far_t *addr) {
-  const unsigned *col_count = bitdescr[chiptype].col_count;
+_last_frame(const sw_far_t *addr) {
   const col_type_t type = addr->type;
-  unsigned col = addr->col;
 
-  /* There are pad frames for all three types of data frames */
-  if (col >= col_count[type] &&
-      type == LAST_COL_TYPE)
+  if (type == LAST_COL_TYPE + 1)
     return TRUE;
 
   return FALSE;
@@ -195,9 +188,8 @@ far_is_pad(bitstream_parser_t *bitstream, guint32 myfar) {
 }
 
 static inline void
-_far_increment_mna(bitstream_parser_t *bitstream,
+_far_increment_mna(const id_vlx_t chiptype,
 		   sw_far_t *addr) {
-  const id_vlx_t chiptype = bitstream->type;
   const unsigned *frame_count = bitdescr[chiptype].frame_count;
   const design_col_t col_type = _type_of_far(chiptype, addr);
   unsigned mna = addr->mna;
@@ -206,7 +198,7 @@ _far_increment_mna(bitstream_parser_t *bitstream,
 
   if (mna == frame_count[col_type]) {
     mna = 0;
-    _far_increment_col(bitstream, addr);
+    _far_increment_col(chiptype, addr);
   }
 
   addr->mna = mna;
@@ -214,9 +206,10 @@ _far_increment_mna(bitstream_parser_t *bitstream,
 
 static inline void
 far_increment_mna(bitstream_parser_t *bitstream) {
+  const id_vlx_t chiptype = bitstream->type;
   sw_far_t far;
   fill_swfar(&far, register_read(bitstream, FAR));
-  _far_increment_mna(bitstream, &far);
+  _far_increment_mna(chiptype, &far);
   register_write(bitstream, FAR, get_hwfar(&far));
 }
 
@@ -369,21 +362,9 @@ free_indexer(bitstream_parsed_t *parsed) {
 void
 iterate_over_frames(const bitstream_parsed_t *parsed,
 		    frame_iterator_t iter, void *itdat) {
-  const id_vlx_t chiptype = 5; /* XC4VLX100 */
-  sw_far_t far;
   (void) parsed;
-  fill_swfar(&far, 0);
-
-  /* Iterate over the whole thing very dumbly */
-  while (!_last_frame(chiptype, &far)) {
-/*     const int type = _type_of_far(chip_id, &far); */
-/*     const int index = _col_of_far(chip_id, &far); */
-/*     const int frame = far.mna; */
-    const gchar *data = *get_frameloc_from_swfar(parsed, chiptype, &far);
-    iter(data, 0, 0, 0, itdat);
-    //_far_increment_mna(chiptype, &far);
-  }
-
+  (void) iter;
+  (void) itdat;
   return;
 }
 
@@ -401,13 +382,27 @@ iterate_over_unk_frames(const bitstream_parsed_t *parsed,
   }
 }
 
+#include <assert.h>
+
 /* Iterate over frames in FAR-ordered mode. This is a bit complex... */
 void
 iterate_over_frames_far(const bitstream_parsed_t *parsed,
 			frame_iterator_t iter, void *itdat) {
+  const id_vlx_t chiptype = 5; /* XC4VLX100 */
+  sw_far_t far;
   (void) parsed;
-  (void) iter;
-  (void) itdat;
+  fill_swfar(&far, 0);
+
+  /* Iterate over the whole thing very dumbly */
+  while (!_last_frame(&far)) {
+/*     const int type = _type_of_far(chip_id, &far); */
+/*     const int index = _col_of_far(chip_id, &far); */
+/*     const int frame = far.mna; */
+    const gchar *data = *get_frameloc_from_swfar(parsed, chiptype, &far);
+    assert(data || _far_is_pad(chiptype, &far));
+    iter(data, 0, 0, 0, itdat);
+    _far_increment_mna(chiptype, &far);
+  }
 }
 
 static gint

@@ -503,6 +503,23 @@ bs_write_padding(bitstream_writer_t *writer, const unsigned rega, const unsigned
   }
 }
 
+static void
+write_frame(const char *frame, guint type, guint index, guint frameidx, void *data) {
+  bitstream_writer_t *writer = data;
+  const chip_struct_t *chip = writer->bit->chip_struct;
+  const unsigned frame_len = chip->framelen * sizeof(uint32_t);
+  (void) type; (void) index; (void) frameidx;
+
+  /* unlikely */
+  if (!frame) {
+    bs_write_padding(writer, FDRI, chip->framelen);
+    return;
+  }
+
+  write_buf(writer->fd, frame, frame_len);
+  update_crc_b(writer, FDRI, frame, frame_len);
+}
+
 #if defined(VIRTEX2) || defined(SPARTAN3)
 
 /* Scatter-gather data write, for frames */
@@ -517,16 +534,6 @@ static inline unsigned nframes(const chip_struct_t *chip_struct) {
   for (type = 0; type < V2C__NB_CFG; type++)
     total += frame_count[type] * col_count[type];
   return total;
-}
-
-static void
-write_frame(const char *frame, guint type, guint index, guint frameidx, void *data) {
-  bitstream_writer_t *writer = data;
-  const chip_struct_t *chip = writer->bit->chip_struct;
-  const unsigned frame_len = chip->framelen * sizeof(uint32_t);
-  (void) type; (void) index; (void) frameidx;
-  write_buf(writer->fd, frame, frame_len);
-  update_crc_b(writer, FDRI, frame, frame_len);
 }
 
 #define S2U(x) GUINT32_FROM_BE(*((uint32_t *)x))
@@ -625,6 +632,19 @@ bs_write_body(bitstream_writer_t *writer) {
 
 #elif defined(VIRTEX4)
 
+#include "design_v4.h"
+
+static inline unsigned nframes(const chip_struct_t *chip) {
+  const unsigned *frame_count = chip->frame_count;
+  unsigned total = 0;
+  design_col_t type;
+  for (type = 0; type < V4C__NB_CFG; type++) {
+    /* cast the type to a col_type_t */
+    total += frame_count[type] * num_of_type(chip, type);
+  }
+  return total * (chip->row_count << 1);
+}
+
 static void
 bs_write_cmd_header(bitstream_writer_t *writer) {
   int fd = writer->fd;
@@ -673,7 +693,7 @@ bs_fdri_write_frames(bitstream_writer_t *writer) {
   const bitstream_parsed_t *bit = writer->bit;
   const chip_struct_t *chip = bit->chip_struct;
   /* Compute total word count */
-  const unsigned framec = 10;//nframes(chip);
+  const unsigned framec = nframes(chip);
   const unsigned wordc = framec * chip->framelen;
 
   /* prepare for FRDI write */
@@ -686,7 +706,7 @@ bs_fdri_write_frames(bitstream_writer_t *writer) {
   bs_write_wreg(fd, TYPE_V2, FDRI, wordc);
 
   /* simply write *all* frames, in FAR order. Along with noop padding */
-  //iterate_over_frames_far(bit, write_frame, writer);
+  iterate_over_frames_far(bit, write_frame, writer);
 
   /* explicit CRC check for v4 */
   bs_write_wreg_u32(writer, fd, CRC, writer->crc);
