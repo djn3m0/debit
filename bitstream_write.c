@@ -725,7 +725,7 @@ bs_write_cmd_footer(bitstream_writer_t *writer) {
   int fd = writer->fd;
   const bitstream_parsed_t *bit = writer->bit;
   const chip_struct_t *chip = bit->chip_struct;
-  unsigned i;
+  unsigned final_far, i;
   (void) chip;
   /* All frames have been written */
 
@@ -735,9 +735,9 @@ bs_write_cmd_footer(bitstream_writer_t *writer) {
   bs_write_wreg_u32(writer, fd, CMD, C_LFRM);
   bs_write_noop(fd);
 
-  /* Series of noop packets, waiting for flush of the last written
-     frame */
-  for (i = 0; i < chip->framelen; i++)
+  /* Series of noop packets, waiting for flush of the last
+     two written frame */
+  for (i = 0; i < chip->framelen * 2 + 5 + 4 * 3; i++)
     bs_write_noop(fd);
 
   bs_write_wreg_u32(writer, fd, CMD, GRESTORE);
@@ -746,13 +746,15 @@ bs_write_cmd_footer(bitstream_writer_t *writer) {
   bs_write_wreg_u32(writer, fd, CMD, C_NULL);
   bs_write_noop(fd);
 
-  bs_write_wreg_u32(writer, fd, FAR, 0xffff);
+  final_far = (chip->col_count[V4_TYPE_CLB] << FAR_V4_COL_OFFSET) |
+    (chip->row_count << FAR_V4_ROW_OFFSET);
+  bs_write_wreg_u32(writer, fd, FAR, final_far);
 
   bs_write_wreg_u32(writer, fd, CMD, START);
   bs_write_noop(fd);
 
-  bs_write_wreg_u32(writer, fd, MASK, 0xffff);
-  bs_write_wreg_u32(writer, fd, CTL, 0xffff);
+  bs_write_wreg_u32(writer, fd, MASK, 0);
+  bs_write_wreg_u32(writer, fd, CTL, 0);
 
   /* CRC check. We should fuck this up big time intentionally. We don't
      want anyone to load our bitstreams for now... */
