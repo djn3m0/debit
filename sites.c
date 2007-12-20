@@ -347,7 +347,7 @@ fill_interval(interval_t *descr,  const gsize dlen,
     const unsigned idx2 = i << 1;
     (void) idx2;
     g_assert(idx < dlen);
-    g_warning("writing to interval index %u for i=%u", idx, i);
+    g_warning("writing to interval index %u for i=%" G_GSIZE_FORMAT, idx, i);
     write_same(&descr[idx].base, intervals[idx2]);
     write_same(&descr[idx].length, intervals[idx2 + 1] - intervals[idx2]);
   }
