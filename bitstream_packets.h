@@ -138,6 +138,8 @@ typedef enum _cmd_pkt_ver {
 } cmd_pkt_ver_t;
 
 typedef enum _special_words {
+  SYNCHRO_0 = 0x000000BBU,
+  SYNCHRO_1 = 0x11220044U,
   SYNCHRO = 0xAA995566U,
   NOOP    = 0x20000000U,
   NULLPKT = 0x00000000U,

@@ -492,8 +492,17 @@ bs_write_noop(const int fd) {
 
 static inline void
 bs_write_synchro(int fd) {
+#if defined(VIRTEX5)
+  write_u32(fd, (unsigned)-1);
+  write_u32(fd, SYNCHRO_0);
+  write_u32(fd, SYNCHRO_1);
+  write_u32(fd, (unsigned)-1);
   write_u32(fd, (unsigned)-1);
   write_u32(fd, SYNCHRO);
+#else
+  write_u32(fd, (unsigned)-1);
+  write_u32(fd, SYNCHRO);
+#endif /* VIRTEX5 */
 }
 
 /* High-level register operation functions */
