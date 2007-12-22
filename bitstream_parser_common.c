@@ -390,6 +390,16 @@ static id_vlx_t chipid(const bitstream_parsed_t *parsed) {
   return chip->chip;
 }
 
+static inline int
+snprintf_swfar(char *buf, const size_t buf_len,
+	       const sw_far_t swfar) {
+  return snprintf(buf, buf_len,
+		  "%i_%i_%i_%i_%i",
+		  swfar.tb, swfar.type,
+		  swfar.row, swfar.col,
+		  swfar.mna);
+}
+
 /* Iterate over frames in FAR-ordered mode. This is a bit complex... */
 void
 iterate_over_frames_far(const bitstream_parsed_t *parsed,
@@ -402,6 +412,11 @@ iterate_over_frames_far(const bitstream_parsed_t *parsed,
   while (!_last_frame(&far)) {
     const gchar *data = *get_frameloc_from_swfar(parsed, chiptype, &far);
     assert(data || _far_is_pad(chiptype, &far));
+    {
+      gchar far_name[32];
+      snprintf_swfar(far_name, sizeof(far_name), far);
+      debit_log(L_BITSTREAM, "FAR is %s", far_name);
+    }
     /* XXX */
     iter(data, 0, 0, 0, itdat);
     _far_increment_mna(chiptype, &far);
@@ -572,6 +587,7 @@ read_next_token(bitstream_parsed_t *parsed,
   unsigned offset = 1;
   int err = 0;
 
+  debit_log(L_FILEPOS, "Bitstream offset %08tx", bytearray_offset(ba));
   print_parser_state(parser);
 
   switch(state) {

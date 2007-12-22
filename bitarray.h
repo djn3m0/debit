@@ -44,6 +44,11 @@ void bytearray_init(bytearray_t *lba,
   lba->pos = pos;
 }
 
+static inline ptrdiff_t
+bytearray_offset(const bytearray_t *lba) {
+  return lba->pos;
+}
+
 static inline
 const gchar *bytearray_get_ptr(const bytearray_t *ba) {
   return &ba->data[ba->pos];

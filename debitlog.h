@@ -57,6 +57,8 @@ enum {
 	L_LEXER = (DEBIT_DEBUG > 1) * 0x20000,
 	/* Bitstream writer */
 	L_WRITE = (DEBIT_DEBUG > 1) * 0x40000,
+	/* Various file positions */
+	L_FILEPOS = (DEBIT_DEBUG > 1) * 0x80000,
 	L_ANY = 0xfffff,
 };
 

@@ -76,7 +76,8 @@ typedef enum _v5_col_type {
   V5__NB_COL_TYPES,
 } v5_col_type_t;
 
-#define LAST_COL_TYPE V5_TYPE_CFG_CLB
+/* V5 bitstreams typically don't include V5_TYPE_CFG_CLB frames */
+#define LAST_COL_TYPE V5_TYPE_BRAM
 
 typedef enum _v5_tb_t {
   V5_TB_TOP = 0,

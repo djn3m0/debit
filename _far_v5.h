@@ -102,13 +102,6 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
   },
 };
 
-typedef enum _ba_v5_col_type {
-  BA_TYPE_CLB = 0,
-  /* Error in UG191, I guess */
-  BA_TYPE_BRAM_INT,
-  BA_TYPE_BRAM,
-} ba_v5_col_type_t;
-
 typedef enum parser_state {
   STATE_IDLE = 0,
   STATE_UNSYNCHED,
