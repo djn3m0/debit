@@ -908,12 +908,11 @@ bs_write_cmd_footer(bitstream_writer_t *writer) {
   bs_write_wreg_u32(writer, fd, CMD, START);
   bs_write_noop(fd);
 
-  final_far = (chip->col_count[V5_TYPE_CLB] << FAR_V5_COL_OFFSET) |
-    (chip->row_count << FAR_V5_ROW_OFFSET);
+  final_far = FAR_V5_TYPE_MASK | FAR_V5_ROW_MASK;
   bs_write_wreg_u32(writer, fd, FAR, final_far);
 
-  bs_write_wreg_u32(writer, fd, MASK, 0);
-  bs_write_wreg_u32(writer, fd, CTL0, 0);
+  bs_write_wreg_u32(writer, fd, MASK, 0x400000);
+  bs_write_wreg_u32(writer, fd, CTL0, 0x400000);
 
   /* CRC check. We should fuck this up big time intentionally. We don't
      want anyone to load our bitstreams for now... */
