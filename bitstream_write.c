@@ -823,7 +823,7 @@ bs_write_cmd_header(bitstream_writer_t *writer) {
   bs_write_noop(fd);
 
   /* V5-specific */
-  bs_write_wreg_u32(writer, fd, WBSTAR, 0xffff);
+  bs_write_wreg_u32(writer, fd, WBSTAR, 0);
   bs_write_wreg_u32(writer, fd, CMD, CMD_NULL);
   bs_write_noop(fd);
 
@@ -835,22 +835,22 @@ bs_write_cmd_header(bitstream_writer_t *writer) {
   bs_write_noop(fd);
 
   /* V5-specific */
-  bs_write_wreg_u32(writer, fd, TIMER, 0xabadface);
-  bs_write_wreg_u32(writer, fd, REG19, 0xabadface);
+  bs_write_wreg_u32(writer, fd, TIMER, 0);
+  bs_write_wreg_u32(writer, fd, REG19, 0);
 
   /* These values are meaningless for me now */
-  bs_write_wreg_u32(writer, fd, COR0, 0xabadface);
-  bs_write_wreg_u32(writer, fd, COR1, 0xabadface);
+  bs_write_wreg_u32(writer, fd, COR0, 0x431e5);
+  bs_write_wreg_u32(writer, fd, COR1, 0);
 
   bs_write_wreg_u32(writer, fd, IDCODE, chip->idcode);
   bs_write_wreg_u32(writer, fd, CMD, SWITCH);
   bs_write_noop(fd);
 
   /* Set unknown bits */
-  bs_write_wreg_u32(writer, fd, MASK, 0xabadface);
-  bs_write_wreg_u32(writer, fd, CTL0, 0xabadface);
-  bs_write_wreg_u32(writer, fd, MASK, 0xabadface);
-  bs_write_wreg_u32(writer, fd, CTL1, 0xabadface);
+  bs_write_wreg_u32(writer, fd, MASK, 0x00400000);
+  bs_write_wreg_u32(writer, fd, CTL0, 0x00400000);
+  bs_write_wreg_u32(writer, fd, MASK, 0);
+  bs_write_wreg_u32(writer, fd, CTL1, 0);
 
 #define NOOPS_SYNC 8
   for(nop = 0; nop < NOOPS_SYNC; nop++)
@@ -921,7 +921,7 @@ bs_write_cmd_footer(bitstream_writer_t *writer) {
   bs_write_wreg_u32(writer, fd, CRC, writer->crc);
 
   bs_write_wreg_u32(writer, fd, CMD, DESYNCH);
-  for (i = 0; i < 99; i++)
+  for (i = 0; i < 100; i++)
     bs_write_noop(fd);
 }
 
