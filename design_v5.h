@@ -190,7 +190,7 @@ type_col_count_v5(const unsigned *col_count,
   case V5C_BRAM_INT:
     return col_count[V5_TYPE_BRAM];
   case V5C_PAD:
-    return V5__NB_COL_TYPES;
+    return V5__NB_COL_TYPES-1;
   case V5C__NB_CFG:
     /* return the total ? */
   default:
