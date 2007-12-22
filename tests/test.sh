@@ -49,6 +49,18 @@ function check_suffix() {
     fi
 }
 
+function check_write() {
+    local design=$1;
+    local bitfile=${design}_u
+
+    echo -ne "rewrite\t\t\t"
+    make -s --no-print-directory -f $MAKEFILE ${bitfile}.rewrite && \
+    diff -q ${bitfile}.bit ${bitfile}.rewrite || \
+	log_failure_msg "FAILED"
+
+    log_success_msg "PASSED";
+}
+
 function produce_suffix() {
     local design=$1;
     local suffix=$2;
@@ -71,6 +83,7 @@ function test_design() {
     check_suffix ${DESIGN_NAME} bram
     check_suffix ${DESIGN_NAME} lut
     check_suffix ${DESIGN_NAME} pip
+    check_write ${DESIGN_NAME}
 
     make -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
 }

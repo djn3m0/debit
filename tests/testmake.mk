@@ -20,6 +20,9 @@ LOGME = 2>$@.log
 	echo $*.dir/* | xargs md5sum | sed -e 's/_u//' $(DUMPME) && \
 	rm -Rf $*.dir
 
+%.rewrite: %.bit $(DEBIT)
+	$(DEBIT_CMD) --input $< --outfile $@
+
 %.bram: %.bit $(DEBIT)
 	$(DEBIT_CMD) --bramdump --input $< $(DUMPME) $(LOGME)
 
