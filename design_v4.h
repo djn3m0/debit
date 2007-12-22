@@ -189,7 +189,8 @@ type_col_count_v4(const unsigned *col_count,
   case V4C_BRAM_INT:
     return col_count[V4_TYPE_BRAM_INT];
   case V4C_PAD:
-    return V4__NB_COL_TYPES;
+    /* Remove all CFG frames */
+    return V4__NB_COL_TYPES - 2;
   case V4C__NB_CFG:
     /* return the total ? */
   default:
