@@ -11,7 +11,9 @@ FULL_ENVIRONMENT = srcdir=$(srcdir) $(TESTS_ENVIRONMENT)
 # Copied on cairo's test suite
 EXTRA_VALGRIND_FLAGS = $(DEBIT_EXTRA_VALGRIND_FLAGS)
 
-VALGRIND_FLAGS = --tool=memcheck --leak-check=yes --show-reachable=yes \
+VALGRIND_FLAGS = --error-exitcode=254 \
+		 --tool=memcheck --leak-check=yes --show-reachable=yes \
+		 --suppressions=$(top_srcdir)/tests/valgrind.exclude --gen-suppressions=all \
 		$(EXTRA_VALGRIND_FLAGS)
 
 check-valgrind: TESTS_ENVIRONMENT += VALGRIND_DEBIT_CMD="valgrind $(VALGRIND_FLAGS)"
