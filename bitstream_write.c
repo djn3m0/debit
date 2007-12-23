@@ -623,6 +623,7 @@ bs_write_cmd_header(bitstream_writer_t *writer) {
   int fd = writer->fd;
   const bitstream_parsed_t *bit = writer->bit;
   const chip_struct_t *chip = bit->chip_struct;
+  uint32_t cor_val;
 
   bs_write_wreg_u32(writer, fd, CMD, RCRC);
   /* reset the CRC appropriately */
@@ -630,10 +631,17 @@ bs_write_cmd_header(bitstream_writer_t *writer) {
 
   bs_write_wreg_u32(writer, fd, FLR, chip->framelen-1);
   /* These values are meaningless for me now */
-  bs_write_wreg_u32(writer, fd, COR,
-		    COR_F(GWE_CYCLE, 5) | COR_F(GTS_CYCLE, 4) |
-		    COR_F(LOCK_CYCLE, 7) | COR_F(MATCH_CYCLE, 7) |
-		    COR_F(DONE_CYCLE, 3) | COR_F(OSCFSEL, 2));
+  cor_val = COR_F(GWE_CYCLE, 5) | COR_F(GTS_CYCLE, 4) |
+	  COR_F(LOCK_CYCLE, 7) | COR_F(MATCH_CYCLE, 7) |
+	  COR_F(DONE_CYCLE, 3);
+#if defined(VIRTEX2)
+  cor_val |= COR_F(OSCFSEL, 2);
+#else
+  /* spartan 3, see UG */
+  cor_val |= 0x40000000;
+#endif
+  bs_write_wreg_u32(writer, fd, COR, cor_val);
+
   bs_write_wreg_u32(writer, fd, IDCODE, chip->idcode);
   bs_write_wreg_u32(writer, fd, MASK, 0);
   bs_write_wreg_u32(writer, fd, CMD, SWITCH);
