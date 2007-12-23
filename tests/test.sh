@@ -49,16 +49,42 @@ function check_suffix() {
     fi
 }
 
+function compare_bitstreams() {
+    local bitbase=$1;
+    local bitgen=$2;
+
+    make -s --no-print-directory -f $MAKEFILE ${bitgen} && \
+    diff -q ${bitbase} ${bitgen} &> /dev/null
+
+    if test $? -ne 0; then
+	log_warning_msg "DIFFERING"
+    else
+	log_success_msg "PASSED"
+    fi
+}
+
 function check_write() {
     local design=$1;
-    local bitfile=${design}_u
+    echo -ne "rw, from compressed\t"
+    compare_bitstreams ${design}_u.bit ${design}.rewrite
 
-    echo -ne "rewrite\t\t\t"
-    make -s --no-print-directory -f $MAKEFILE ${bitfile}.rewrite && \
-    diff -q ${bitfile}.bit ${bitfile}.rewrite || \
+    # This will fail as the header is not the same. How can we manage that properly ?
+    echo -ne "rw, from uncompressed\t"
+    compare_bitstreams ${design}_u.bit ${design}_u.rewrite
+}
+
+function check_xdl() {
+    local design=$1
+    echo -ne "xdl2bit\t\t\t"
+    echo $design | grep virtex2 &> /dev/null
+    if test $? -ne 0; then
+	log_warning_msg "NOT AVAILABLE"
+	return
+    fi
+
+    make -s --no-print-directory -f $MAKEFILE $design.xdl2bit || \
 	log_failure_msg "FAILED"
-
-    log_success_msg "PASSED";
+    log_success_msg "DID SOMETHING"
 }
 
 function produce_suffix() {
@@ -83,7 +109,11 @@ function test_design() {
     check_suffix ${DESIGN_NAME} bram
     check_suffix ${DESIGN_NAME} lut
     check_suffix ${DESIGN_NAME} pip
+    #Test that bitstream rewrite function is somewhat OK
     check_write ${DESIGN_NAME}
+
+    #Test that the xdl2bit tool is okay
+    check_xdl ${DESIGN_NAME}
 
     make -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
 }

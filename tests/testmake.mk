@@ -1,10 +1,12 @@
 top_srcdir	?= ..
 top_builddir	?= $(top_srcdir)
 DEBIT		?= $(top_builddir)/debit
+XDL2BIT         ?= $(top_builddir)/xdl/xdl2bit
 DUMPARG		?= --fakearg
 DATADIR		?= $(top_srcdir)/data
 DEBITDBG	?= -g 0x0
 DEBIT_CMD	=$(VALGRIND_DEBIT_CMD) $(DEBIT) $(DEBITDBG) --datadir=$(DATADIR)
+XDL2BIT_CMD	=$(VALGRIND_DEBIT_CMD) $(XDL2BIT) $(DEBITDBG) --datadir=$(DATADIR)
 
 ##################
 ### Debit work ###
@@ -21,7 +23,7 @@ LOGME = 2>$@.log
 	rm -Rf $*.dir
 
 %.rewrite: %.bit $(DEBIT)
-	$(DEBIT_CMD) --input $< --outfile $@
+	$(DEBIT_CMD) --input $< --outfile $@ $(LOGME)
 
 %.bram: %.bit $(DEBIT)
 	$(DEBIT_CMD) --bramdump --input $< $(DUMPME) $(LOGME)
@@ -34,6 +36,13 @@ LOGME = 2>$@.log
 
 %.nets: %.bit $(DEBIT)
 	$(DEBIT_CMD) --netdump --input $< $(DUMPME) $(LOGME)
+
+####################
+### xdl2bit work ###
+####################
+
+%.xdl2bit: %.xdl $(XDL2BIT)
+	$(XDL2BIT_CMD) --input $< --output $@ $(LOGME)
 
 ############################
 ### XDL/Debit comparison ###
@@ -96,6 +105,7 @@ clean:
 	- rm -f $(CLEANDIR)/*.bram
 	- rm -f $(CLEANDIR)/*.lut
 	- rm -f $(CLEANDIR)/*.pip
+	- rm -f $(CLEANDIR)/*.xdl2bit
 	- rm -f $(CLEANDIR)/*.log
 	- rm -f $(CLEANDIR)/*.allspeed
 	- rm -f $(CLEANDIR)/*.ncd
