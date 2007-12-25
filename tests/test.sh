@@ -73,6 +73,22 @@ function check_write() {
     compare_bitstreams ${design}_u.bit ${design}_u.rewrite
 }
 
+function check_xdl_param() {
+    local design=$1
+    local name=$2
+
+    # then debit it again and check pips against the golden ref
+    make -s --no-print-directory -f $MAKEFILE $design.xdl2bit.$name && \
+	diff -q $design.xdl2bit.$name $design.$name.golden
+    local result=$?
+    echo -ne "\t\t\t";
+    if test $result -ne 0; then
+	log_warning_msg "$name DIFFER"
+    else
+	log_success_msg "$name OK"
+    fi
+}
+
 function check_xdl() {
     local design=$1
     echo -ne "xdl2bit\t\t\t"
@@ -84,7 +100,11 @@ function check_xdl() {
 
     make -s --no-print-directory -f $MAKEFILE $design.xdl2bit || \
 	log_failure_msg "FAILED"
-    log_success_msg "DID SOMETHING"
+    log_success_msg "GENERATED"
+
+    check_xdl_param $design "lut"
+    check_xdl_param $design "pip"
+    check_xdl_param $design "bram"
 }
 
 function produce_suffix() {
@@ -115,7 +135,7 @@ function test_design() {
     #Test that the xdl2bit tool is okay
     check_xdl ${DESIGN_NAME}
 
-    make -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
+#    make -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
 }
 
 function force_design() {

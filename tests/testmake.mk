@@ -28,10 +28,19 @@ LOGME = 2>$@.log
 %.bram: %.bit $(DEBIT)
 	$(DEBIT_CMD) --bramdump --input $< $(DUMPME) $(LOGME)
 
+%.bram: % $(DEBIT)
+	$(DEBIT_CMD) --bramdump --input $< $(DUMPME) $(LOGME)
+
 %.lut: %.bit $(DEBIT)
 	$(DEBIT_CMD) --lutdump --input $< $(DUMPME) $(LOGME)
 
+%.lut: % $(DEBIT)
+	$(DEBIT_CMD) --lutdump --input $< $(DUMPME) $(LOGME)
+
 %.pip: %.bit $(DEBIT)
+	$(DEBIT_CMD) --pipdump --input $< $(DUMPME) $(LOGME)
+
+%.pip: % $(DEBIT)
 	$(DEBIT_CMD) --pipdump --input $< $(DUMPME) $(LOGME)
 
 %.nets: %.bit $(DEBIT)
