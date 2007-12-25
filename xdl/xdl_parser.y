@@ -65,6 +65,10 @@ static int write_pip(parser_t *parser,
   return err;
 }
 
+static void write_lut(const parser_t *parser,
+		      const uint16_t val,
+		      const char *at);
+
 static int record_placement(parser_t *parser,
 			    const char *site,
 			    const char *slice) {
@@ -81,6 +85,12 @@ static int record_placement(parser_t *parser,
   parser->current_site = get_site(chip, siter);
   err = parse_slice_simple(slice, &parser->slice_idx);
 
+  if (!err) {
+    /* whenever we reach a slice, initialize its luts */
+    write_lut(parser, 0, "F");
+    write_lut(parser, 0, "G");
+  }
+
  out_err:
   return err;
 }
@@ -94,8 +104,8 @@ static void write_lut(const parser_t *parser,
   /* i = 1 => G, else F, j is slice_idx in [0,3] */
   unsigned lut_idx = (slice_idx << 1) + (at[0] == 'G');
   assert(at[0] == 'F' || at[0] == 'G');
-  debit_log(L_PARSER,"LUT cfg %04x seen at place %i, for pos %s\n",
-	    val, slice_idx, at);
+  debit_log(L_PARSER,"LUT cfg %04x seen at site %p place %i, for pos %s",
+	    val, site, slice_idx, at);
   set_bitstream_lut(&parser->bit, site, val, lut_idx);
 }
 
@@ -107,12 +117,8 @@ static void write_property(const parser_t *parser,
     return;
   }
   if (!strcmp(prop, "_GND_SOURCE")) {
-    /* I've only ever seen Y, so check for this assumption.
-       When used as a ground source, it seems the LUTs are initialized.
-     */
+    /* I've only ever seen Y, so check for this assumption. */
     assert(peek_property(parser) && !strcmp(peek_property(parser),"Y"));
-    write_lut(parser, 0, "F");
-    write_lut(parser, 0, "G");
   }
 }
 

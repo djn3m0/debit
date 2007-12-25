@@ -304,6 +304,9 @@ query_bitstream_site_bytea(const bitstream_parsed_t *bitstream,
   const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
 				 x+type_bits[site_type].x_type_off, xoff);
 
+/*   debit_log(L_FILEPOS, "querying site t%u, (%u,%u), cfgbit %u", */
+/* 	    site->type, site->type_coord.x, site->type_coord.y, cfgbit); */
+
   return &frame[frame_offset];
 }
 
@@ -520,6 +523,8 @@ set_bitstream_lut(const bitstream_parsed_t *bitstream,
   /* XXX */
   char *addr1 = (void *) query_bitstream_site_bytea(bitstream, site, cfgbytes[0]);
   char *addr2 = (void *) query_bitstream_site_bytea(bitstream, site, cfgbytes[1]);
+
+  assert(lut_i < 8);
 
   *addr1 = write_lut_val & 0xff;
   *addr2 = write_lut_val >> 8;
