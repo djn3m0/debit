@@ -117,8 +117,13 @@ static void write_property(const parser_t *parser,
     return;
   }
   if (!strcmp(prop, "_GND_SOURCE")) {
-    /* I've only ever seen Y, so check for this assumption. */
+#if defined(VIRTEX2)
+    /* I've only ever seen Y, and i'd like to be informed of other
+       possibilities, so check for this assumption. */
     assert(peek_property(parser) && !strcmp(peek_property(parser),"Y"));
+#elif defined(VIRTEX4)
+    assert(peek_property(parser) && !strcmp(peek_property(parser),"HARD0"));
+#endif /* defined */
   }
 }
 

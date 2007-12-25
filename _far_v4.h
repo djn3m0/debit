@@ -115,6 +115,20 @@ chip_struct_t bitdescr[XC4VLX__NUM] = {
 		  .row_count = 6, },
 };
 
+static const gchar *
+chipfiles[XC4VLX__NUM] = {
+  [XC4VLX15] = "xc4vlx15",
+  [XC4VLX25] = "xc4vlx25",
+  [XC4VLX40] = "xc4vlx40",
+  [XC4VLX60] = "xc4vlx60",
+  [XC4VLX80] = "xc4vlx80",
+  [XC4VLX100] = "xc4vlx100",
+  [XC4VLX160] = "xc4vlx160",
+  [XC4VLX200] = "xc4vlx200",
+};
+
+#define CHIPS__NUM XC4VLX__NUM
+
 typedef enum _ba_v4_col_type {
   BA_TYPE_CLB = 0,
   BA_TYPE_BRAM_INT,

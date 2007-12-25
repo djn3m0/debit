@@ -332,6 +332,27 @@ query_bitstream_luts(const bitstream_parsed_t *bitstream,
   return;
 }
 
+void
+set_bitstream_lut(const bitstream_parsed_t *bitstream,
+		  const csite_descr_t *site,
+		  const guint16 lut_val, const unsigned lut_i) {
+  (void) bitstream;
+  (void) site;
+  (void) lut_val;
+  (void) lut_i;
+}
+
+void set_bitstream_site_bits(const bitstream_parsed_t * bitstream,
+			     const csite_descr_t *site,
+			     const uint32_t vals,
+			     const guint cfgbits[], const gsize nbits) {
+  (void) bitstream;
+  (void) site;
+  (void) vals;
+  (void) cfgbits;
+  (void) nbits;
+}
+
 typedef int property_t;
 
 /*

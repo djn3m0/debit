@@ -309,13 +309,23 @@ frames_of_type(const chip_struct_t *chip_struct,
   return 2 * chip_struct->row_count * type_col_count(col_count,type) * frame_count_v[type];
 }
 
+static inline gsize
+total_frame_count(const chip_struct_t *chip_struct) {
+  gsize total_size = 0;
+  design_col_t type;
+  /* We need room for the frames themselves */
+  for (type = 0; type < VC__NB_CFG; type++)
+    total_size += frames_of_type(chip_struct, type);
+  return total_size;
+}
+
 static void
 alloc_indexer(bitstream_parsed_t *parsed) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
-  gsize total_size = 0;
   gsize type_offset = 0;
-  design_col_t type;
+  gsize total_size = 0;
   const gchar ***type_lut, **frame_array;
+  design_col_t type;
 
   /* The frame array is a triple-lookup array:
      - first index is index type (design_col_t, length VC__NB_CFG)
@@ -330,8 +340,7 @@ alloc_indexer(bitstream_parsed_t *parsed) {
   total_size += VC__NB_CFG * sizeof(gchar **);
 
   /* We need room for the frames themselves */
-  for (type = 0; type < VC__NB_CFG; type++)
-    total_size += frames_of_type(chip_struct, type) * sizeof(gchar *);
+  total_size += total_frame_count(chip_struct) * sizeof(gchar *);
 
   /* We allocate only one big array with the type_lut at the beginning
      and the frame_array at the end */
@@ -358,6 +367,60 @@ free_indexer(bitstream_parsed_t *parsed) {
   if (frames)
     g_array_free(frames, TRUE);
 }
+
+/* XXX these functions burden the read-only case. To be put elsewhere
+   at some point */
+static void
+fill_indexer(bitstream_parsed_t *parsed) {
+  gchar **frame_array = (gchar **) &parsed->frames[VC__NB_CFG];
+  const chip_struct_t *chip_struct = parsed->chip_struct;
+  const unsigned total_frames = total_frame_count(chip_struct);
+  const unsigned framelen = chip_struct->framelen;
+  uint32_t *current_frame;
+  unsigned i;
+
+  /* Alloc *all* frames. A bit tedious... */
+  current_frame = g_new0(uint32_t, total_frames * framelen);
+
+  for(i = 0; i < total_frames; i++) {
+    frame_array[i] = (char *)current_frame;
+    current_frame += framelen;
+  }
+}
+
+static void
+empty_indexer(bitstream_parsed_t *parsed) {
+  gchar **frame_array = (gchar **) &parsed->frames[VC__NB_CFG];
+  /* Free *all* frames at once. Easy... */
+  g_free (frame_array[0]);
+}
+
+int
+alloc_wbitstream(bitstream_parsed_t *parsed) {
+  /* Lookup the name */
+  const header_option_p *devopt = get_option(&parsed->header, DEVICE_TYPE);
+  const char *name = devopt->data;
+  int i;
+
+  for (i = CHIPS__NUM - 1; i >= 0; i--) {
+    const char *chipname = chipfiles[i];
+    if (!strncmp(name,chipname,strlen(chipname))) {
+      parsed->chip_struct = &bitdescr[i];
+      alloc_indexer(parsed);
+      fill_indexer(parsed);
+      return 0;
+    }
+  }
+  return -1;
+}
+
+void
+free_wbitstream(bitstream_parsed_t *parsed) {
+  empty_indexer(parsed);
+  free_indexer(parsed);
+}
+
+/* XXX End-of-burden */
 
 void
 iterate_over_frames(const bitstream_parsed_t *parsed,

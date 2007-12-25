@@ -11,10 +11,16 @@ SHARED_SRC	= ../bitarray.c ../bitheader.c ../filedump.c \
 		../localpips.c  ../wiring.c ../keyfile.c \
 		../analysis.c ../connexity.c ../xdlout.c ../sites.c \
 		../bitstream_write.c
-V2_SRC		= ../bitstream.c ../bitstream_parser.c ../codes/crc-ibm.c
+PARSER_SRC	= xdl2bit.c xdl_lexer.l xdl_parser.y parser.h
 
-bin_PROGRAMS    = xdl2bit
-xdl2bit_SOURCES = xdl2bit.c xdl_lexer.l xdl_parser.y parser.h $(SHARED_SRC) $(V2_SRC)
+bin_PROGRAMS    = xdl2bit xdl2bit_v4
+
+V2_SRC		= ../bitstream.c ../bitstream_parser.c ../codes/crc-ibm.c
+xdl2bit_SOURCES = $(PARSER_SRC) $(SHARED_SRC) $(V2_SRC)
 xdl2bit_CFLAGS	= $(AM_CFLAGS) @GLIB_CFLAGS@ -DVIRTEX2
 xdl2bit_LDADD	= @GLIB_LIBS@ @GTK_LIBS@
 
+V4_SRC		   = ../bitstream_v4.c ../bitstream_parser_common.c ../codes/crc32-c.c ../codes/xhamming.c
+xdl2bit_v4_SOURCES = $(PARSER_SRC) $(SHARED_SRC) $(V4_SRC)
+xdl2bit_v4_CFLAGS  = $(AM_CFLAGS) @GLIB_CFLAGS@ -DVIRTEX4
+xdl2bit_v4_LDADD   = @GLIB_LIBS@ @GTK_LIBS@

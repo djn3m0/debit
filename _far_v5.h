@@ -102,6 +102,18 @@ chip_struct_t bitdescr[XC5VLX__NUM] = {
   },
 };
 
+static const gchar *
+chipfiles[XC5VLX__NUM] = {
+  [XC5VLX30] = "xc5vlx30",
+  [XC5VLX50] = "xc5vlx50",
+  [XC5VLX85] = "xc5vlx85",
+  [XC5VLX110] = "xc5vlx110",
+  [XC5VLX220] = "xc5vlx220",
+  [XC5VLX330] = "xc5vlx330",
+};
+
+#define CHIPS__NUM XC5VLX__NUM
+
 typedef enum parser_state {
   STATE_IDLE = 0,
   STATE_UNSYNCHED,
