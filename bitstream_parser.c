@@ -942,6 +942,12 @@ void record_frame(bitstream_parsed_t *parsed,
   *frame_loc = dataframe;
 }
 
+/*
+ * XXX quite a bit number of the following functions use seemingly
+ * V2-specific constant. Should convert to S3/V2 - independent
+ * constants.
+ */
+
 static inline gsize
 total_frame_count(bitstream_parsed_t *parsed) {
   const chip_struct_t *chip_struct = parsed->chip_struct;

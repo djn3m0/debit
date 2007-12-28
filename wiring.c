@@ -280,13 +280,13 @@ static inline gint cmp(const gchar *s1, const gchar *s2) {
 
 gint parse_wire_simple(const wire_db_t *db, wire_atom_t* res,
 		       const gchar *wire) {
-  guint low = 0, high = db->dblen-1;
+  int low = 0, high = db->dblen-1;
   //  g_assert(high <= db->dblen);
 
   do {
-    guint middle = (high + low) / 2;
-    const gchar *middlename = wire_name(db, middle);
-    gint comp = cmp(wire,middlename);
+    int middle = (high + low) / 2;
+    const char *middlename = wire_name(db, middle);
+    int comp = cmp(wire,middlename);
     if (!comp) {
       *res = middle;
       return 0;
@@ -294,6 +294,7 @@ gint parse_wire_simple(const wire_db_t *db, wire_atom_t* res,
     if (comp > 0)
       low = middle + 1;
     else
+      /* high can underflow here, so we want it to be signed */
       high = middle - 1;
   } while(low <= high);
 
