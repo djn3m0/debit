@@ -92,11 +92,6 @@ function check_xdl_param() {
 function check_xdl() {
     local design=$1
     echo -ne "xdl2bit\t\t\t"
-    echo $design | grep virtex2 &> /dev/null
-    if test $? -ne 0; then
-	log_warning_msg "NOT AVAILABLE"
-	return
-    fi
 
     make -s --no-print-directory -f $MAKEFILE $design.xdl2bit || \
 	log_failure_msg "FAILED"
