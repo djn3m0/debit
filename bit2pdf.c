@@ -109,7 +109,7 @@ draw_bitstream(const bitstream_analyzed_t *nlz, const gchar *lofile,
   chip_descr_t *chip = nlz->chip;
   cairo_surface_t *sr;
   cairo_t *cr;
-  int err;
+  int err = 0;
 
   /* extract size from chip size */
   switch (out) {
