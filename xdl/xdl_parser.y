@@ -127,7 +127,7 @@ static void write_property(const parser_t *parser,
        possibilities, so check for this assumption. */
     assert(check_property(parser, "Y"));
 #elif defined(VIRTEX4)
-    assert(check_property(parser, "HARD0"));
+    assert(check_property(parser, "Y") || check_property(parser, "HARD0"));
 #endif /* defined */
   }
 }
