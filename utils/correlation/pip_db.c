@@ -138,9 +138,9 @@ static void
 store_iline(gpointer key,
 	    gpointer value,
 	    gpointer user_data) {
-  guint index = GPOINTER_TO_UINT(value);
+  guint idx = GPOINTER_TO_UINT(value);
   pip_db_t *db = user_data;
-  pip_ref_t *ref = &db->pip_array[index];
+  pip_ref_t *ref = &db->pip_array[idx];
   gchar **endpoints = g_strsplit (key, " ", 2);
 
   ref->name = key;
@@ -208,7 +208,8 @@ static void do_state(pip_ref_t *ref, state_t *state, void *dat) {
 /* FIXME: move this to one big allocation array */
 void
 alloc_pips_state(pip_db_t *pip_db, const alldata_t *dat) {
-  iterate_over_pips(pip_db, do_state, (void *)dat);
+  void *arg = (void *) dat;
+  iterate_over_pips(pip_db, do_state, arg);
 }
 
 static void free_state(pip_ref_t *ref, state_t *state, void *dat) {

@@ -533,7 +533,8 @@ dump_lab(const altera_bitstream_t *bitstream,
 void
 dump_lab_data(const gchar *odir,
 	      const altera_bitstream_t *bitstream) {
-  iterate_over_labs(bitstream, dump_lab, (void*)odir);
+  void *arg = (void *) odir;
+  iterate_over_labs(bitstream, dump_lab, arg);
 }
 
 static void

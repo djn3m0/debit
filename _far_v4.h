@@ -334,7 +334,6 @@ _typed_col_of_far(const id_vlx_t chiptype,
   switch (type) {
   case V4_TYPE_CLB:
     {
-      const unsigned col = addr->col;
       const unsigned end = bitdescr[chiptype].col_count[V4_TYPE_CLB] - 1;
       const unsigned middle = end >> 1;
       const unsigned dsp = DSP_V4_OF_END(end);

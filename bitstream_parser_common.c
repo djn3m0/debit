@@ -103,9 +103,9 @@ update_crc(bitstream_parser_t *parser,
 void
 typed_frame_name(char *buf, unsigned buf_len,
 		 const unsigned type,
-		 const unsigned index,
+		 const unsigned idx,
 		 const unsigned frameid) {
-  (void) buf; (void) buf_len; (void) type; (void) index; (void) frameid;
+  (void) buf; (void) buf_len; (void) type; (void) idx; (void) frameid;
 }
 
 static inline void

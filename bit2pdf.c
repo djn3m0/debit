@@ -90,21 +90,22 @@ static const char *tnames[OTYPE_END] = {
   [SVG] = "svg",
 };
 
-static out_type_t get_optype(const char *otype) {
+static out_type_t get_optype(const char *lotype) {
   int i;
-  if (!otype)
+  if (!lotype)
     return PNG;
 
   for (i = 0; i < OTYPE_END; i++) {
-    if (!strcmp(otype,tnames[i]))
+    if (!strcmp(lotype,tnames[i]))
       return i;
   }
-  g_warning("unknown requested type %s, selecting PNG", otype);
+  g_warning("unknown requested type %s, selecting PNG", lotype);
   return PNG;
 }
 
 static int
-draw_bitstream(const bitstream_analyzed_t *nlz, const gchar *ofile, const out_type_t out) {
+draw_bitstream(const bitstream_analyzed_t *nlz, const gchar *lofile,
+	       const out_type_t out) {
   chip_descr_t *chip = nlz->chip;
   cairo_surface_t *sr;
   cairo_t *cr;
@@ -114,21 +115,21 @@ draw_bitstream(const bitstream_analyzed_t *nlz, const gchar *ofile, const out_ty
   switch (out) {
 #ifdef PDF_CAIRO
   case PDF:
-    sr = cairo_pdf_surface_create (ofile,
+    sr = cairo_pdf_surface_create (lofile,
 				   chip->width * SITE_WIDTH,
 				   chip->height * SITE_HEIGHT);
     break;
 #endif /* PDF_CAIRO */
 #ifdef PS_CAIRO
   case PS:
-    sr = cairo_ps_surface_create (ofile,
+    sr = cairo_ps_surface_create (lofile,
 				  chip->width * SITE_WIDTH,
 				  chip->height * SITE_HEIGHT);
     break;
 #endif /* PS_CAIRO */
 #ifdef SVG_CAIRO
   case SVG:
-    sr = cairo_svg_surface_create (ofile,
+    sr = cairo_svg_surface_create (lofile,
 				   chip->width * SITE_WIDTH,
 				   chip->height * SITE_HEIGHT);
     break;
@@ -158,7 +159,7 @@ draw_bitstream(const bitstream_analyzed_t *nlz, const gchar *ofile, const out_ty
     break;
 #endif /* PDF_CAIRO || PS_CAIRO */
   case PNG:
-    (void) cairo_surface_write_to_png (sr, ofile);
+    (void) cairo_surface_write_to_png (sr, lofile);
     break;
   default:
     err = -1;

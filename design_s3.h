@@ -144,18 +144,18 @@ get_hwfar(const sw_far_t *sw_far) {
 static inline
 const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
 			    const guint type,
-			    const guint index,
+			    const guint idx,
 			    const guint frame) {
   const chip_struct_t *chip_struct = parsed->chip_struct;
   const unsigned *col_count = chip_struct->col_count;
   const unsigned *frame_count = chip_struct->frame_count;
   g_assert(type < V2C__NB_CFG);
-  g_assert(index < col_count[type]);
+  g_assert(idx < col_count[type]);
   g_assert(frame < frame_count[type]);
   (void) col_count;
 
   /* This is a double-lookup method */
-  return &parsed->frames[type][index * frame_count[type] + frame];
+  return &parsed->frames[type][idx * frame_count[type] + frame];
 }
 
 /* FDRI handling. Requires FAR handling.
@@ -164,9 +164,9 @@ const gchar **get_frame_loc(const bitstream_parsed_t *parsed,
 static inline
 const gchar *get_frame(const bitstream_parsed_t *parsed,
 		       const guint type,
-		       const guint index,
+		       const guint idx,
 		       const guint frame) {
-  const gchar *frameptr = *get_frame_loc(parsed, type, index, frame);
+  const gchar *frameptr = *get_frame_loc(parsed, type, idx, frame);
   g_assert(frameptr != NULL);
   return frameptr;
 }

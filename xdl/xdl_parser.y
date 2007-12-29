@@ -109,10 +109,15 @@ static void write_lut(const parser_t *parser,
   set_bitstream_lut(&parser->bit, site, val, lut_idx);
 }
 
+static inline int check_property(const parser_t *parser,
+				 const char *val) {
+  return peek_property(parser) && !strcmp(peek_property(parser),val);
+}
+
 static void write_property(const parser_t *parser,
 			   const char *prop) {
   if (!strcmp(prop, "F") || !strcmp(prop, "G")) {
-    assert(peek_property(parser) && !strcmp(peek_property(parser),"#OFF"));
+    assert(check_property(parser,"#OFF"));
     write_lut(parser, 0, prop);
     return;
   }
@@ -120,9 +125,9 @@ static void write_property(const parser_t *parser,
 #if defined(VIRTEX2)
     /* I've only ever seen Y, and i'd like to be informed of other
        possibilities, so check for this assumption. */
-    assert(peek_property(parser) && !strcmp(peek_property(parser),"Y"));
+    assert(check_property(parser, "Y"));
 #elif defined(VIRTEX4)
-    assert(peek_property(parser) && !strcmp(peek_property(parser),"HARD0"));
+    assert(check_property(parser, "HARD0"));
 #endif /* defined */
   }
 }

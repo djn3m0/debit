@@ -610,10 +610,10 @@ char *type_names[V2C__NB_CFG] = {
 void
 typed_frame_name(char *buf, unsigned buf_len,
 		 const unsigned type,
-		 const unsigned index,
+		 const unsigned idx,
 		 const unsigned frameid) {
   snprintf(buf, buf_len, "frame_%s_%02x_%02x",
-	   type_names[type], index, frameid);
+	   type_names[type], idx, frameid);
 }
 
 int
@@ -923,20 +923,20 @@ void record_frame(bitstream_parsed_t *parsed,
 		  bitstream_parser_t *bitstream,
 		  const guint32 myfar) {
   sw_far_t far;
-  guint type, index, frame;
+  guint type, idx, frame;
   const char *dataframe = bitstream->last_frame;
   const char **frame_loc;
 
   fill_swfar(&far, myfar);
 
   type = _type_of_far(bitstream->type, &far);
-  index = _col_of_far(bitstream->type, &far);
+  idx = _col_of_far(bitstream->type, &far);
   frame = far.mna;
 
   debit_log(L_BITSTREAM,"flushing frame [type:%i,index:%02i,frame:%2X]",
-	    type, index, frame);
+	    type, idx, frame);
 
-  frame_loc = get_frame_loc(parsed, type, index, frame);
+  frame_loc = get_frame_loc(parsed, type, idx, frame);
   if (*frame_loc != NULL)
 	  g_warning("Overwriting already present frame");
   *frame_loc = dataframe;
@@ -1064,18 +1064,18 @@ iterate_over_frames(const bitstream_parsed_t *parsed,
   const chip_struct_t *chip_struct = parsed->chip_struct;
   const unsigned *col_counts = chip_struct->col_count;
   const unsigned *frame_counts = chip_struct->frame_count;
-  guint type, index, frame;
+  guint type, idx, frame;
 
   /* Iterate over the whole thing */
   for (type = 0; type < V2C__NB_CFG; type++) {
     const guint col_count = col_counts[type];
 
-    for (index = 0; index < col_count; index++) {
+    for (idx = 0; idx < col_count; idx++) {
       const guint frame_count = frame_counts[type];
 
       for (frame = 0; frame < frame_count; frame++) {
-	const gchar *data = get_frame(parsed, type, index, frame);
-	iter(data, type, index, frame, itdat);
+	const gchar *data = get_frame(parsed, type, idx, frame);
+	iter(data, type, idx, frame, itdat);
       }
     }
   }
@@ -1098,11 +1098,11 @@ iterate_over_frames_far(const bitstream_parsed_t *parsed,
   /* Iterate over the whole thing very dumbly */
   while (!_last_frame(chip_id, &far)) {
     const int type = _type_of_far(chip_id, &far);
-    const int index = _col_of_far(chip_id, &far);
+    const int idx = _col_of_far(chip_id, &far);
     const int frame = far.mna;
-    const gchar *data = get_frame(parsed, type, index, frame);
+    const gchar *data = get_frame(parsed, type, idx, frame);
 
-    iter(data, type, index, frame, itdat);
+    iter(data, type, idx, frame, itdat);
     _far_increment_mna(chip_id, &far);
   }
 }

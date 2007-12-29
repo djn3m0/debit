@@ -1067,10 +1067,10 @@ __pips_of_site_append_index(const pip_db_t *pipdb,
 			    const bitstream_parsed_t *bitstream,
 			    const csite_descr_t *site,
 			    allpips_iter_t *data) {
-  unsigned *site_index = data->site_index;
+  unsigned *site_index_a = data->site_index;
   GArray *pips_array = data->array;
 
-  site_index[data->site_idx++] = pips_array->len;
+  site_index_a[data->site_idx++] = pips_array->len;
   __pips_of_site_append(pipdb, bitstream, site, pips_array);
 }
 
@@ -1096,22 +1096,22 @@ _pips_of_bitstream(const pip_db_t *pipdb, const chip_descr_t *chipdb,
   /* XXX This is obviously we bigger than needed. We need to redo this
      part */
   unsigned array_len = nsites;
-  unsigned *site_index = g_new0(unsigned, array_len + 1);
+  unsigned *site_index_a = g_new0(unsigned, array_len + 1);
 
   allpips_iter_t arg = {
     .bitstream = bitstream,
     .pipdb = pipdb,
     .array = pips_array,
     .site_idx = 0,
-    .site_index = site_index,
+    .site_index = site_index_a,
   };
 
   iterate_over_sites(chipdb, _pips_of_bitstream_iter, &arg);
 
-  site_index[array_len] = pips_array->len;
+  site_index_a[array_len] = pips_array->len;
   debit_log(L_PIPS, "Got %i explicit pips", pips_array->len);
 
-  fill->site_index = site_index;
+  fill->site_index = site_index_a;
   fill->bitpips = (pip_t *)g_array_free (pips_array, FALSE);
 
   return 0;

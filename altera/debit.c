@@ -67,13 +67,13 @@ unsigned int debit_debug = 0;
 
 static void
 debit_reverse(const altera_bitstream_t *altera,
-	      const gchar ** coords) {
+	      const gchar ** acoords) {
   const gchar *scoord;
 
-  if (!coords)
+  if (!acoords)
     return;
 
-  while ( (scoord = *coords++) != NULL) {
+  while ( (scoord = *acoords++) != NULL) {
     unsigned long coord = strtoul(scoord, NULL, 0);
     print_pos_from_bit_offset(altera, coord);
   }

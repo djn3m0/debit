@@ -149,7 +149,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 			  const csite_descr_t *site,
 			  const int cfgbyte) {
   const chip_struct_t *chip_struct = bitstream->chip_struct;
-  const site_type_t site_type = site->type;
+  const site_type_t lsite_type = site->type;
   const unsigned x = site->type_coord.x;
   const unsigned y = site->type_coord.y;
   const unsigned ymid = chip_struct->row_count;
@@ -170,7 +170,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 
   /* When top is one, the row numbering is inverted, and bits are mirrored */
   row = top ? (ymid - 1 - row) : row - ymid;
-  frame = get_frame(bitstream, type_bits[site_type].col_type, row, top, x, frame_x);
+  frame = get_frame(bitstream, type_bits[lsite_type].col_type, row, top, x, frame_x);
   frame_y = top ? (164 - 1 - frame_y) : frame_y;
 
   /* The adressing here is a bit strange, due to the frame byte order */
@@ -185,7 +185,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 			  const csite_descr_t *site,
 			  const int cfgbyte) {
   const chip_struct_t *chip_struct = bitstream->chip_struct;
-  const site_type_t site_type = site->type;
+  const site_type_t lsite_type = site->type;
   const unsigned x = site->type_coord.x;
   const unsigned y = site->type_coord.y;
   const unsigned ymid = chip_struct->row_count;
@@ -204,7 +204,7 @@ query_bitstream_site_byte(const bitstream_parsed_t *bitstream,
 
   /* When top is one, the row numbering is inverted */
   row = top ? (ymid - 1 - row) : row - ymid;
-  frame = get_frame(bitstream, type_bits[site_type].col_type, row, top, x, frame_x);
+  frame = get_frame(bitstream, type_bits[lsite_type].col_type, row, top, x, frame_x);
 
   /* The adressing here is a bit strange, due to the frame byte order */
   return frame[frame_y ^ 0x3];

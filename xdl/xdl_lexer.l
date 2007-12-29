@@ -84,10 +84,10 @@ A[1-6]   {
 	  [2] = 0xf0f0f0f0f0f0f0f0ULL, [3] = 0xff00ff00ff00ff00ULL,
 	  [4] = 0xffff0000ffff0000ULL, [5] = 0xffffffff00000000ULL,
 	};
-	unsigned index = yytext[1]-'1';
-	assert(index < ARRAY_SIZE(vars));
-	debit_log(L_LEXER, "Lookup variable %s, index %i", yytext, index);
-	yylval->val = vars[index];
+	unsigned idx = yytext[1]-'1';
+	assert(idx < ARRAY_SIZE(vars));
+	debit_log(L_LEXER, "Lookup variable %s, index %i", yytext, idx);
+	yylval->val = vars[idx];
 	return(TOK_E_VAL);
 }
 0x[a-fA-F0-9]+ { int i; uint64_t tmp = 0;

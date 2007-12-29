@@ -553,11 +553,11 @@ bs_write_padding(bitstream_writer_t *writer, const unsigned rega, const unsigned
 }
 
 static void
-write_frame(const char *frame, guint type, guint index, guint frameidx, void *data) {
+write_frame(const char *frame, guint type, guint idx, guint frameidx, void *data) {
   bitstream_writer_t *writer = data;
   const chip_struct_t *chip = writer->bit->chip_struct;
   const unsigned frame_len = chip->framelen * sizeof(uint32_t);
-  (void) type; (void) index; (void) frameidx;
+  (void) type; (void) idx; (void) frameidx;
 
   /* unlikely */
   if (!frame) {

@@ -284,12 +284,12 @@ query_bitstream_site_bytea(const bitstream_parsed_t *bitstream,
 			   const csite_descr_t *site,
 			   const unsigned cfgbit) {
   const chip_struct_t *chip_struct = bitstream->chip_struct;
-  const guint site_type = site->type;
+  const guint lsite_type = site->type;
   const guint x = site->type_coord.x;
   const guint y = site->type_coord.y;
-  const guint y_width = type_bits[site_type].y_width;
+  const guint y_width = type_bits[lsite_type].y_width;
   const guint flen = chip_struct->framelen * sizeof(uint32_t);
-  const gint y_offset = type_bits[site_type].y_offset;
+  const gint y_offset = type_bits[lsite_type].y_offset;
 
   /* site offset in the y axis -- inverted. Should not be done here maybe */
   const guint y_type_offset = (y_offset >= 0) ? (unsigned)y_offset : (flen + y_offset);
@@ -301,8 +301,8 @@ query_bitstream_site_bytea(const bitstream_parsed_t *bitstream,
   /* The database could be changed to have only one add here */
   const gsize frame_offset = site_off + yoff;
 
-  const gchar *frame = get_frame(bitstream, type_bits[site_type].col_type,
-				 x+type_bits[site_type].x_type_off, xoff);
+  const gchar *frame = get_frame(bitstream, type_bits[lsite_type].col_type,
+				 x+type_bits[lsite_type].x_type_off, xoff);
 
 /*   debit_log(L_FILEPOS, "querying site t%u, (%u,%u), cfgbit %u", */
 /* 	    site->type, site->type_coord.x, site->type_coord.y, cfgbit); */
