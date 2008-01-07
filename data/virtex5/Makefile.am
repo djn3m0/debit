@@ -10,7 +10,7 @@
 DATAPREFIX=int
 
 #chip geometry
-CHIPS=30 85 110 220 330
+CHIPS=30 50 85 110 220 330
 CHIP_PFX=xc5vlx
 SITE_INCL=sites_v5.h
 GENSCRIPT=generate_v5_chip.pl
