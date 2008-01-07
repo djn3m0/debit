@@ -20,7 +20,7 @@ dnl Checks for libraries
 AC_CHECK_LIB([m], [sqrt])
 
 dnl Check for glib
-GLIB_REQUIRED=2.2.0
+GLIB_REQUIRED=2.8.0
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= $GLIB_REQUIRED])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
