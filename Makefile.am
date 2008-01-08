@@ -119,7 +119,7 @@ profile-std: $(DEBIT)
 .PHONY: doc deb srpm
 
 # doxygen documentation generation
-DOCSOURCES=$(shell find ./ -name '*.c' -or -name '*.h')
+DOCSOURCES=$(shell find ./ -name '*.c' -o -name '*.h')
 DOXYCONFIG=doc/doxygen.cfg
 DOXYDIR=doc
 
