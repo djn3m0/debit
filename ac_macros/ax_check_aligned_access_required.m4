@@ -14,6 +14,7 @@ dnl should be accessed per-byte in that case to avoid segfault type errors.
 dnl
 dnl @category C
 dnl @author Guido U. Draheim <guidod@gmx.de>
+dnl @author Jean-Baptiste Note <jean-baptiste.note@m4x.org>
 dnl @version 2006-08-17
 dnl @license GPLWithACException
 
@@ -26,22 +27,28 @@ AC_DEFUN([AX_CHECK_ALIGNED_ACCESS_REQUIRED],
 
 int main()
 {
-  char* string = malloc(40);
+  char* string = malloc(2*sizeof(int)+1);
+  const int offset = sizeof(int) + 1;
   int i;
-  for (i=0; i < 40; i++) string[[i]] = i;
+  for (i=0; i < sizeof(int); i++)
+      string[i] = i;
+  for (i=0; i < sizeof(int); i++)
+      string[i+offset] = i;
   {
      void* s = string;
-     int* p = s+1;
-     int* q = s+2;
+     int* p = (int *)s;
+     int* q = (int *)(s+offset);
 
-     if (*p == *q) { return 1; }
+     if (*p != *q) {
+      return 1;
+     }
   }
   return 0;
 }
               ],
-     [ax_cv_have_aligned_access_required=yes],
      [ax_cv_have_aligned_access_required=no],
-     [ax_cv_have_aligned_access_required=no])
+     [ax_cv_have_aligned_access_required=yes],
+     [ax_cv_have_aligned_access_required=yes])
   ])
 if test "$ax_cv_have_aligned_access_required" = yes ; then
   AC_DEFINE([HAVE_ALIGNED_ACCESS_REQUIRED], [1],
