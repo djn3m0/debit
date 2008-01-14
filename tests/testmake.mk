@@ -19,7 +19,7 @@ LOGME = 2>$@.log
 %.frames: %.bit $(DEBIT)
 	mkdir -p $*.dir && \
 	$(DEBIT_CMD) $(DUMPARG) --outdir $*.dir --input $< $(DUMPME) $(LOGME) && \
-	echo $*.dir/* | xargs md5sum | sed -e 's/_u//' $(DUMPME) && \
+	echo $*.dir/* | xargs md5sum | sort -n | sed -e 's/_u//' | tr -s "/" $(DUMPME) && \
 	rm -Rf $*.dir
 
 %.rewrite: %.bit $(DEBIT)

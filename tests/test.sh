@@ -2,8 +2,11 @@
 
 . log-functions
 
+COMPARE="cmp -s"
+#MAKE is set by make itself from above
+
 function get_dirs() {
-    DIRS=`find $1 -mindepth 1 -maxdepth 1 -type d`
+    DIRS=`ls -d $1/*/`
 }
 
 function test_family() {
@@ -35,12 +38,12 @@ function check_suffix() {
     echo -ne "$suffix\t\t\t"
 
     if [ -e $design.$suffix.golden ]; then
-	make -s --no-print-directory -f $MAKEFILE $design.$suffix && \
-	    diff -q $design.$suffix $design.$suffix.golden || \
+	${MAKE} -s --no-print-directory -f $MAKEFILE $design.$suffix && \
+	    ${COMPARE} $design.$suffix $design.$suffix.golden || \
 	    log_failure_msg "COMPRESSED BITSTREAM FAILED";
 
-	make -s --no-print-directory -f $MAKEFILE ${design}_u.$suffix && \
-	    diff -q $design.$suffix ${design}_u.$suffix || \
+	${MAKE} -s --no-print-directory -f $MAKEFILE ${design}_u.$suffix && \
+	    ${COMPARE} $design.$suffix ${design}_u.$suffix || \
 	    log_failure_msg "UNCOMPRESSED BITSTREAM FAILED";
 
 	log_success_msg "PASSED";
@@ -53,8 +56,8 @@ function compare_bitstreams() {
     local bitbase=$1;
     local bitgen=$2;
 
-    make -s --no-print-directory -f $MAKEFILE ${bitgen} && \
-    diff -q ${bitbase} ${bitgen} &> /dev/null
+    ${MAKE} -s --no-print-directory -f $MAKEFILE ${bitgen} && \
+    ${COMPARE} ${bitbase} ${bitgen} &> /dev/null
 
     if test $? -ne 0; then
 	log_warning_msg "DIFFERING"
@@ -78,8 +81,8 @@ function check_xdl_param() {
     local name=$2
 
     # then debit it again and check pips against the golden ref
-    make -s --no-print-directory -f $MAKEFILE $design.xdl2bit.$name && \
-	diff -q $design.xdl2bit.$name $design.$name.golden
+    ${MAKE} -s --no-print-directory -f $MAKEFILE $design.xdl2bit.$name && \
+	${COMPARE} $design.xdl2bit.$name $design.$name.golden
     local result=$?
     echo -ne "\t\t\t";
     if test $result -ne 0; then
@@ -93,7 +96,7 @@ function check_xdl() {
     local design=$1
     echo -ne "xdl2bit\t\t\t"
 
-    make -s --no-print-directory -f $MAKEFILE $design.xdl2bit || \
+    ${MAKE} -s --no-print-directory -f $MAKEFILE $design.xdl2bit || \
 	log_failure_msg "FAILED"
     log_success_msg "GENERATED"
 
@@ -107,7 +110,7 @@ function produce_suffix() {
     local suffix=$2;
 
     echo -ne "$suffix\t\t\t"
-    make -s --no-print-directory -f $MAKEFILE $design.$suffix && \
+    ${MAKE} -s --no-print-directory -f $MAKEFILE $design.$suffix && \
     mv -f $design.$suffix $design.$suffix.golden || \
 	log_failure_msg "GENERATION FAILED"
 
@@ -130,7 +133,7 @@ function test_design() {
     #Test that the xdl2bit tool is okay
     check_xdl ${DESIGN_NAME}
 
-#    make -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
+#    ${MAKE} -s --no-print-directory CLEANDIR=$designs -f $MAKEFILE clean
 }
 
 function force_design() {
@@ -145,3 +148,4 @@ function force_design() {
 }
 
 CALLED_FUN=test_design
+#CALLED_FUN=force_design
