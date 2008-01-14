@@ -1,5 +1,5 @@
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\" -I$(top_srcdir)
-AM_CFLAGS	= -Wall -Wunused -O3 -g
+AM_CFLAGS	= -O3
 
 AM_YFLAGS = -d
 AM_LFLAGS = -Cfe --perf-report --verbose --nounput

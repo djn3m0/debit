@@ -1,5 +1,5 @@
 AM_CPPFLAGS	= -I$(top_srcdir)
-AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
+AM_CFLAGS	= -O3
 
 bin_PROGRAMS		= bitisolation
 bitisolation_SOURCES	= state_db.c pip_db.c bitisolation.c \

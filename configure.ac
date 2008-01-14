@@ -100,6 +100,11 @@ AC_FUNC_MMAP
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([memset munmap regcomp strdup strerror strtoul])
 
+# Enable warning flags and debug compile in case of GCC
+if test "x$CC" = "xgcc"; then
+   CFLAGS="$CFLAGS -Wall -Wextra -Wunused -g"
+fi
+
 # Enable non-debug mode
 AC_ARG_ENABLE(asserts, [  --disable-asserts    remove assertions in the code], enable_asserts=$enableval, enable_asserts=yes)
 if test "x$enable_asserts" = "xno"; then

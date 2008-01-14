@@ -38,6 +38,8 @@ typedef enum option_type {
   LAST_OPTION,
 } option_type_t;
 
+#pragma pack(1)
+
 struct header_option {
   guint8 code;
   guint16 length;
@@ -49,6 +51,8 @@ struct synchro_option {
   guint32 bitstream_length;
   guint32 data[];
 } __attribute__((packed));
+
+#pragma pack()
 
 typedef struct _header_option_p {
   guint16 len;

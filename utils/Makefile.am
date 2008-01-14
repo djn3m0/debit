@@ -1,6 +1,6 @@
 SUBDIRS		= correlation
 
-AM_CPPFLAGS	= -Wall -Werror -Wunused -O3 -g
+AM_CPPFLAGS	= -O3
 
 bin_PROGRAMS		= diff_bin_pos
 diff_bin_pos_SOURCES	= diff_bin.c

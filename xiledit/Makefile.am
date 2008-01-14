@@ -1,5 +1,5 @@
 AM_CPPFLAGS	= -DDATADIR=\"$(pkgdatadir)\" -I$(top_srcdir)
-AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
+AM_CFLAGS	= -O3
 
 glade_sources   = xiledit.glade xiledit.gladep
 glade_generated = interface.c interface.h support.c support.h

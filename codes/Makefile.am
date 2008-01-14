@@ -1,5 +1,5 @@
-AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
+AM_CFLAGS	= -O3
 
 bin_PROGRAMS	= dumptable
 
-dumptable_SOURCES	= crc-tables.c
+dumptable_SOURCES	= crc-tables.c crc32-c.c crc-ibm.c

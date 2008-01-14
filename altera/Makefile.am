@@ -1,5 +1,5 @@
 AM_CPPFLAGS	= -I$(top_srcdir) -DDATADIR=\"$(pkgdatadir)\"
-AM_CFLAGS	= -Wall -Werror -Wunused -O3 -g
+AM_CFLAGS	= -O3
 
 bin_PROGRAMS	= altera
 altera_SOURCES	= bitarray.c debit.c bitstream.c bitstream_header.c \
