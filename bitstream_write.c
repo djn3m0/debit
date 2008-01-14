@@ -29,6 +29,9 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+/* For config.h */
+#include "bitarray.h"
+
 #undef HAVE_MMAP
 
 #ifdef HAVE_MMAP

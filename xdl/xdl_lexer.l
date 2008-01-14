@@ -58,7 +58,7 @@ pip    { return PIP; }
 "=="|"=>"|"=-"|"->"     { return CONNECTION; }
 
 [a-zA-Z0-9_\-]* { copy_and_return(IDENTIFIER); } /* Should do otherwise */
-v[0-9]+.[0-9]+  { return VERSION; }
+v[0-9]+.[0-9]+  { return NCDVERSION; }
 
 <S_CONFIG>{
 [ \t\n]+     /* eat up whitespace */

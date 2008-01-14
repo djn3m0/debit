@@ -225,7 +225,7 @@ static int treat_design(parser_t *parser,
 /* Bison declaration */
 %token STRING
 %token IDENTIFIER
-%token VERSION
+%token NCDVERSION
 %token DESIGN
 
 %token LUTID
@@ -278,7 +278,7 @@ input:   /* empty */
 /* Design */
 design_name: STRING ;
 part: IDENTIFIER ;
-ncd_version: VERSION ;
+ncd_version: NCDVERSION ;
 
 device: IDENTIFIER ;
 package: IDENTIFIER ;
