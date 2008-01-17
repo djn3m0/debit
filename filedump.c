@@ -47,23 +47,13 @@ dump_bin_rev(FILE *out, const void *_data, const unsigned num) {
   }
 }
 
-static inline void
-dump_32be(FILE *out, const uint32_t dat) {
-  unsigned i;
-  /* dump le first */
-  for( i = 0; i < 4; i++) {
-    unsigned char atom;
-    atom = (dat >> (8 * (3-i))) & 0xff;
-    putc(atom, out);
-  }
-}
-
 static void
 dump_bin(FILE *out, const void *_data, const unsigned num) {
-  const uint32_t *const data = _data;
+  const unsigned char *const data = _data;
   unsigned i;
-  for( i = 0; i < num / sizeof(uint32_t); i++)
-    dump_32be(out, GUINT32_FROM_LE(data[i]));
+  /* Dump weak weights first of the in-frame le word, without unaligned loads */
+  for( i = 0; i < num; i++)
+    putc(data[i ^ 3], out);
 }
 
 typedef void (*naming_hook_t)(char *buf, unsigned buf_len,

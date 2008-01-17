@@ -608,11 +608,12 @@ query_bitstream_bram_data(const bitstream_parsed_t *bitstream,
   /* iterate over BRAM columns (config line) */
   for (i = 0; i < 64; i++) {
     guint16 *line_data = &bram_data[16*i];
-    unsigned guint_offset = site_offset / 2;
-    const guint16 *frame = (const guint16 *) get_frame(bitstream, V2C_BRAM, x, i);
+    unsigned guint_offset = site_offset;
+    const unsigned char *frame = (const unsigned char *) get_frame(bitstream, V2C_BRAM, x, i);
 
     for (j = 0; j < 16; j++) {
-      guint16 data = GUINT16_FROM_BE(frame[guint_offset]);
+      /* read BE data */
+      guint16 data = frame[site_offset] << 8 | frame[site_offset | 1];
       guint16 bit_to_write = (1 << j);
 
       for (k = 0; k < 16; k++) {
