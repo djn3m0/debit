@@ -87,6 +87,7 @@ Section "Debitting graphical tools" SecDisplay
 
   SetOutPath "$INSTDIR\bin"
   File ..\xiledit\xiledit.exe
+  File ..\xiledit\xiledit_s3.exe
   File ..\xiledit\xiledit_v4.exe
   File ..\xiledit\xiledit_v5.exe
 
@@ -114,9 +115,16 @@ Section "Debitting shell tools" SecXilinx
   File ..\utils\correlation\bitisolation.exe
   File ..\utils\diff_bin_pos.exe
   File ..\debit.exe
+  File ..\debit_s3.exe
   File ..\debit_v4.exe
   File ..\debit_v5.exe
   File ..\bit2pdf.exe
+
+; xdl2bit
+  File ..\xdl\xdl2bit.exe
+  File ..\xdl\xdl2bit_s3.exe
+  File ..\xdl\xdl2bit_v4.exe
+  File ..\xdl\xdl2bit_v5.exe
 
   DetailPrint "Installing debitting .bat helper files..."
   SetOutPath "$INSTDIR"
@@ -124,6 +132,7 @@ Section "Debitting shell tools" SecXilinx
   File ${SRCDIR}\windows\scripts\bit2luts.bat
   File ${SRCDIR}\windows\scripts\bit2bram.bat
   File ${SRCDIR}\windows\scripts\bit2pips.bat
+  File ${SRCDIR}\windows\scripts\xdl2bit.bat
 
   ;Store installation folder
   WriteRegStr HKCU "Software\debit" "" $INSTDIR
@@ -158,9 +167,14 @@ Section "File type and context menus" SecCtx
     WriteRegStr HKCR ".bit" "" "debit.bitfile"
     WriteRegStr HKCR "debit.bitfile" "" "Xilinx Bitstream file"
     WriteRegStr HKCR "debit.bitfile\DefaultIcon" "" "$INSTDIR\gfx\application-x-xilinx-bitstream.ico"
+  ReadRegStr $0 HKCR ".xdl" ""
+  StrCmp $0 "" 0 +4
+    WriteRegStr HKCR ".xdl" "" "debit.xdlfile"
+    WriteRegStr HKCR "debit.xdlfile" "" "Xilinx Description Language file"
+    WriteRegStr HKCR "debit.xdlfile\DefaultIcon" "" "$INSTDIR\gfx\application-x-xilinx-bitstream.ico"
   ReadRegStr $0 HKCR ".sof" ""
   StrCmp $0 "" 0 +4
-    WriteRegStr HKCR ".sof" "" "soffile"
+    WriteRegStr HKCR ".sof" "" "debit.soffile"
     WriteRegStr HKCR "debit.soffile" "" "Altera Bitstream file"
     WriteRegStr HKCR "debit.soffile\DefaultIcon" "" "$INSTDIR\gfx\application-x-altera-bitstream.ico"
   IfErrors 0 +2
@@ -179,12 +193,16 @@ Section "File type and context menus" SecCtx
   DetailPrint "Registering browsers for Xilinx bitstreams"
   ClearErrors
   ReadRegStr $0 HKCR ".bit" ""
+  WriteRegStr HKCR "$0\shell\spartan3" "" "Browse bitstream (Spartan-3)"
+  WriteRegStr HKCR "$0\shell\spartan3\command" "" '"$INSTDIR\bin\xiledit_s3.exe" "-d" "$INSTDIR\data" "-i" "%1"'
   WriteRegStr HKCR "$0\shell\virtex4" "" "Browse bitstream (Virtex-4)"
   WriteRegStr HKCR "$0\shell\virtex4\command" "" '"$INSTDIR\bin\xiledit_v4.exe" "-d" "$INSTDIR\data" "-i" "%1"'
   WriteRegStr HKCR "$0\shell\virtex5" "" "Browse bitstream (Virtex-5)"
   WriteRegStr HKCR "$0\shell\virtex5\command" "" '"$INSTDIR\bin\xiledit_v5.exe" "-d" "$INSTDIR\data" "-i" "%1"'
+  IfErrors 0 +2
+     DetailPrint "Error registering browsers for Xilinx bitstreams"
 
-  DetailPrint "Creating context menu entries for debit"
+  DetailPrint "Creating context menu entries for bitfiles"
   ClearErrors
   ReadRegStr $0 HKCR ".bit" ""
   WriteRegStr HKCR "$0\shell\x_pdf" "" "Convert to PDF (V-II)"
@@ -196,9 +214,17 @@ Section "File type and context menus" SecCtx
   WriteRegStr HKCR "$0\shell\y_lut" "" "Extract LUT data (V-II)"
   WriteRegStr HKCR "$0\shell\y_lut\command" "" '"$INSTDIR\bit2luts.bat" "%1"'
   IfErrors 0 +2
-     DetailPrint "Error creating custom actions"
+     DetailPrint "Error creating custom actions for bitfiles"
 
-  DetailPrint "Signalling the change to windows"
+  DetailPrint "Creating context menu entries for XDL files"
+  ClearErrors
+  ReadRegStr $0 HKCR ".xdl" ""
+  WriteRegStr HKCR "$0\shell\x_bit" "" "Convert to bitstream (V-II)"
+  WriteRegStr HKCR "$0\shell\x_bit\command" "" '"$INSTDIR\xdl2bit.bat" "%1"'
+  IfErrors 0 +2
+     DetailPrint "Error creating custom actions for XDL files"
+
+  DetailPrint "Signalling the changes to windows"
   System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
 
 SectionEnd
@@ -209,7 +235,7 @@ SectionEnd
   ;Language strings
   LangString DESC_SecXilinx ${LANG_ENGLISH} "Command-line utilities for debitting"
   LangString DESC_SecDisplay ${LANG_ENGLISH} "Graphical utilities for debitting"
-  LangString DESC_SecDatabase ${LANG_ENGLISH} "Database for the Xilinx xc2v2000 chip"
+  LangString DESC_SecDatabase ${LANG_ENGLISH} "Database for the Xilinx chips"
   LangString DESC_SecCtx ${LANG_ENGLISH} "File type and context menus"
   LangString DESC_SecStartMenu ${LANG_ENGLISH} "StartMenu entries"
 
@@ -230,6 +256,7 @@ Section "Uninstall"
   ;; Data files deletion
 
   Delete "$INSTDIR\bin\xiledit.exe"
+  Delete "$INSTDIR\bin\xiledit_s3.exe"
   Delete "$INSTDIR\bin\xiledit_v4.exe"
   Delete "$INSTDIR\bin\xiledit_v5.exe"
   Delete "$INSTDIR\data\pixmaps\ulogic_icon_32.png"
@@ -244,9 +271,16 @@ Section "Uninstall"
   Delete "$INSTDIR\bin\bitisolation.exe"
   Delete "$INSTDIR\bin\diff_bin_pos.exe"
   Delete "$INSTDIR\bin\debit.exe"
+  Delete "$INSTDIR\bin\debit_s3.exe"
   Delete "$INSTDIR\bin\debit_v4.exe"
   Delete "$INSTDIR\bin\debit_v5.exe"
   Delete "$INSTDIR\bin\bit2pdf.exe"
+
+  Delete "$INSTDIR\bin\xdl2bit.exe"
+  Delete "$INSTDIR\bin\xdl2bit_s3.exe"
+  Delete "$INSTDIR\bin\xdl2bit_v4.exe"
+  Delete "$INSTDIR\bin\xdl2bit_v5.exe"
+
   RMDir "$INSTDIR\bin"
 
   RMDir /r "$INSTDIR\data"
@@ -257,6 +291,7 @@ Section "Uninstall"
   Delete "$INSTDIR\bit2luts.bat"
   Delete "$INSTDIR\bit2bram.bat"
   Delete "$INSTDIR\bit2pips.bat"
+  Delete "$INSTDIR\xdl2bit.bat"
   RMDir "$INSTDIR"
 
   ;; Start Menu deletion
@@ -265,6 +300,10 @@ Section "Uninstall"
 
   Delete "$SMPROGRAMS\$MUI_TEMP\Xiledit.lnk"
   Delete "$SMPROGRAMS\$MUI_TEMP\Uninstall.lnk"
+  Delete "$SMPROGRAMS\$MUI_TEMP\Xiledit (Virtex-II).lnk"
+  Delete "$SMPROGRAMS\$MUI_TEMP\Xiledit (Spartan-3).lnk"
+  Delete "$SMPROGRAMS\$MUI_TEMP\Xiledit (Virtex-4).lnk"
+  Delete "$SMPROGRAMS\$MUI_TEMP\Xiledit (Virtex-5).lnk"
 
   ;Delete empty start menu parent diretories
 
